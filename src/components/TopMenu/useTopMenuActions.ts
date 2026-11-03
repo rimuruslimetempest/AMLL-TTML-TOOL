@@ -86,6 +86,7 @@ import { type LyricWord, type LyricWordBase, newLyricWord } from "$/types/ttml";
 import { openFileWithDialog } from "$/utils/fileDialog.ts";
 import { saveFile } from "$/utils/fileSystem.ts";
 import { error, log } from "$/utils/logging.ts";
+import { getNearestRemainingLineId } from "$/modules/lyric-editor/components/selection-scroll";
 import { openExternal } from "$/utils/openExternal";
 import { createHistoryActionGate } from "./history-action-gate";
 
@@ -577,20 +578,34 @@ export const useTopMenuActions = () => {
 		const selectedLineIds = store.get(selectedLinesAtom);
 		log("deleting selections", selectedWordIds, selectedLineIds);
 		if (selectedWordIds.size === 0) {
+			const lines = store.get(lyricLinesAtom).lyricLines;
+			const preferredIndex = Math.max(
+				0,
+				lines.findIndex((line) => selectedLineIds.has(line.id)),
+			);
+			// Keep a usable selection after deleting the selected line(s).
+			const fallbackLineId =
+				selectedLineIds.size > 0
+					? getNearestRemainingLineId(lines, selectedLineIds, preferredIndex)
+					: null;
 			editLyricLines((prev) => {
 				prev.lyricLines = prev.lyricLines.filter(
 					(l) => !selectedLineIds.has(l.id),
 				);
 			});
+			store.set(
+				selectedLinesAtom,
+				fallbackLineId ? new Set([fallbackLineId]) : new Set(),
+			);
 		} else {
 			editLyricLines((prev) => {
 				for (const line of prev.lyricLines) {
 					removeWordsFromLine(line, selectedWordIds);
 				}
 			});
+			store.set(selectedLinesAtom, new Set());
 		}
 		store.set(selectedWordsAtom, new Set());
-		store.set(selectedLinesAtom, new Set());
 	}, [store, editLyricLines]);
 
 	const onAutoSegment = useCallback(() => {

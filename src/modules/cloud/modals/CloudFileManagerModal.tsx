@@ -48,6 +48,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { uid } from "uid";
 import { useFileOpener } from "$/hooks/useFileOpener";
+import { ExternalCoverImage } from "$/components/ExternalCoverImage";
 import { audioEngine } from "$/modules/audio/audio-engine";
 import { tryReloadAudioFromComputer } from "$/modules/audio/utils/autoReloadAudio";
 import {
@@ -207,26 +208,13 @@ const SongGroupItem: FC<{
 							flexShrink: 0,
 						}}
 					>
-						{activeVersion.coverArt || group.coverArt ? (
-							<img
-								src={activeVersion.coverArt || group.coverArt!}
-								alt={group.title}
-								loading="lazy"
-								style={{
-									width: "100%",
-									height: "100%",
-									objectFit: "cover",
-								}}
-							/>
-						) : (
-							<MusicNote2Filled
-								style={{
-									width: 24,
-									height: 24,
-									color: "var(--accent-9)",
-								}}
-							/>
-						)}
+						<ExternalCoverImage
+							src={activeVersion.coverArt || group.coverArt}
+							alt={group.title}
+							size={56}
+							borderRadius={10}
+							style={{ width: "100%", height: "100%" }}
+						/>
 					</Box>
 
 					{/* Song Info */}

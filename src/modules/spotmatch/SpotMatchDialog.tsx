@@ -33,6 +33,7 @@ import { useAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
+import { ExternalCoverImage } from "$/components/ExternalCoverImage";
 import { checkIsTauri } from "$/modules/spotify/client";
 import { saveFile } from "$/utils/fileSystem";
 import {
@@ -514,32 +515,11 @@ export function SpotMatchDialog() {
 					>
 						<Flex align="center" justify="between">
 							<Flex align="center" gap="3">
-								{sourceTrack.cover ? (
-									<img
-										src={sourceTrack.cover}
-										alt={sourceTrack.title}
-										style={{
-											width: 44,
-											height: 44,
-											borderRadius: 6,
-											objectFit: "cover",
-										}}
-									/>
-								) : (
-									<Box
-										style={{
-											width: 44,
-											height: 44,
-											borderRadius: 6,
-											backgroundColor: "var(--gray-a4)",
-											display: "flex",
-											alignItems: "center",
-											justifyContent: "center",
-										}}
-									>
-										<MusicNote2Filled />
-									</Box>
-								)}
+								<ExternalCoverImage
+									src={sourceTrack.cover}
+									alt={sourceTrack.title}
+									size={44}
+								/>
 								<Box>
 									<Flex align="center" gap="2">
 										<Text size="2" weight="bold">
@@ -686,34 +666,11 @@ export function SpotMatchDialog() {
 														onClick={(e) => e.stopPropagation()}
 													/>
 
-													{candidate.cover ? (
-														<img
-															src={candidate.cover}
-															alt={candidate.title}
-															style={{
-																width: 40,
-																height: 40,
-																borderRadius: 6,
-																objectFit: "cover",
-																flexShrink: 0,
-															}}
-														/>
-													) : (
-														<Box
-															style={{
-																width: 40,
-																height: 40,
-																borderRadius: 6,
-																backgroundColor: "var(--gray-a4)",
-																display: "flex",
-																alignItems: "center",
-																justifyContent: "center",
-																flexShrink: 0,
-															}}
-														>
-															<MusicNote2Filled />
-														</Box>
-													)}
+													<ExternalCoverImage
+														src={candidate.cover}
+														alt={candidate.title}
+														size={40}
+													/>
 
 													<Box style={{ minWidth: 0, flex: 1 }}>
 														<Flex align="center" gap="2">

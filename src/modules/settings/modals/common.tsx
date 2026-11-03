@@ -72,6 +72,7 @@ import {
 	autoSegmentOnLineSyncAtom,
 	autoSegmentSyncModeAtom,
 	enableUpcomingWordHighlightAtom,
+	seekAudioToSelectedLineAtom,
 	syncCommitOffsetAtom,
 	syncTimeOffsetAtom,
 	upcomingWordHighlightColorAtom,
@@ -145,6 +146,9 @@ export const SettingsCommonTab = ({
 	const [syncCommitOffset, setSyncCommitOffset] = useAtom(syncCommitOffsetAtom);
 	const [keepPlayingWordInView, setKeepPlayingWordInView] = useAtom(
 		keepPlayingWordInViewAtom,
+	);
+	const [seekAudioToSelectedLine, setSeekAudioToSelectedLine] = useAtom(
+		seekAudioToSelectedLineAtom,
 	);
 	const [highlightUnsyncedWordsInEditor, setHighlightUnsyncedWordsInEditor] =
 		useAtom(highlightUnsyncedWordsInEditorAtom);
@@ -1139,6 +1143,37 @@ export const SettingsCommonTab = ({
 								</Text>
 							</Card>
 						</>
+					)}
+					{shouldShow("editor-seek-selected-line") && (
+						<Card>
+							<Text as="label">
+								<Flex gap="3" align="center">
+									<Timer24Regular />
+									<Box flexGrow="1">
+										<Flex gap="2" align="center" justify="between">
+											<Flex direction="column" gap="1">
+												<Text>
+													{t(
+														"settings.common.seekAudioToSelectedLine",
+														"Seek audio to selected line",
+													)}
+												</Text>
+												<Text size="1" color="gray">
+													{t(
+														"settings.common.seekAudioToSelectedLineDesc",
+														"Move the playhead to the line's start time when you select it. Off by default.",
+													)}
+												</Text>
+											</Flex>
+											<Switch
+												checked={seekAudioToSelectedLine}
+												onCheckedChange={setSeekAudioToSelectedLine}
+											/>
+										</Flex>
+									</Box>
+								</Flex>
+							</Text>
+						</Card>
 					)}
 				</Flex>
 			)}

@@ -35,6 +35,14 @@ export enum ToolMode {
 export const toolModeAtom = atom<ToolMode>(ToolMode.Edit);
 export const aiSyncPickModeAtom = atom(false);
 
+/** One-shot request used after the mode-keyed lyric editor remounts. */
+export interface EditorModeRevealRequest {
+	mode: ToolMode;
+	token: number;
+}
+export const editorModeRevealRequestAtom =
+	atom<EditorModeRevealRequest | null>(null);
+
 export const showPreviewPanelAtom = atom(false);
 export const previewPanelWidthAtom = atomWithStorage("previewPanelWidth", 400);
 export const aiSidebarWidthAtom = atomWithStorage("aiSidebarWidth", 360);

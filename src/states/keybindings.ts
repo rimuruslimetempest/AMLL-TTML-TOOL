@@ -4,6 +4,7 @@
 
 import type { WritableAtom } from "jotai";
 import {
+	cmdAddCueAtPlayhead,
 	cmdAutoSegment,
 	cmdDeleteSelection,
 	cmdFind,
@@ -97,6 +98,7 @@ export const keySyncStartAtom = cmdSyncStart.atom;
 export const keySyncNextAtom = cmdSyncNext.atom;
 export const keySyncEndAtom = cmdSyncEnd.atom;
 export const keyToggleWordHighlightAtom = cmdToggleWordHighlight.atom;
+export const keyAddCueAtPlayheadAtom = cmdAddCueAtPlayhead.atom;
 export const keyUrbanDictionaryAtom = cmdUrbanDictionary.atom;
 export const keyUrbanDictionarySyncAtom = cmdUrbanDictionarySync.atom;
 

@@ -7,6 +7,7 @@ import {
 	Box,
 	Button,
 	Card,
+	Checkbox,
 	Flex,
 	Grid,
 	IconButton,
@@ -32,6 +33,46 @@ import {
 	Mp3ConversionMode,
 	mp3ConversionModeAtom,
 } from "$/modules/settings/states";
+import {
+	CUE_SOUNDS,
+	CUE_SOURCES,
+	type CueSound,
+	type CueSource,
+	cueInPreviewAtom,
+	cueMinGapMsAtom,
+	cueSoundAtom,
+	cueSourcesAtom,
+	cuesEnabledAtom,
+	cueVolumeAtom,
+} from "$/modules/settings/states/cues";
+
+const CUE_SOUND_LABEL_KEYS = {
+	tick: "settings.audio.cuesSoundName.tick",
+	click: "settings.audio.cuesSoundName.click",
+	beep: "settings.audio.cuesSoundName.beep",
+	woodblock: "settings.audio.cuesSoundName.woodblock",
+} as const;
+
+const CUE_SOUND_LABELS: Record<CueSound, string> = {
+	tick: "Tick",
+	click: "Click",
+	beep: "Beep",
+	woodblock: "Woodblock",
+};
+
+const CUE_SOURCE_LABEL_KEYS = {
+	marks: "settings.audio.cuesSource.marks",
+	sections: "settings.audio.cuesSource.sections",
+	lines: "settings.audio.cuesSource.lines",
+	words: "settings.audio.cuesSource.words",
+} as const;
+
+const CUE_SOURCE_LABELS: Record<CueSource, string> = {
+	marks: "Cue markers",
+	sections: "Section starts",
+	lines: "Line starts",
+	words: "Word starts",
+};
 
 export const AudioSettingsTab = () => {
 	const { t } = useTranslation();
@@ -42,6 +83,26 @@ export const AudioSettingsTab = () => {
 	const [newPresetName, setNewPresetName] = useState("");
 	const [mp3ConversionMode, setMp3ConversionMode] = useAtom(
 		mp3ConversionModeAtom,
+	);
+	const [cuesEnabled, setCuesEnabled] = useAtom(cuesEnabledAtom);
+	const [cueVolume, setCueVolume] = useAtom(cueVolumeAtom);
+	const [cueSound, setCueSound] = useAtom(cueSoundAtom);
+	const [cueSources, setCueSources] = useAtom(cueSourcesAtom);
+	const [cueInPreview, setCueInPreview] = useAtom(cueInPreviewAtom);
+	const [cueMinGap, setCueMinGap] = useAtom(cueMinGapMsAtom);
+
+	const toggleCueSource = useCallback(
+		(source: CueSource, checked: boolean) => {
+			setCueSources((previous) => {
+				const next = new Set(previous);
+				if (checked) next.add(source);
+				else next.delete(source);
+				// An empty selection would silently disable every cue.
+				if (next.size === 0) return previous;
+				return CUE_SOURCES.filter((item) => next.has(item));
+			});
+		},
+		[setCueSources],
 	);
 
 	const allPresets = useMemo(
@@ -294,6 +355,156 @@ export const AudioSettingsTab = () => {
 							</Select.Root>
 						</Flex>
 					</Box>
+				</Flex>
+			</Card>
+
+			<Card>
+				<Flex direction="column" gap="3">
+					<Flex align="center" justify="between" gap="4">
+						<Flex direction="column" gap="1">
+							<Text weight="bold" size="3">
+								{t("settings.audio.cues", "Audio Cues")}
+							</Text>
+							<Text size="1" color="gray">
+								{t(
+									"settings.audio.cuesDescription",
+									"Click sounds while the playhead crosses cue points, so timing can be checked by ear. Monitoring only: cues are never written to the TTML.",
+								)}
+							</Text>
+						</Flex>
+						<Switch checked={cuesEnabled} onCheckedChange={setCuesEnabled} />
+					</Flex>
+
+					<Flex
+						direction="column"
+						gap="3"
+						style={{
+							opacity: cuesEnabled ? 1 : 0.5,
+							pointerEvents: cuesEnabled ? "auto" : "none",
+						}}
+					>
+						<Flex gap="3" align="end" wrap="wrap">
+							<Box>
+								<Text size="1" color="gray">
+									{t("settings.audio.cuesSound", "Cue sound")}
+								</Text>
+								<Select.Root
+									value={cueSound}
+									onValueChange={(value) => setCueSound(value as CueSound)}
+								>
+									<Select.Trigger />
+									<Select.Content>
+										{CUE_SOUNDS.map((sound) => (
+											<Select.Item key={sound} value={sound}>
+												{t(
+													CUE_SOUND_LABEL_KEYS[sound],
+													CUE_SOUND_LABELS[sound],
+												)}
+											</Select.Item>
+										))}
+									</Select.Content>
+								</Select.Root>
+							</Box>
+							<Button
+								variant="soft"
+								size="1"
+								onClick={() => {
+									void audioEngine.previewCueSound(cueSound);
+								}}
+							>
+								{t("settings.audio.cuesPreview", "Preview")}
+							</Button>
+							<Box style={{ flexGrow: 1, minWidth: 160 }}>
+								<Flex justify="between" align="center">
+									<Text size="1" color="gray">
+										{t("settings.audio.cuesVolume", "Cue volume")}
+									</Text>
+									<Text size="1" color="gray">
+										{Math.round(cueVolume * 100)}%
+									</Text>
+								</Flex>
+								<Slider
+									value={[cueVolume]}
+									min={0}
+									max={1}
+									step={0.05}
+									onValueChange={([value]) => setCueVolume(value)}
+								/>
+							</Box>
+						</Flex>
+
+						<Flex gap="3" align="center" wrap="wrap">
+							<Text size="1" color="gray">
+								{t("settings.audio.cuesMinGap", "Minimum gap")}
+							</Text>
+							<TextField.Root
+								type="number"
+								min={0}
+								max={1000}
+								step={10}
+								value={String(cueMinGap)}
+								onChange={(event) => {
+									const value = Number.parseInt(event.target.value, 10);
+									if (!Number.isNaN(value)) {
+										setCueMinGap(Math.max(0, Math.min(1000, value)));
+									}
+								}}
+								style={{ width: 110 }}
+							>
+								<TextField.Slot side="right">
+									{t("settings.audio.cuesMinGapUnit", "ms")}
+								</TextField.Slot>
+							</TextField.Root>
+							<Text as="label" size="2" style={{ marginLeft: "auto" }}>
+								<Flex align="center" gap="2">
+									<Checkbox
+										checked={cueInPreview}
+										onCheckedChange={(checked) => setCueInPreview(!!checked)}
+									/>
+									{t(
+										"settings.audio.cuesInPreview",
+										"Play cues in Preview mode",
+									)}
+								</Flex>
+							</Text>
+						</Flex>
+
+						<Box>
+							<Text size="1" color="gray">
+								{t("settings.audio.cuesSources", "Cue sources")}
+							</Text>
+							<Flex gap="4" wrap="wrap" mt="2">
+								{CUE_SOURCES.map((source) => (
+									<Text
+										as="label"
+										size="2"
+										key={source}
+										style={{ display: "inline-flex" }}
+									>
+										<Flex align="center" gap="2">
+											<Checkbox
+												checked={cueSources.includes(source)}
+												onCheckedChange={(checked) =>
+													toggleCueSource(source, !!checked)
+												}
+											/>
+											{t(
+												CUE_SOURCE_LABEL_KEYS[source],
+												CUE_SOURCE_LABELS[source],
+											)}
+										</Flex>
+									</Text>
+								))}
+							</Flex>
+						</Box>
+
+						<Text size="1" color="gray">
+							{t(
+								"settings.audio.cuesAddHint",
+								'Alt+click the waveform or press the "Add cue at playhead" shortcut to place a cue.',
+							)}
+						</Text>
+					</Flex>
 				</Flex>
 			</Card>
 		</Flex>

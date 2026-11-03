@@ -7,12 +7,16 @@ import {
 	Text,
 	TextField,
 } from "@radix-ui/themes";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useStore } from "jotai";
 import { useSetImmerAtom } from "jotai-immer";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import { lyricLinesAtom } from "$/states/main";
+import {
+	lyricLinesAtom,
+	selectedLinesAtom,
+	selectedWordsAtom,
+} from "$/states/main";
 import type { LyricLine } from "$/types/ttml";
 import { mergeLyricLines } from "../utils/merge-lines";
 
@@ -44,6 +48,8 @@ export const MergeLineDialog = ({
 	const { t } = useTranslation();
 	const lyricData = useAtomValue(lyricLinesAtom);
 	const editLyricLines = useSetImmerAtom(lyricLinesAtom);
+	const selectedLines = useAtomValue(selectedLinesAtom);
+	const store = useStore();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedTargetIndex, setSelectedTargetIndex] = useState<number | null>(
 		null,
@@ -79,6 +85,9 @@ export const MergeLineDialog = ({
 		if (selectedTargetIndex === null || !sourceLine) return;
 		const targetLine = lyricData.lyricLines[selectedTargetIndex];
 		if (!targetLine) return;
+		const selectionInvolved =
+			selectedLines.has(sourceLine.id) || selectedLines.has(targetLine.id);
+		let mergedLineId: string | null = null;
 
 		editLyricLines((state) => {
 			let orderedLines: LyricLine[];
@@ -105,6 +114,7 @@ export const MergeLineDialog = ({
 
 			const merged = mergeLyricLines(orderedLines);
 			if (!merged) return;
+			mergedLineId = merged.id;
 
 			const minIdx = Math.min(sourceLineIndex, selectedTargetIndex);
 			const maxIdx = Math.max(sourceLineIndex, selectedTargetIndex);
@@ -113,6 +123,10 @@ export const MergeLineDialog = ({
 			state.lyricLines.splice(maxIdx, 1);
 			state.lyricLines.splice(minIdx, 1, merged);
 		});
+		if (selectionInvolved && mergedLineId) {
+			store.set(selectedLinesAtom, new Set([mergedLineId]));
+			store.set(selectedWordsAtom, new Set());
+		}
 
 		toast.success(
 			t(

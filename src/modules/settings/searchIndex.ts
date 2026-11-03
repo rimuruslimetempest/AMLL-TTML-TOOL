@@ -194,6 +194,14 @@ export const SETTINGS_SEARCH_ITEMS: SettingSearchItem[] = [
 		keywords: ["auto-scroll", "follow", "scroll", "view", "playhead", "follow word"],
 	},
 	{
+		id: "editor-seek-selected-line",
+		title: "Seek audio to selected line",
+		description: "Move the playhead to the selected line's start time when selecting a line",
+		tab: "editor",
+		tabName: "Editor & Sync",
+		keywords: ["seek", "selection", "line", "playhead", "audio"],
+	},
+	{
 		id: "editor-compact-bg",
 		title: "Compact Background Lines in Sync",
 		description: "Condense background vocal lines during active synchronization",
@@ -333,6 +341,47 @@ export const SETTINGS_SEARCH_ITEMS: SettingSearchItem[] = [
 		tab: "audio",
 		tabName: "Audio",
 		keywords: ["spectrogram", "fft", "frequency", "mel", "bark", "colormap", "contrast", "palette"],
+	},
+
+	{
+		id: "audio-cues",
+		title: "Audio Cues",
+		description:
+			"Click sounds when the playhead crosses cue markers or lyric boundaries",
+		tab: "audio",
+		tabName: "Audio",
+		keywords: [
+			"cue",
+			"click",
+			"tick",
+			"beep",
+			"metronome",
+			"marker",
+			"audio cue",
+			"cue sound",
+		],
+	},
+
+	// AI Check
+	{
+		id: "ai-check",
+		title: "AI Check Provider & Model",
+		description:
+			"Choose an OpenAI-compatible API or a local Ollama endpoint for the optional AI review pass",
+		tab: "ai-check",
+		tabName: "AI Check",
+		keywords: [
+			"ai",
+			"ai check",
+			"openai",
+			"ollama",
+			"review",
+			"validation",
+			"api key",
+			"model",
+			"endpoint",
+			"llm",
+		],
 	},
 
 	// Keybindings

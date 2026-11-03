@@ -117,12 +117,15 @@ import { ResizablePanel } from "./components/ResizablePanel";
 import { useFileOpener } from "./hooks/useFileOpener.ts";
 import AudioControls from "./modules/audio/components/index.tsx";
 import { useAudioFeedback } from "./modules/audio/hooks/useAudioFeedback.ts";
+import { useAudioCues } from "$/modules/audio/cues/useAudioCues";
+import { CueKeyBinding } from "$/modules/audio/components/CueKeyBinding";
 import { SyncKeyBinding } from "./modules/lyric-editor/components/sync-keybinding.tsx";
 import { UrbanDictionaryKeybinding } from "./modules/lyric-editor/components/urban-dictionary-keybinding.tsx";
 import { LinePropertiesKeybinding } from "./modules/lyric-editor/components/line-properties-keybinding.tsx";
 import { AutosaveManager } from "./modules/project/autosave/AutosaveManager.tsx";
 import { ProjectTimerManager } from "./modules/project/timer/ProjectTimerManager.tsx";
 import exportTTMLText from "./modules/project/logic/ttml-writer.ts";
+import { AiCheckPanel } from "$/modules/ai-check/AiCheckPanel";
 import { GlobalDragOverlay } from "./modules/project/modals/GlobalDragOverlay.tsx";
 import {
 	customBackgroundBlurAtom,
@@ -137,6 +140,7 @@ import { showTouchSyncPanelAtom } from "./modules/settings/states/sync.ts";
 import { previewFullscreenAtom } from "./modules/settings/states/preview.ts";
 import { settingsDialogAtom, settingsTabAtom } from "./states/dialogs.ts";
 import {
+	editorModeRevealRequestAtom,
 	isDarkThemeAtom,
 	isDirtyAtom,
 	isGlobalFileDraggingAtom,
@@ -340,6 +344,18 @@ function App() {
 	const isDarkTheme = useAtomValue(isDarkThemeAtom);
 	const legacyDarkTheme = useAtomValue(legacyDarkThemeAtom);
 	const toolMode = useAtomValue(toolModeAtom);
+	const previousToolModeRef = useRef(toolMode);
+	const setEditorModeRevealRequest = useSetAtom(editorModeRevealRequestAtom);
+	useEffect(() => {
+		const previousToolMode = previousToolModeRef.current;
+		previousToolModeRef.current = toolMode;
+		const switchedBetweenEditAndSync =
+			(previousToolMode === ToolMode.Edit && toolMode === ToolMode.Sync) ||
+			(previousToolMode === ToolMode.Sync && toolMode === ToolMode.Edit);
+		if (switchedBetweenEditAndSync) {
+			setEditorModeRevealRequest({ mode: toolMode, token: Date.now() });
+		}
+	}, [toolMode, setEditorModeRevealRequest]);
 	const projectIdentity = useAtomValue(projectIdentityAtom);
 
 	useEffect(() => {
@@ -931,6 +947,7 @@ function App() {
 	const setIsGlobalDragging = useSetAtom(isGlobalFileDraggingAtom);
 	const { openFile } = useFileOpener();
 	useAudioFeedback();
+	useAudioCues();
 
 	useEffect(() => {
 		if (!import.meta.env.TAURI_ENV_PLATFORM) {
@@ -1438,6 +1455,7 @@ function App() {
 					<ProjectTimerManager />
 					<GlobalDragOverlay />
 					{toolMode === ToolMode.Sync && <SyncKeyBinding />}
+					<CueKeyBinding />
 					<UrbanDictionaryKeybinding />
 					<LinePropertiesKeybinding />
 					<DarkThemeDetector />
@@ -1500,7 +1518,7 @@ function App() {
 																	animate={{ opacity: 1 }}
 																	exit={{ opacity: 0 }}
 																>
-																	<LyricLinesView key={toolMode} />
+															<LyricLinesView key={toolMode} />
 																</motion.div>
 															</SuspensePlaceHolder>
 														)}
@@ -1638,6 +1656,7 @@ function App() {
 							);
 						})()}
 					</Flex>
+					<AiCheckPanel />
 					<Suspense fallback={null}>
 						<Dialogs />
 					</Suspense>

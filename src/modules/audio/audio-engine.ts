@@ -15,8 +15,10 @@ import {
 } from "$/modules/audio/states/index.ts";
 import { AudioWorkerClient } from "$/modules/audio/workers/audio-worker-client";
 import { saveAudioToCache } from "$/modules/project/autosave/autosave";
+import type { CueSound } from "$/modules/settings/states/cues";
 import { globalStore } from "$/states/store.ts";
 import { log } from "$/utils/logging";
+import { getCueBuffer } from "./cues/cue-sounds";
 import { PcmClock, replayFrame, seekFrame } from "./utils/pcm-clock";
 import { clampPlaybackRate } from "./utils/playback-rate";
 import type { AudioMetadata } from "./workers/types";
@@ -105,6 +107,28 @@ export class AudioEngine extends EventTarget {
 		this.gainNode.gain.value = this._volume;
 		this.gainNode.connect(this.ctx.destination);
 		return this.gainNode;
+	}
+
+	private _cueVolume = 0.35;
+	private cueGainNode: GainNode | null = null;
+	/**
+	 * Cue clicks have their own bus straight to the output: neither the music EQ
+	 * nor the music volume slider quietens timing feedback.
+	 */
+	private get cueGain() {
+		if (this.cueGainNode) return this.cueGainNode;
+		this.cueGainNode = this.ctx.createGain();
+		this.cueGainNode.gain.value = this._cueVolume;
+		this.cueGainNode.connect(this.ctx.destination);
+		return this.cueGainNode;
+	}
+	get cueVolume() {
+		return this._cueVolume;
+	}
+	set cueVolume(value: number) {
+		if (!Number.isFinite(value)) return;
+		this._cueVolume = Math.max(0, Math.min(1, value));
+		if (this.cueGainNode) this.cueGainNode.gain.value = this._cueVolume;
 	}
 
 	private _eqNodes: BiquadFilterNode[] = [];
@@ -684,6 +708,10 @@ export class AudioEngine extends EventTarget {
 			await this._ctx?.close();
 		} catch {}
 		this._ctx = null;
+		this.cueGainNode = null;
+		this.gainNode = null;
+		this._eqNodes = [];
+		this._analyserNode = null;
 		this.workletReady = null;
 		this.wasmBytes = null;
 		return this.ctx;
@@ -865,6 +893,37 @@ export class AudioEngine extends EventTarget {
 		source.connect(this.eqEntryPoint);
 		source.start(when, offset, duration);
 		source.addEventListener("ended", () => source.disconnect());
+	}
+
+	/**
+	 * Render context time for a point in the song. Cue sounds scheduled with it
+	 * share the music's device latency instead of drifting with a wall clock.
+	 */
+	renderTimeForTimeline(seconds: number): number | null {
+		if (!this.musicBuffer || !Number.isFinite(seconds)) return null;
+		const sampleRate = this.musicBuffer.sampleRate;
+		return this.musicClock.contextTimeForFrame(
+			seconds * sampleRate,
+			sampleRate,
+		);
+	}
+
+	/**
+	 * Schedules a synthesized cue click. Returns the source so the caller can
+	 * stop it when the playhead moves.
+	 */
+	playCue(sound: CueSound, when = this.ctx.currentTime) {
+		const source = this.ctx.createBufferSource();
+		source.buffer = getCueBuffer(this.ctx, sound);
+		source.connect(this.cueGain);
+		source.start(when);
+		source.addEventListener("ended", () => source.disconnect());
+		return source;
+	}
+
+	async previewCueSound(sound: CueSound) {
+		await this.resumeContext();
+		this.playCue(sound, this.ctx.currentTime + 0.02);
 	}
 	async playNode(node: AudioScheduledSourceNode, when?: number, stop?: number) {
 		await this.resumeContext();

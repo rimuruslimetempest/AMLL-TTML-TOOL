@@ -47,6 +47,7 @@ describe("Settings searchIndex", () => {
 			"discord",
 			"about",
 			"dev",
+			"ai-check",
 		];
 		for (const item of SETTINGS_SEARCH_ITEMS) {
 			expect(validTabs).toContain(item.tab);

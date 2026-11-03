@@ -249,6 +249,13 @@ export const cmdToggleWordHighlight = registerCommand(
 	"Sync",
 );
 
+export const cmdAddCueAtPlayhead = registerCommand(
+	"addCueAtPlayhead",
+	[CONTROL_KEY, "KeyK"],
+	t("settingsDialog.keybindings.addCueAtPlayhead"),
+	"Sync",
+);
+
 export const cmdUrbanDictionary = registerCommand(
 	"urbanDictionary",
 	["KeyF"],
