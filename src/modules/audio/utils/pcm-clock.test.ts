@@ -92,4 +92,58 @@ describe("PCM clock", () => {
 		});
 		expect(clock.frameAt(256 / 44100 + 64 / 44100, 44100)).toBeCloseTo(288);
 	});
+	it("maps a source frame back to the context time of its render report", () => {
+		const clock = new PcmClock();
+		clock.reset(1, 0);
+		clock.push({
+			generation: 1,
+			startFrame: 0,
+			endFrame: 128,
+			contextTime: 10,
+			renderedFrames: 128,
+			ended: false,
+		});
+		clock.push({
+			generation: 1,
+			startFrame: 128,
+			endFrame: 320,
+			contextTime: 10 + 128 / 44100,
+			renderedFrames: 128,
+			ended: false,
+		});
+
+		expect(clock.contextTimeForFrame(64, 44100)).toBeCloseTo(
+			10 + 64 / 44100,
+			6,
+		);
+		expect(clock.contextTimeForFrame(224, 44100)).toBeCloseTo(
+			10 + 128 / 44100 + 96 / (44100 * 1.5),
+			6,
+		);
+		// Extrapolates past the newest report with its last rate (1.5x).
+		expect(clock.contextTimeForFrame(320 + 44100, 44100)).toBeCloseTo(
+			10 + 128 / 44100 + 1 / 1.5,
+			4,
+		);
+	});
+
+	it("extrapolates before the first report and handles an empty clock", () => {
+		const empty = new PcmClock();
+		expect(empty.contextTimeForFrame(0, 44100)).toBeNull();
+
+		const clock = new PcmClock();
+		clock.reset(1, 1000);
+		clock.push({
+			generation: 1,
+			startFrame: 1000,
+			endFrame: 1128,
+			contextTime: 5,
+			renderedFrames: 128,
+			ended: false,
+		});
+		expect(clock.contextTimeForFrame(0, 44100)).toBeCloseTo(
+			5 - 1000 / 44100,
+			6,
+		);
+	});
 });

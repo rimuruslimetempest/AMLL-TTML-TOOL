@@ -23,6 +23,12 @@ export const enableTimeModeDoubleClickEditAtom = atomWithStorage(
 export const syncTimeOffsetAtom = atomWithStorage("syncTimeOffset", 0);
 export const syncCommitOffsetAtom = atomWithStorage("syncCommitOffset", 0);
 
+/** Off by default: selecting a line only changes selection, never playback. */
+export const seekAudioToSelectedLineAtom = atomWithStorage(
+	"seekAudioToSelectedLine",
+	false,
+);
+
 export type SyncLevelMode = "word" | "line";
 export const syncLevelModeAtom = atomWithStorage<SyncLevelMode>(
 	"syncLevelMode",

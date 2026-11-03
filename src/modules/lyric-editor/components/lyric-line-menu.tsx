@@ -4,7 +4,11 @@ import { selectAtom } from "jotai/utils";
 import { useSetImmerAtom } from "jotai-immer";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { lyricLinesAtom, selectedLinesAtom } from "$/states/main";
+import {
+	lyricLinesAtom,
+	selectedLinesAtom,
+	selectedWordsAtom,
+} from "$/states/main";
 import {
 	formatVoiceLabel,
 	getLineVoice,
@@ -144,28 +148,46 @@ export const LyricLineMenu = ({ lineIndex }: { lineIndex: number }) => {
 
 	function mergeWithPrevious() {
 		if (lineIndex <= 0) return;
+		let mergedLineId: string | null = null;
+		let selectionInvolved = false;
 		editLyricLines((state) => {
 			const prevLine = state.lyricLines[lineIndex - 1];
 			const curLine = state.lyricLines[lineIndex];
 			if (!prevLine || !curLine) return;
+			selectionInvolved =
+				selectedLines.has(prevLine.id) || selectedLines.has(curLine.id);
 			const merged = mergeLyricLines([prevLine, curLine]);
 			if (!merged) return;
+			mergedLineId = merged.id;
 			state.lyricLines.splice(lineIndex, 1);
 			state.lyricLines.splice(lineIndex - 1, 1, merged);
 		});
+		if (selectionInvolved && mergedLineId) {
+			store.set(selectedLinesAtom, new Set([mergedLineId]));
+			store.set(selectedWordsAtom, new Set());
+		}
 	}
 
 	function mergeWithNext() {
 		if (lineIndex >= totalLines - 1) return;
+		let mergedLineId: string | null = null;
+		let selectionInvolved = false;
 		editLyricLines((state) => {
 			const curLine = state.lyricLines[lineIndex];
 			const nextLine = state.lyricLines[lineIndex + 1];
 			if (!curLine || !nextLine) return;
+			selectionInvolved =
+				selectedLines.has(curLine.id) || selectedLines.has(nextLine.id);
 			const merged = mergeLyricLines([curLine, nextLine]);
 			if (!merged) return;
+			mergedLineId = merged.id;
 			state.lyricLines.splice(lineIndex + 1, 1);
 			state.lyricLines.splice(lineIndex, 1, merged);
 		});
+		if (selectionInvolved && mergedLineId) {
+			store.set(selectedLinesAtom, new Set([mergedLineId]));
+			store.set(selectedWordsAtom, new Set());
+		}
 	}
 
 	function mergeSelectedLines() {

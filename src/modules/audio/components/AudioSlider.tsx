@@ -1,18 +1,17 @@
+import { Delete16Regular } from "@fluentui/react-icons";
 import {
-	Card,
+	Box,
 	Flex,
+	IconButton,
 	Popover,
 	Text,
-	TextField,
 	TextArea,
-	Box,
-	IconButton,
+	TextField,
 } from "@radix-ui/themes";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import WaveSurfer from "wavesurfer.js";
-import { msToTimestamp } from "$/utils/timestamp";
 import { audioEngine } from "$/modules/audio/audio-engine";
 import {
 	audioBufferAtom,
@@ -21,31 +20,31 @@ import {
 	currentTimeAtom,
 	spectrogramVisibleAtom,
 } from "$/modules/audio/states";
+import { toggleMarkAt, updateMarkAt } from "$/modules/project/logic/marks";
+import {
+	accentColorAtom,
+	activePresetIdAtom,
+	advancedWaveformColorAtom,
+	advancedWaveformProgressColorAtom,
+	customAccentColorAtom,
+	useCustomAccentAtom,
+} from "$/modules/settings/states";
+import {
+	spectrogramContainerWidthAtom,
+	spectrogramScrollLeftAtom,
+	spectrogramZoomAtom,
+} from "$/modules/spectrogram/states";
 import {
 	isDarkThemeAtom,
 	lyricLinesAtom,
 	selectedLinesAtom,
 } from "$/states/main";
-import {
-	accentColorAtom,
-	useCustomAccentAtom,
-	customAccentColorAtom,
-	advancedWaveformColorAtom,
-	advancedWaveformProgressColorAtom,
-	activePresetIdAtom,
-} from "$/modules/settings/states";
-import {
-	spectrogramContainerWidthAtom,
-	spectrogramPlayheadTrackingModeAtom,
-	spectrogramScrollLeftAtom,
-	spectrogramZoomAtom,
-} from "$/modules/spectrogram/states";
+import type { Mark } from "$/types/ttml";
+import { msToTimestamp } from "$/utils/timestamp";
 import { clampScroll, useHoverGuide } from "../hooks";
 import { AudioRegion } from "./AudioRegion";
 import styles from "./AudioSlider.module.css";
 import { HoverGuide } from "./HoverGuide";
-import { Add16Regular, Delete16Regular } from "@fluentui/react-icons";
-import type { Mark } from "$/types/ttml";
 
 const WaveformMarkers = memo(
 	({
@@ -57,7 +56,6 @@ const WaveformMarkers = memo(
 		updateMark: (timeMs: number, data: Partial<Mark>) => void;
 		toggleMark: (timeMs: number) => void;
 	}) => {
-		const { t } = useTranslation();
 		return (
 			<>
 				{markers.map((marker) => (
@@ -116,6 +114,7 @@ const MarkerItem = memo(
 		updateMark: (timeMs: number, data: Partial<Mark>) => void;
 		toggleMark: (timeMs: number) => void;
 	}) => {
+		const { t } = useTranslation();
 		const [localLabel, setLocalLabel] = useState(marker.label || "");
 		const [localDescription, setLocalDescription] = useState(
 			marker.description || "",
@@ -223,11 +222,7 @@ export const AudioSlider = memo(() => {
 	const activePresetId = useAtomValue(activePresetIdAtom);
 
 	const spectrogramVisible = useAtomValue(spectrogramVisibleAtom);
-	const playheadTrackingMode = useAtomValue(
-		spectrogramPlayheadTrackingModeAtom,
-	);
-	const isTrackingOn = playheadTrackingMode !== "off";
-	const [scrollLeft, setScrollLeft] = useAtom(spectrogramScrollLeftAtom);
+	const setScrollLeft = useSetAtom(spectrogramScrollLeftAtom);
 	const zoom = useAtomValue(spectrogramZoomAtom);
 	const containerWidth = useAtomValue(spectrogramContainerWidthAtom);
 	const spectrogramVisibleRef = useRef(spectrogramVisible);
@@ -250,34 +245,14 @@ export const AudioSlider = memo(() => {
 
 	const toggleMark = useCallback(
 		(timeMs: number) => {
-			setLyricLines((prev) => {
-				const marks = prev.marks || [];
-				const existingIndex = marks.findIndex(
-					(m) => Math.abs(m.timeMs - timeMs) < 150,
-				);
-				if (existingIndex !== -1) {
-					return {
-						...prev,
-						marks: marks.filter((_, i) => i !== existingIndex),
-					};
-				}
-				return {
-					...prev,
-					marks: [...marks, { timeMs }].sort((a, b) => a.timeMs - b.timeMs),
-				};
-			});
+			setLyricLines((prev) => toggleMarkAt(prev, timeMs));
 		},
 		[setLyricLines],
 	);
 
 	const updateMark = useCallback(
 		(timeMs: number, data: Partial<Mark>) => {
-			setLyricLines((prev) => {
-				const marks = (prev.marks || []).map((m) =>
-					m.timeMs === timeMs ? { ...m, ...data } : m,
-				);
-				return { ...prev, marks };
-			});
+			setLyricLines((prev) => updateMarkAt(prev, timeMs, data));
 		},
 		[setLyricLines],
 	);
@@ -287,7 +262,10 @@ export const AudioSlider = memo(() => {
 			if (!wsContainerRef.current || currentDuration <= 0) return;
 			const rect = wsContainerRef.current.getBoundingClientRect();
 			if (rect.width <= 0) return;
-			const progress = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+			const progress = Math.max(
+				0,
+				Math.min(1, (clientX - rect.left) / rect.width),
+			);
 			const timeMs = progress * currentDuration;
 			const timeS = timeMs / 1000;
 			audioEngine.seekMusic(timeS);
@@ -304,7 +282,10 @@ export const AudioSlider = memo(() => {
 			if (!wsContainerRef.current || currentDuration <= 0) return;
 			const rect = wsContainerRef.current.getBoundingClientRect();
 			if (rect.width <= 0) return;
-			const progress = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+			const progress = Math.max(
+				0,
+				Math.min(1, (clientX - rect.left) / rect.width),
+			);
 			const timeS = progress * (currentDuration / 1000);
 			const targetScroll = clampScroll(
 				timeS * zoom - containerWidth / 2,
@@ -355,17 +336,24 @@ export const AudioSlider = memo(() => {
 			};
 			window.addEventListener("mousemove", onMouseMove);
 			window.addEventListener("mouseup", onMouseUp);
-			window.addEventListener("contextmenu", preventContextMenu, { capture: true, once: true });
+			window.addEventListener("contextmenu", preventContextMenu, {
+				capture: true,
+				once: true,
+			});
 		},
 		[scrollSpectrogramFromClientX],
 	);
 
 	const handleAudioBarMouseDown = useCallback(
 		(e: React.MouseEvent) => {
-			if (!wsContainerRef.current || sliderWidthPx <= 0 || currentDuration <= 0) return;
+			if (!wsContainerRef.current || sliderWidthPx <= 0 || currentDuration <= 0)
+				return;
 			const rect = wsContainerRef.current.getBoundingClientRect();
 			if (rect.width <= 0) return;
-			const progress = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+			const progress = Math.max(
+				0,
+				Math.min(1, (e.clientX - rect.left) / rect.width),
+			);
 			const timeMs = progress * currentDuration;
 
 			if (e.altKey && e.button === 0) {
@@ -668,7 +656,7 @@ export const AudioSlider = memo(() => {
 							? t(
 									"audio.spectrogramBarHint",
 									"Left click to seek playhead. Right click to move spectrogram area.",
-							  )
+								)
 							: undefined
 					}
 					hoverState={hoverState}

@@ -45,6 +45,7 @@ import {
 import { useFileOpener } from "$/hooks/useFileOpener";
 import { audioEngine } from "$/modules/audio/audio-engine";
 import { AudioSlider } from "$/modules/audio/components/AudioSlider";
+import { AudioUrlDialog } from "$/modules/audio/components/AudioUrlDialog";
 import {
 	audioPlayingAtom,
 	currentDurationAtom,
@@ -129,6 +130,7 @@ const CurrentTimeLabel: FC = () => {
 
 export const AudioControls: FC = memo(() => {
 	const [audioLoaded, setAudioLoaded] = useState(false);
+	const [urlDialogOpen, setUrlDialogOpen] = useState(false);
 	const [playbackRate, setPlaybackRate] = useAtom(playbackRateAtom);
 	const [preservesPitch, setPreservesPitch] = useAtom(preservesPitchAtom);
 	const [spectrogramVisible, setSpectrogramVisible] = useAtom(
@@ -325,6 +327,16 @@ export const AudioControls: FC = memo(() => {
 									color="gray"
 									mt="2"
 									style={{ width: "100%", cursor: "pointer" }}
+									onClick={() => setUrlDialogOpen(true)}
+								>
+									{t("audioPanel.loadFromUrl", "Load Audio from URL…")}
+								</Button>
+								<Button
+									size="1"
+									variant="soft"
+									color="gray"
+									mt="2"
+									style={{ width: "100%", cursor: "pointer" }}
 									onClick={async () => {
 										await audioEngine.recreateContext();
 										toast.success(
@@ -379,6 +391,10 @@ export const AudioControls: FC = memo(() => {
 					</Tooltip>
 				</Flex>
 			</Flex>
+			<AudioUrlDialog
+				open={urlDialogOpen}
+				onOpenChange={setUrlDialogOpen}
+			/>
 		</Box>
 	);
 });

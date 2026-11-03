@@ -1,4 +1,5 @@
 import {
+	Bot24Regular,
 	Dismiss16Regular,
 	Edit24Regular,
 	Folder24Regular,
@@ -30,6 +31,7 @@ import { useTranslation } from "react-i18next";
 import { settingsDialogAtom, settingsTabAtom } from "$/states/dialogs.ts";
 import { filterSettings, type SettingSearchItem } from "../searchIndex";
 import { SettingsAboutTab } from "./about";
+import { SettingsAiCheckTab } from "./ai-check";
 import { SettingsAccountTab } from "./account";
 import { SettingsAppearanceTab } from "./appearance";
 import { AudioSettingsTab } from "./audio";
@@ -303,6 +305,14 @@ export const SettingsDialog = memo(() => {
 							>
 								{t("settingsDialog.tab.audio", "Audio")}
 							</NavigationItem>
+								<NavigationItem
+									value="ai-check"
+									icon={<Bot24Regular />}
+									matchCount={tabMatchCounts["ai-check"]}
+									onSelect={() => searchQuery && setSearchQuery("")}
+								>
+									{t("settingsDialog.tab.aiCheck", "AI Check")}
+								</NavigationItem>
 							<NavigationItem
 								value="keybinding"
 								icon={<Keyboard12324Regular />}
@@ -529,6 +539,17 @@ export const SettingsDialog = memo(() => {
 										<SettingsSpectrogramTab />
 									</SettingsPage>
 								</Tabs.Content>
+							<Tabs.Content value="ai-check" className={styles.tabContent}>
+								<SettingsPage
+									title={t("settingsDialog.tab.aiCheck", "AI Check")}
+									description={t(
+										"settingsDialog.page.aiCheckDesc",
+										"Provider, endpoint, and model used for the optional AI review pass.",
+									)}
+								>
+									<SettingsAiCheckTab />
+								</SettingsPage>
+							</Tabs.Content>
 								<Tabs.Content value="keybinding" className={styles.tabContent}>
 									<SettingsPage
 										title={t("settingsDialog.tab.keybindings", "Keybindings")}

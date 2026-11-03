@@ -62,6 +62,7 @@ import {
 import { hasCustomBackgroundAtom } from "$/modules/settings/modals/customBackground";
 import {
 	collapsedSectionIdsAtom,
+	editorModeRevealRequestAtom,
 	lyricLinesAtom,
 	selectedLinesAtom,
 	selectedWordsAtom,
@@ -87,6 +88,7 @@ import {
 	lastLineDragEndAtom,
 	lineDragAtom,
 	timingCopyPlacementAtom,
+	timeLineEditorAtom,
 } from "./lyric-line-view-states";
 import { LyricWordSettingsProvider } from "./lyric-word-settings-context";
 import {
@@ -94,7 +96,13 @@ import {
 	SectionManagerDialog,
 	SectionMetadataDialog,
 } from "./SectionActions";
-import { shouldAutoCenterSelection } from "./selection-scroll";
+import {
+	getLineIdAtClampedIndex,
+	getLineIndexById,
+	getPrimarySelectedLineId,
+	shouldAutoCenterSelection,
+} from "./selection-scroll";
+import { AI_CHECK_SCROLL_EVENT } from "$/modules/ai-check/types";
 
 const lyricLinesOnlyAtom = splitAtom(
 	focusAtom(lyricLinesAtom, (o) => o.prop("lyricLines")),
@@ -123,6 +131,18 @@ const findCurrentLineIndex = (lines: LyricLine[], currentTime: number) => {
 	return scan();
 };
 
+const isLineFullyVisible = (viewport: HTMLElement, lineId: string) => {
+	const lineElement = viewport.querySelector<HTMLElement>(
+		`[data-lyric-line-id="${lineId}"]`,
+	);
+	if (!lineElement) return false;
+	const viewportRect = viewport.getBoundingClientRect();
+	const lineRect = lineElement.getBoundingClientRect();
+	return (
+		lineRect.top >= viewportRect.top && lineRect.bottom <= viewportRect.bottom
+	);
+};
+
 export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 	const editLyric = useAtomValue(lyricLinesOnlyAtom);
 	const store = useStore();
@@ -130,6 +150,7 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 	const viewElRef = useRef<HTMLDivElement>(null);
 	const editLyricLines = useSetImmerAtom(lyricLinesAtom);
 	const toolMode = useAtomValue(toolModeAtom);
+	const setTimeLineEditor = useSetAtom(timeLineEditorAtom);
 	const wrapLyricLines = useAtomValue(wrapLyricLinesAtom);
 	const { t } = useTranslation();
 	const setGuideWelcome = useSetAtom(guideWelcomeOpenAtom);
@@ -188,6 +209,10 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 			store.set(timingCopyPlacementAtom, null);
 		}
 	}, [store, toolMode]);
+
+	useEffect(() => {
+		if (toolMode !== ToolMode.Sync) setTimeLineEditor(null);
+	}, [toolMode, setTimeLineEditor]);
 
 	useEffect(() => {
 		const viewEl = viewElRef.current;
@@ -461,6 +486,10 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 	const scrollToIndex = useAtomValue(scrollToIndexAtom);
 	const lastScrolledIndexRef = useRef<number | undefined>(undefined);
 	const lyricLines = useAtomValue(lyricLinesAtom).lyricLines;
+	const selectedLineIds = useAtomValue(selectedLinesAtom);
+	const previousSelectedIndexRef = useRef(-1);
+	const revealRequest = useAtomValue(editorModeRevealRequestAtom);
+	const setRevealRequest = useSetAtom(editorModeRevealRequestAtom);
 	const collapsedSections = useAtomValue(collapsedSectionIdsAtom);
 	const visibleItems = useMemo(
 		() =>
@@ -482,9 +511,16 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 	);
 
 	const scrollToLineIndex = useCallback(
-		(index: number) => {
+		(index: number, options?: { onlyIfNotVisible?: boolean }) => {
 			const viewEl = viewElRef.current;
 			if (!viewEl) return;
+			const targetLine = lyricLines[index];
+			if (
+				options?.onlyIfNotVisible &&
+				targetLine &&
+				isLineFullyVisible(viewEl, targetLine.id)
+			)
+				return;
 			const viewContainerEl = viewEl.parentElement;
 			if (!viewContainerEl) return;
 			let visibleIndex = visibleItems.findIndex(
@@ -506,6 +542,72 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 		},
 		[visibleItems, lyricLines],
 	);
+
+	// Keep a local line selection alive when its line is deleted by any command
+	// that does not repair the selection itself (merge/context-menu delete).
+	useEffect(() => {
+		const primaryLineId = getPrimarySelectedLineId(
+			lyricLines,
+			selectedLineIds,
+		);
+		if (primaryLineId) {
+			previousSelectedIndexRef.current = getLineIndexById(
+				lyricLines,
+				primaryLineId,
+			);
+			return;
+		}
+		if (selectedLineIds.size === 0) return;
+		if (lyricLines.length === 0) {
+			store.set(selectedLinesAtom, new Set());
+			store.set(selectedWordsAtom, new Set());
+			return;
+		}
+		const fallbackLineId = getLineIdAtClampedIndex(
+			lyricLines,
+			previousSelectedIndexRef.current,
+		);
+		if (!fallbackLineId) return;
+		store.set(selectedLinesAtom, new Set([fallbackLineId]));
+		store.set(selectedWordsAtom, new Set());
+	}, [lyricLines, selectedLineIds, store]);
+
+	// A mode switch is an explicit navigation action: reveal the shared selected
+	// line in the target mode, even when selection auto-centering is off.
+	useEffect(() => {
+		if (!revealRequest || revealRequest.mode !== toolMode) return;
+		setRevealRequest(null);
+		const selectedLineId = getPrimarySelectedLineId(
+			lyricLines,
+			selectedLineIds,
+		);
+		if (!selectedLineId) return;
+		const selectedIndex = getLineIndexById(lyricLines, selectedLineId);
+		if (selectedIndex < 0) return;
+		const frame = requestAnimationFrame(() => {
+			scrollToLineIndex(selectedIndex, { onlyIfNotVisible: true });
+		});
+		// Do not cancel on cleanup: StrictMode runs the effect twice, and the
+		// first frame is the one that performs the reveal.
+		void frame;
+	}, [
+		toolMode,
+		revealRequest,
+		lyricLines,
+		selectedLineIds,
+		scrollToLineIndex,
+		setRevealRequest,
+	]);
+
+	useEffect(() => {
+		const handleAiCheckScroll = (event: Event) => {
+			const index = (event as CustomEvent<number>).detail;
+			if (typeof index === "number") scrollToLineIndex(index);
+		};
+		window.addEventListener(AI_CHECK_SCROLL_EVENT, handleAiCheckScroll);
+		return () =>
+			window.removeEventListener(AI_CHECK_SCROLL_EVENT, handleAiCheckScroll);
+	}, [scrollToLineIndex]);
 
 	const geniusCategorizationEnabled = useAtomValue(
 		geniusCategorizationEnabledAtom,
@@ -540,7 +642,7 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 		)
 			return;
 		lastScrolledIndexRef.current = scrollToIndex;
-		scrollToLineIndex(scrollToIndex);
+		scrollToLineIndex(scrollToIndex, { onlyIfNotVisible: true });
 	}, [scrollToIndex, scrollToLineIndex]);
 
 	const keepPlayingWordInView = useAtomValue(keepPlayingWordInViewAtom);

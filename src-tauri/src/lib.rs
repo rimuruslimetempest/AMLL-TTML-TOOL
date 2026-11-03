@@ -420,6 +420,48 @@ async fn fetch_binary(url: String) -> Result<tauri::ipc::Response, String> {
     Ok(tauri::ipc::Response::new(bytes.to_vec()))
 }
 
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AiCheckHttpRequest {
+    url: String,
+    headers: std::collections::HashMap<String, String>,
+    body: String,
+}
+
+/// Forwards one AI review request. Running it in Rust keeps the provider call
+/// out of the webview's CORS rules; the key only ever travels to `request.url`.
+#[tauri::command]
+async fn ai_check_request(request: AiCheckHttpRequest) -> Result<String, String> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(120))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let mut req = client
+        .post(&request.url)
+        .header("Content-Type", "application/json")
+        .body(request.body);
+
+    for (key, value) in request.headers {
+        req = req.header(key, value);
+    }
+
+    let resp = req
+        .send()
+        .await
+        .map_err(|e| format!("Network request failed: {e}"))?;
+
+    let status = resp.status();
+    let body = resp.text().await.map_err(|e| e.to_string())?;
+
+    if !status.is_success() {
+        let detail: String = body.chars().take(500).collect();
+        return Err(format!("HTTP {}: {}", status.as_u16(), detail));
+    }
+
+    Ok(body)
+}
+
 #[tauri::command]
 async fn fetch_apple_ttml(url: String) -> Result<String, String> {
     let client = reqwest::Client::builder()
@@ -823,6 +865,7 @@ pub fn run() {
             fetch_apple_ttml,
             fetch_url,
             fetch_binary,
+            ai_check_request,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

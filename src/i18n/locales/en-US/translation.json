@@ -275,6 +275,8 @@
 			"wrapLyricLinesDesc": "Wrap lyrics to the next line when they exceed the editor width instead of scrolling horizontally.",
 			"keepPlayingWordInView": "Always Keep Playing Word in View",
 			"keepPlayingWordInViewDesc": "Automatically scrolls the lyric editor during playback to keep the active line and playing word visible.",
+			"seekAudioToSelectedLine": "Seek audio to selected line",
+			"seekAudioToSelectedLineDesc": "Move the playhead to the line's start time when you select it. Off by default.",
 			"allowConsecutiveBackgroundLines": "Allow consecutive and standalone background vocals",
 			"allowConsecutiveBackgroundLinesDesc": "Export consecutive background vocals together and preserve standalone background vocals for Spicy Lyrics compatibility. Other players may not support this structure.",
 			"openSpotMatchAfterSave": "Open SpotMatch after saving",
@@ -503,7 +505,29 @@
 			"mp3ConversionDesc": "Convert MP3 to FLAC when importing for better sync",
 			"mp3ConversionAsk": "Ask",
 			"mp3ConversionAlways": "Auto",
-			"mp3ConversionNever": "Off"
+			"mp3ConversionNever": "Off",
+			"cues": "Audio Cues",
+			"cuesDescription": "Click sounds while the playhead crosses cue points, so timing can be checked by ear. Monitoring only: cues are never written to the TTML.",
+			"cuesVolume": "Cue volume",
+			"cuesSound": "Cue sound",
+			"cuesPreview": "Preview",
+			"cuesInPreview": "Play cues in Preview mode",
+			"cuesMinGap": "Minimum gap",
+			"cuesMinGapUnit": "ms",
+			"cuesSources": "Cue sources",
+			"cuesAddHint": "Alt+click the waveform or press the \"Add cue at playhead\" shortcut to place a cue.",
+			"cuesSource": {
+				"marks": "Cue markers",
+				"sections": "Section starts",
+				"lines": "Line starts",
+				"words": "Word starts"
+			},
+			"cuesSoundName": {
+				"tick": "Tick",
+				"click": "Click",
+				"beep": "Beep",
+				"woodblock": "Woodblock"
+			}
 		},
 		"backup": {
 			"category": {
@@ -764,6 +788,7 @@
 			"syncNext": "Timing - Commit",
 			"syncEnd": "Timing - Mark end",
 			"toggleWordHighlight": "Timing - Toggle active word highlight",
+			"addCueAtPlayhead": "Timing - Add cue at playhead",
 			"urbanDictionary": "Edit - Look up in Urban Dictionary",
 			"urbanDictionarySync": "Timing - Look up in Urban Dictionary",
 			"moveFirstWordAndPlay": "Timing - Move to first word and play",
@@ -822,6 +847,8 @@
 		"markerLabel": "Label (e.g. Verse 1 Start)",
 		"markerDescription": "Description...",
 		"deleteMarker": "Delete Marker",
+		"cueAdded": "Cue added at {time}",
+		"cueRemoved": "Cue removed at {time}",
 		"waveform": "Audio Waveform",
 		"spectrogramBarHint": "Left click to seek playhead. Right click to move spectrogram area.",
 		"spectrogramBarTrackingHint": "Left click to seek playhead. Right click to move spectrogram area.",
@@ -963,6 +990,24 @@
 			"duration": "Duration:",
 			"playPause": "Play/Pause"
 		}
+	},
+	"timeLineEditor": {
+		"editLine": "Edit line text",
+		"title": "Edit line text",
+		"hint": "Enter saves · click away saves · Esc cancels",
+		"done": "Done",
+		"addWord": "Add word",
+		"wordPlaceholder": "Word",
+		"word": "Word",
+		"moveLeft": "Move word left",
+		"moveRight": "Move word right",
+		"deleteWord": "Delete word",
+		"empty": "No words yet. Add the first word above.",
+		"unsynced": "Unsynced",
+		"unsyncedWords": "New words have no timing until they are synced.",
+		"timingsOutOfOrder": "Timing order no longer matches word order. The timings were left unchanged.",
+		"timingsOutOfOrderShort": "Timing order does not match word order.",
+		"timingOrder": "Timing order"
 	},
 	"lyricLineView": {
 		"translatedLabel": "Translation:",

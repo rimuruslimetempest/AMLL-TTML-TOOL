@@ -63,4 +63,41 @@ export class PcmClock {
 		}
 		return frame;
 	}
+
+	/**
+	 * Inverse of {@link frameAt}: the render context time at which a source
+	 * frame reaches the device. Used to schedule cue sounds on the same clock
+	 * as the music. Read-only, so it never prunes the report history.
+	 */
+	contextTimeForFrame(frame: number, sampleRate: number): number | null {
+		const reports = this.reports;
+		if (reports.length === 0 || sampleRate <= 0) return null;
+
+		const rateOf = (report: RenderReport) =>
+			report.renderedFrames > 0
+				? (report.endFrame - report.startFrame) / report.renderedFrames
+				: 0;
+
+		const first = reports[0];
+		if (frame <= first.startFrame) {
+			const rate = rateOf(first);
+			if (rate <= 0) return first.contextTime;
+			return (
+				first.contextTime + (frame - first.startFrame) / (sampleRate * rate)
+			);
+		}
+
+		for (const report of reports) {
+			if (frame > report.endFrame) continue;
+			const rate = rateOf(report);
+			if (rate <= 0) return report.contextTime;
+			return (
+				report.contextTime + (frame - report.startFrame) / (sampleRate * rate)
+			);
+		}
+
+		const last = reports[reports.length - 1];
+		const rate = rateOf(last) || 1;
+		return last.contextTime + (frame - last.endFrame) / (sampleRate * rate);
+	}
 }
