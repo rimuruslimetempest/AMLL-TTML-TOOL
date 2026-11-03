@@ -17,7 +17,15 @@ import {
 	FolderOpen24Regular,
 	MyLocation24Regular,
 } from "@fluentui/react-icons";
-import { Box, Button, Card, ContextMenu, Flex, IconButton, Text } from "@radix-ui/themes";
+import {
+	Box,
+	Button,
+	Card,
+	ContextMenu,
+	Flex,
+	IconButton,
+	Text,
+} from "@radix-ui/themes";
 import { atom, useAtom, useAtomValue, useSetAtom, useStore } from "jotai";
 import { splitAtom } from "jotai/utils";
 import { useSetImmerAtom } from "jotai-immer";
@@ -62,7 +70,7 @@ import {
 import { hasCustomBackgroundAtom } from "$/modules/settings/modals/customBackground";
 import {
 	collapsedSectionIdsAtom,
-	editorModeRevealRequestAtom,
+	lastVisibleLineIndexAtom,
 	lyricLinesAtom,
 	selectedLinesAtom,
 	selectedWordsAtom,
@@ -70,6 +78,7 @@ import {
 	toolModeAtom,
 } from "$/states/main.ts";
 import type { LyricLine } from "$/types/ttml.ts";
+import { AI_CHECK_SCROLL_EVENT } from "$/modules/ai-check/types";
 import { repairSectionIntegrity } from "../utils/section-system.ts";
 import {
 	clampScrollTop,
@@ -87,8 +96,8 @@ import {
 	draggingIdAtom,
 	lastLineDragEndAtom,
 	lineDragAtom,
-	timingCopyPlacementAtom,
 	timeLineEditorAtom,
+	timingCopyPlacementAtom,
 } from "./lyric-line-view-states";
 import { LyricWordSettingsProvider } from "./lyric-word-settings-context";
 import {
@@ -97,51 +106,15 @@ import {
 	SectionMetadataDialog,
 } from "./SectionActions";
 import {
-	getLineIdAtClampedIndex,
-	getLineIndexById,
-	getPrimarySelectedLineId,
+	findCurrentLineIndex,
+	getActiveLineIndex,
+	isLineVisibleInViewport,
 	shouldAutoCenterSelection,
 } from "./selection-scroll";
-import { AI_CHECK_SCROLL_EVENT } from "$/modules/ai-check/types";
 
 const lyricLinesOnlyAtom = splitAtom(
 	focusAtom(lyricLinesAtom, (o) => o.prop("lyricLines")),
 );
-
-const findCurrentLineIndex = (lines: LyricLine[], currentTime: number) => {
-	const scan = (predicate?: (line: LyricLine) => boolean) => {
-		let previousIndex = -1;
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
-			if (predicate && !predicate(line)) continue;
-			if (line.endTime <= line.startTime) continue;
-			if (currentTime < line.startTime) {
-				return previousIndex !== -1 ? previousIndex : i;
-			}
-			if (currentTime >= line.startTime && currentTime <= line.endTime) {
-				return i;
-			}
-			previousIndex = i;
-		}
-		return previousIndex;
-	};
-
-	const mainIndex = scan((line) => !line.isBG);
-	if (mainIndex !== -1) return mainIndex;
-	return scan();
-};
-
-const isLineFullyVisible = (viewport: HTMLElement, lineId: string) => {
-	const lineElement = viewport.querySelector<HTMLElement>(
-		`[data-lyric-line-id="${lineId}"]`,
-	);
-	if (!lineElement) return false;
-	const viewportRect = viewport.getBoundingClientRect();
-	const lineRect = lineElement.getBoundingClientRect();
-	return (
-		lineRect.top >= viewportRect.top && lineRect.bottom <= viewportRect.bottom
-	);
-};
 
 export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 	const editLyric = useAtomValue(lyricLinesOnlyAtom);
@@ -471,25 +444,8 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 		};
 	}, [editLyric.length, editLyricLines, store, toolMode]);
 
-	const scrollToIndexAtom = useMemo(
-		() =>
-			atom((get) => {
-				if (!shouldAutoCenterSelection(toolMode)) return;
-				const selectedLines = get(selectedLinesAtom);
-				if (selectedLines.size === 0) return Number.NaN;
-				const lyrics = get(lyricLinesAtom).lyricLines;
-				const index = lyrics.findIndex((l) => selectedLines.has(l.id));
-				return index === -1 ? Number.NaN : index;
-			}),
-		[toolMode],
-	);
-	const scrollToIndex = useAtomValue(scrollToIndexAtom);
 	const lastScrolledIndexRef = useRef<number | undefined>(undefined);
 	const lyricLines = useAtomValue(lyricLinesAtom).lyricLines;
-	const selectedLineIds = useAtomValue(selectedLinesAtom);
-	const previousSelectedIndexRef = useRef(-1);
-	const revealRequest = useAtomValue(editorModeRevealRequestAtom);
-	const setRevealRequest = useSetAtom(editorModeRevealRequestAtom);
 	const collapsedSections = useAtomValue(collapsedSectionIdsAtom);
 	const visibleItems = useMemo(
 		() =>
@@ -511,16 +467,9 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 	);
 
 	const scrollToLineIndex = useCallback(
-		(index: number, options?: { onlyIfNotVisible?: boolean }) => {
+		(index: number) => {
 			const viewEl = viewElRef.current;
 			if (!viewEl) return;
-			const targetLine = lyricLines[index];
-			if (
-				options?.onlyIfNotVisible &&
-				targetLine &&
-				isLineFullyVisible(viewEl, targetLine.id)
-			)
-				return;
 			const viewContainerEl = viewEl.parentElement;
 			if (!viewContainerEl) return;
 			let visibleIndex = visibleItems.findIndex(
@@ -538,66 +487,8 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 			viewRef.current?.scrollToIndex({
 				index: visibleIndex,
 				offset: viewContainerEl.clientHeight / -2 + 50,
-			});
-		},
-		[visibleItems, lyricLines],
+			});	}, [visibleItems, lyricLines],
 	);
-
-	// Keep a local line selection alive when its line is deleted by any command
-	// that does not repair the selection itself (merge/context-menu delete).
-	useEffect(() => {
-		const primaryLineId = getPrimarySelectedLineId(
-			lyricLines,
-			selectedLineIds,
-		);
-		if (primaryLineId) {
-			previousSelectedIndexRef.current = getLineIndexById(
-				lyricLines,
-				primaryLineId,
-			);
-			return;
-		}
-		if (selectedLineIds.size === 0) return;
-		if (lyricLines.length === 0) {
-			store.set(selectedLinesAtom, new Set());
-			store.set(selectedWordsAtom, new Set());
-			return;
-		}
-		const fallbackLineId = getLineIdAtClampedIndex(
-			lyricLines,
-			previousSelectedIndexRef.current,
-		);
-		if (!fallbackLineId) return;
-		store.set(selectedLinesAtom, new Set([fallbackLineId]));
-		store.set(selectedWordsAtom, new Set());
-	}, [lyricLines, selectedLineIds, store]);
-
-	// A mode switch is an explicit navigation action: reveal the shared selected
-	// line in the target mode, even when selection auto-centering is off.
-	useEffect(() => {
-		if (!revealRequest || revealRequest.mode !== toolMode) return;
-		setRevealRequest(null);
-		const selectedLineId = getPrimarySelectedLineId(
-			lyricLines,
-			selectedLineIds,
-		);
-		if (!selectedLineId) return;
-		const selectedIndex = getLineIndexById(lyricLines, selectedLineId);
-		if (selectedIndex < 0) return;
-		const frame = requestAnimationFrame(() => {
-			scrollToLineIndex(selectedIndex, { onlyIfNotVisible: true });
-		});
-		// Do not cancel on cleanup: StrictMode runs the effect twice, and the
-		// first frame is the one that performs the reveal.
-		void frame;
-	}, [
-		toolMode,
-		revealRequest,
-		lyricLines,
-		selectedLineIds,
-		scrollToLineIndex,
-		setRevealRequest,
-	]);
 
 	useEffect(() => {
 		const handleAiCheckScroll = (event: Event) => {
@@ -608,6 +499,117 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 		return () =>
 			window.removeEventListener(AI_CHECK_SCROLL_EVENT, handleAiCheckScroll);
 	}, [scrollToLineIndex]);
+
+	const initialTargetIndex = useMemo(() => {
+		const selectedLines = store.get(selectedLinesAtom);
+		const selectedWords = store.get(selectedWordsAtom);
+		const currentTime = store.get(currentTimeAtom);
+		const fallback = store.get(lastVisibleLineIndexAtom);
+		return getActiveLineIndex({
+			lyricLines,
+			selectedLines,
+			selectedWords,
+			currentTime,
+			fallbackIndex: fallback,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	const initialVisibleIndex = useMemo(() => {
+		if (initialTargetIndex === -1) return undefined;
+		let idx = visibleItems.findIndex(
+			(item) => item.sourceIndex === initialTargetIndex,
+		);
+		if (idx === -1) {
+			const targetLine = lyricLines[initialTargetIndex];
+			if (targetLine?.sectionId) {
+				idx = visibleItems.findIndex(
+					(item) => item.line?.sectionId === targetLine.sectionId,
+				);
+			}
+		}
+		return idx >= 0 ? idx : undefined;
+	}, [initialTargetIndex, visibleItems, lyricLines]);
+
+	const [viewportRange, setViewportRange] = useState<[number, number]>([
+		-1, -1,
+	]);
+	const setLastVisibleLineIndex = useSetAtom(lastVisibleLineIndexAtom);
+
+	const handleViewportIndexesChange = useCallback(
+		([start, end]: [number, number]) => {
+			setViewportRange([start, end]);
+			if (start >= 0 && start < visibleItems.length) {
+				const item = visibleItems[start];
+				if (item) {
+					setLastVisibleLineIndex(item.sourceIndex);
+				}
+			}
+		},
+		[visibleItems, setLastVisibleLineIndex],
+	);
+
+	useEffect(() => {
+		if (initialTargetIndex >= 0) {
+			lastScrolledIndexRef.current = initialTargetIndex;
+			scrollToLineIndex(initialTargetIndex);
+			const timer = setTimeout(() => {
+				scrollToLineIndex(initialTargetIndex);
+			}, 50);
+			return () => clearTimeout(timer);
+		}
+	}, [initialTargetIndex, scrollToLineIndex]);
+
+	const prevToolModeRef = useRef(toolMode);
+	useEffect(() => {
+		if (prevToolModeRef.current !== toolMode) {
+			prevToolModeRef.current = toolMode;
+			lastScrolledIndexRef.current = undefined;
+			const selectedLines = store.get(selectedLinesAtom);
+			const selectedWords = store.get(selectedWordsAtom);
+			const currentTime = store.get(currentTimeAtom);
+			const fallback = store.get(lastVisibleLineIndexAtom);
+			const targetIndex = getActiveLineIndex({
+				lyricLines,
+				selectedLines,
+				selectedWords,
+				currentTime,
+				fallbackIndex: fallback,
+			});
+			if (targetIndex >= 0) {
+				lastScrolledIndexRef.current = targetIndex;
+				scrollToLineIndex(targetIndex);
+				const timer = setTimeout(() => {
+					scrollToLineIndex(targetIndex);
+				}, 50);
+				return () => clearTimeout(timer);
+			}
+		}
+	}, [toolMode, lyricLines, store, scrollToLineIndex]);
+
+	const selectedLines = useAtomValue(selectedLinesAtom);
+	const selectedLineIndex = useMemo(() => {
+		if (selectedLines.size === 0) return -1;
+		return lyricLines.findIndex((l) => selectedLines.has(l.id));
+	}, [selectedLines, lyricLines]);
+
+	useEffect(() => {
+		if (selectedLineIndex === -1) return;
+		if (shouldAutoCenterSelection(toolMode)) {
+			if (selectedLineIndex === lastScrolledIndexRef.current) return;
+			lastScrolledIndexRef.current = selectedLineIndex;
+			scrollToLineIndex(selectedLineIndex);
+		} else if (toolMode === ToolMode.Edit) {
+			const isVisible = isLineVisibleInViewport(
+				selectedLineIndex,
+				viewportRange,
+			);
+			if (!isVisible) {
+				lastScrolledIndexRef.current = selectedLineIndex;
+				scrollToLineIndex(selectedLineIndex);
+			}
+		}
+	}, [selectedLineIndex, toolMode, viewportRange, scrollToLineIndex]);
 
 	const geniusCategorizationEnabled = useAtomValue(
 		geniusCategorizationEnabledAtom,
@@ -634,16 +636,6 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 		geniusCategorizationEnabled,
 		setDetectionDialogOpen,
 	]);
-
-	useEffect(() => {
-		if (
-			scrollToIndex === undefined ||
-			scrollToIndex === lastScrolledIndexRef.current
-		)
-			return;
-		lastScrolledIndexRef.current = scrollToIndex;
-		scrollToLineIndex(scrollToIndex, { onlyIfNotVisible: true });
-	}, [scrollToIndex, scrollToLineIndex]);
 
 	const keepPlayingWordInView = useAtomValue(keepPlayingWordInViewAtom);
 	const audioPlaying = useAtomValue(audioPlayingAtom);
@@ -888,6 +880,8 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 								items={visibleItems}
 								ref={viewRef}
 								viewportRef={viewElRef}
+								initialIndex={initialVisibleIndex}
+								onViewportIndexesChange={handleViewportIndexesChange}
 							>
 								{(item) => (
 									<LyricLineView

@@ -284,6 +284,16 @@ export const cmdMoveLastWordAndPlay = registerCommand(
 	"Sync",
 );
 
+export const cmdToggleTimeLineEdit = registerCommand(
+	"toggleTimeLineEdit",
+	["KeyE"],
+	t(
+		"settingsDialog.keybindings.toggleTimeLineEdit",
+		"Timing - Toggle line edit mode",
+	),
+	"Sync",
+);
+
 // =========================================================================================
 //  音频控制
 // =========================================================================================

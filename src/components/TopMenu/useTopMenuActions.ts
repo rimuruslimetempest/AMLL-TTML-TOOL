@@ -70,6 +70,7 @@ import {
 	keyUndoAtom,
 } from "$/states/keybindings.ts";
 import {
+	ToolMode,
 	isDirtyAtom,
 	lyricLinesAtom,
 	markSavedAtom,
@@ -79,6 +80,7 @@ import {
 	saveFileNameAtom,
 	selectedLinesAtom,
 	selectedWordsAtom,
+	toolModeAtom,
 	undoableLyricLinesAtom,
 	undoLyricLinesAtom,
 } from "$/states/main.ts";
@@ -100,6 +102,7 @@ export const useTopMenuActions = () => {
 	const undoLyricLines = useAtomValue(undoableLyricLinesAtom);
 	const store = useStore();
 	const isDirty = useAtomValue(isDirtyAtom);
+	const toolMode = useAtomValue(toolModeAtom);
 	const setConfirmDialog = useSetAtom(confirmDialogAtom);
 	const setHistoryRestoreDialog = useSetAtom(historyRestoreDialogAtom);
 	const setAdvancedSegmentationDialog = useSetAtom(
@@ -210,7 +213,10 @@ export const useTopMenuActions = () => {
 				await invoke("create_new_window");
 			} catch (e) {
 				console.error("Failed to create new window via Tauri:", e);
-				window.open(window.location.origin + window.location.pathname, "_blank");
+				window.open(
+					window.location.origin + window.location.pathname,
+					"_blank",
+				);
 			}
 		} else {
 			window.open(window.location.origin + window.location.pathname, "_blank");
@@ -613,6 +619,7 @@ export const useTopMenuActions = () => {
 	}, [setAutoSegmentDialog]);
 
 	const onQuickAutoSegment = useCallback(() => {
+		if (toolMode !== ToolMode.Edit) return;
 		if (
 			!matchesSavedSyllabificationEngine(
 				lyricLines.lyricLines,
@@ -648,6 +655,7 @@ export const useTopMenuActions = () => {
 		setAutoSegmentDialog,
 		setSplitEnglish,
 		t,
+		toolMode,
 	]);
 
 	const onRubySegment = useCallback(() => {

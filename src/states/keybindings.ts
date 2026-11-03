@@ -43,6 +43,7 @@ import {
 	cmdSyncStart,
 	cmdToggleBackground,
 	cmdToggleDuet,
+	cmdToggleTimeLineEdit,
 	cmdToggleWordHighlight,
 	cmdTtmlChecklist,
 	cmdUndo,
@@ -99,6 +100,7 @@ export const keySyncNextAtom = cmdSyncNext.atom;
 export const keySyncEndAtom = cmdSyncEnd.atom;
 export const keyToggleWordHighlightAtom = cmdToggleWordHighlight.atom;
 export const keyAddCueAtPlayheadAtom = cmdAddCueAtPlayhead.atom;
+export const keyToggleTimeLineEditAtom = cmdToggleTimeLineEdit.atom;
 export const keyUrbanDictionaryAtom = cmdUrbanDictionary.atom;
 export const keyUrbanDictionarySyncAtom = cmdUrbanDictionarySync.atom;
 

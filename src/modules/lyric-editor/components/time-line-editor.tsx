@@ -31,7 +31,7 @@ import {
 	newLyricWord,
 } from "$/types/ttml.ts";
 import { msToTimestamp } from "$/utils/timestamp.ts";
-import { normalizeLineTime, isWordSynced } from "../utils/normalize-line-time";
+import { isWordSynced, normalizeLineTime } from "../utils/normalize-line-time";
 import {
 	applyTimeLineDraft,
 	hasOutOfOrderWordTimings,
