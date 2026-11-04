@@ -468,27 +468,24 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 	);
 
 	const visibleItemsRef = useRef(visibleItems);
-	const lyricLinesRef = useRef(lyricLines);
 	visibleItemsRef.current = visibleItems;
+	const lyricLinesRef = useRef(lyricLines);
 	lyricLinesRef.current = lyricLines;
 
-	// Keep this callback stable. It changes whenever the project is edited if
-	// it closes over lyricLines, which makes the initial-scroll effect run again
-	// after every timing key and snap the viewport back to the original line.
 	const scrollToLineIndex = useCallback((index: number) => {
 		const viewEl = viewElRef.current;
 		if (!viewEl) return;
 		const viewContainerEl = viewEl.parentElement;
 		if (!viewContainerEl) return;
-		const visibleItems = visibleItemsRef.current;
-		const lyricLines = lyricLinesRef.current;
-		let visibleIndex = visibleItems.findIndex(
+		const currentVisibleItems = visibleItemsRef.current;
+		const currentLyricLines = lyricLinesRef.current;
+		let visibleIndex = currentVisibleItems.findIndex(
 			(item) => item.sourceIndex === index,
 		);
 		if (visibleIndex === -1) {
-			const targetLine = lyricLines[index];
+			const targetLine = currentLyricLines[index];
 			if (targetLine?.sectionId) {
-				visibleIndex = visibleItems.findIndex(
+				visibleIndex = currentVisibleItems.findIndex(
 					(item) => item.line?.sectionId === targetLine.sectionId,
 				);
 			}
@@ -550,14 +547,12 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 		return idx >= 0 ? idx : undefined;
 	}, [initialTargetIndex, visibleItems, lyricLines]);
 
-	const [viewportRange, setViewportRange] = useState<[number, number]>([
-		-1, -1,
-	]);
+	const viewportRangeRef = useRef<[number, number]>([-1, -1]);
 	const setLastVisibleLineIndex = useSetAtom(lastVisibleLineIndexAtom);
 
 	const handleViewportIndexesChange = useCallback(
 		([start, end]: [number, number]) => {
-			setViewportRange([start, end]);
+			viewportRangeRef.current = [start, end];
 			if (start >= 0 && start < visibleItems.length) {
 				const item = visibleItems[start];
 				if (item) {
@@ -568,8 +563,10 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 		[visibleItems, setLastVisibleLineIndex],
 	);
 
+	const hasInitialScrolledRef = useRef(false);
 	useEffect(() => {
-		if (initialTargetIndex >= 0) {
+		if (!hasInitialScrolledRef.current && initialTargetIndex >= 0) {
+			hasInitialScrolledRef.current = true;
 			lastScrolledIndexRef.current = initialTargetIndex;
 			scrollToLineIndex(initialTargetIndex);
 			const timer = setTimeout(() => {
@@ -589,7 +586,7 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 			const currentTime = store.get(currentTimeAtom);
 			const fallback = store.get(lastVisibleLineIndexAtom);
 			const targetIndex = getActiveLineIndex({
-				lyricLines,
+				lyricLines: lyricLinesRef.current,
 				selectedLines,
 				selectedWords,
 				currentTime,
@@ -604,7 +601,7 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 				return () => clearTimeout(timer);
 			}
 		}
-	}, [toolMode, lyricLines, store, scrollToLineIndex]);
+	}, [toolMode, store, scrollToLineIndex]);
 
 	const selectedLines = useAtomValue(selectedLinesAtom);
 	const selectedLineIndex = useMemo(() => {
@@ -612,8 +609,15 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 		return lyricLines.findIndex((l) => selectedLines.has(l.id));
 	}, [selectedLines, lyricLines]);
 
+	const prevSelectedLineIndexRef = useRef<number>(-1);
 	useEffect(() => {
-		if (selectedLineIndex === -1) return;
+		if (selectedLineIndex === -1) {
+			prevSelectedLineIndexRef.current = -1;
+			return;
+		}
+		if (selectedLineIndex === prevSelectedLineIndexRef.current) return;
+		prevSelectedLineIndexRef.current = selectedLineIndex;
+
 		if (shouldAutoCenterSelection(toolMode)) {
 			if (selectedLineIndex === lastScrolledIndexRef.current) return;
 			lastScrolledIndexRef.current = selectedLineIndex;
@@ -621,14 +625,14 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 		} else if (toolMode === ToolMode.Edit) {
 			const isVisible = isLineVisibleInViewport(
 				selectedLineIndex,
-				viewportRange,
+				viewportRangeRef.current,
 			);
 			if (!isVisible) {
 				lastScrolledIndexRef.current = selectedLineIndex;
 				scrollToLineIndex(selectedLineIndex);
 			}
 		}
-	}, [selectedLineIndex, toolMode, viewportRange, scrollToLineIndex]);
+	}, [selectedLineIndex, toolMode, scrollToLineIndex]);
 
 	const geniusCategorizationEnabled = useAtomValue(
 		geniusCategorizationEnabledAtom,
