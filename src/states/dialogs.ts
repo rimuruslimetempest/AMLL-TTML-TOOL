@@ -76,6 +76,7 @@ export const geniusSearchDialogAtom = atom(false);
 export const changelogDialogAtom = atom(false);
 export const whatsNewDialogAtom = atom(false);
 export const geniusImportLyricsDialogAtom = atom(false);
+export const geniusLyricsRefreshDialogAtom = atom(false);
 export const fontSelectionDialogAtom = atom(false);
 export const lyricallyImportLyricsDialogAtom = atom(false);
 export const appleTtmlImportDialogAtom = atom(false);

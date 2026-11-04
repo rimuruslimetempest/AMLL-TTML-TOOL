@@ -102,6 +102,7 @@ import { RibbonFrame, RibbonSection } from "./common";
 import { advancedRibbonControlsAtom } from "$/modules/onboarding/states";
 import { RibbonSyncProgressWidget } from "./sync-mode.tsx";
 import { useRunAiCheck } from "$/modules/ai-check/index";
+import { submissionChecklistOpenAtom } from "$/modules/submission-checklist/states";
 
 const MULTIPLE_VALUES = Symbol("multiple-values");
 
@@ -1428,6 +1429,7 @@ export const EditModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 	const selectedWords = useAtomValue(selectedWordsAtom);
 	const [showAdvanced, setShowAdvanced] = useAtom(advancedRibbonControlsAtom);
 	const { run: runAiCheck } = useRunAiCheck();
+	const setSubmissionChecklistOpen = useSetAtom(submissionChecklistOpenAtom);
 
 	return (
 		<RibbonFrame ref={ref} isSidebar={isSidebar} reserveControlRows={3}>
@@ -1455,6 +1457,26 @@ export const EditModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 					<Flex gap="1" align="center">
 						<Sparkle16Regular />
 						{t("ribbonBar.aiCheck.run", "AI Check")}
+					</Flex>
+				</Button>
+			</RibbonSection>
+			<RibbonSection
+				isSidebar={isSidebar}
+				label={
+					<Flex gap="1" align="center">
+						<Notebook24Regular />
+						Submission Checklist
+					</Flex>
+				}
+			>
+				<Button
+					size="1"
+					variant="soft"
+					onClick={() => setSubmissionChecklistOpen(true)}
+				>
+					<Flex gap="1" align="center">
+						<Notebook24Regular />
+						Open checklist
 					</Flex>
 				</Button>
 			</RibbonSection>

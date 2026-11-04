@@ -129,7 +129,7 @@ describe("runLocalChecks", () => {
 		expect(untimed).toMatchObject({ line: 2, lineIndex: 2 });
 	});
 
-	it("flags empty text and offers a whitespace fix", () => {
+	it("flags empty text without flagging intentional syllable spacing", () => {
 		const issues = runLocalChecks(
 			lyric([
 				line([word({ word: "", startTime: 0, endTime: 100 }), word({ word: "  be  " })]),
@@ -137,8 +137,10 @@ describe("runLocalChecks", () => {
 			TTML_OK,
 		);
 		expect(messages(issues)).toContain("text is empty");
-		const whitespace = issues.find((issue) => issue.fix?.kind === "syllableText");
-		expect(whitespace?.fix).toEqual({ kind: "syllableText", text: "be" });
+		expect(messages(issues)).not.toContain("stray whitespace");
+		expect(issues.some((issue) => issue.fix?.kind === "syllableText")).toBe(
+			false,
+		);
 	});
 
 	it("flags a line with no timing at all", () => {

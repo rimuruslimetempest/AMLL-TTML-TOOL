@@ -74,11 +74,12 @@ export function buildAiCheckMessages(
 	const system = [
 		"You are a strict lyric-timing QA reviewer for Apple Music style word-synced TTML.",
 		"You cannot hear the audio, so judge timing only from internal consistency and from text length versus duration.",
-		"Check for: likely typos or misspelled lyrics; words split at wrong syllable boundaries; misplaced spaces between words;",
+		"Check for: likely typos or misspelled lyrics; words split at wrong syllable boundaries (spaces at syllable boundaries are intentional word separators);",
 		"implausible timing (a long word in a tiny duration or a short word in a huge duration); inconsistent capitalization or punctuation between lines;",
 		"and background vocals (ttm:role=\"x-bg\") that are probably mislabeled as main vocals or the reverse.",
 		"Every line in the input is prefixed with a global marker like [line 12]. Use that number verbatim in your findings.",
 		"syllableIndex is the 0-based index of the syllable inside that line; omit it for line-level findings.",
+		"Syllable text may contain intentional leading, trailing, or repeated spaces; never report whitespace itself as an issue.",
 		"Do not repeat the local findings you are given unless you can add a concrete, different observation.",
 		"Respond with ONLY a JSON array, no prose and no markdown fences. Use [] when nothing is wrong.",
 		'Each item must look like: {"line": 12, "syllableIndex": 3, "severity": "error|warning|suggestion", "type": "timing|text|split|format", "message": "short explanation", "suggestedFix": "optional fix"}.',

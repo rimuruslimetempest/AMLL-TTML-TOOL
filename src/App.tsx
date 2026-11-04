@@ -126,6 +126,7 @@ import { AutosaveManager } from "./modules/project/autosave/AutosaveManager.tsx"
 import { ProjectTimerManager } from "./modules/project/timer/ProjectTimerManager.tsx";
 import exportTTMLText from "./modules/project/logic/ttml-writer.ts";
 import { AiCheckPanel } from "$/modules/ai-check/AiCheckPanel";
+import { SubmissionChecklistPanel } from "$/modules/submission-checklist/SubmissionChecklistPanel";
 import { GlobalDragOverlay } from "./modules/project/modals/GlobalDragOverlay.tsx";
 import {
 	customBackgroundBlurAtom,
@@ -1657,6 +1658,7 @@ function App() {
 						})()}
 					</Flex>
 					<AiCheckPanel />
+					<SubmissionChecklistPanel />
 					<Suspense fallback={null}>
 						<Dialogs />
 					</Suspense>

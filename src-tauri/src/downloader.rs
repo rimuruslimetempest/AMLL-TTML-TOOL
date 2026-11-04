@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex, mpsc};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tauri::{Manager, ipc::Channel};
 use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_fs::FsExt;
 
 struct ActiveDownload {
     id: String,
@@ -777,7 +778,16 @@ pub async fn download_media(
                 ));
             }
         }
-        result.map(Some)
+        let path = result?;
+        // The output is outside the app's default fs scope because the user
+        // can choose any destination. Grant the webview access to this exact
+        // file so it can read the audio back into the editor.
+        window
+            .app_handle()
+            .fs_scope()
+            .allow_file(&path)
+            .map_err(|e| error("failed", format!("Could not read the downloaded file: {e}")))?;
+        Ok(Some(path))
     })
     .await
     .map_err(|e| error("failed", e))?

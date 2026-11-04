@@ -6,8 +6,6 @@ export const MIN_SYLLABLE_MS = 40;
 export const MAX_SYLLABLE_MS = 8000;
 export const MAX_SYLLABLE_GAP_MS = 1500;
 
-const WHITESPACE_ONLY = /^\s*$/;
-
 const formatMs = (value: number) => `${Math.round(value)} ms`;
 
 /**
@@ -147,20 +145,6 @@ export function runLocalChecks(lyric: TTMLLyric, ttml: string): AiCheckIssue[] {
 					type: "text",
 					message: "Syllable text is empty.",
 				});
-			} else if (!WHITESPACE_ONLY.test(text)) {
-				if (/^\s|\s$/.test(text) || /\s{2,}/.test(text)) {
-					const trimmed = text.trim().replace(/\s+/g, " ");
-					push({
-						rule: "text-whitespace",
-						line: lineNumber,
-						syllableIndex,
-						severity: "suggestion",
-						type: "text",
-						message: `Syllable "${text}" has stray whitespace.`,
-						suggestedFix: `Use "${trimmed}".`,
-						fix: { kind: "syllableText", text: trimmed },
-					});
-				}
 			}
 
 			if (line.ignoreSync) return;

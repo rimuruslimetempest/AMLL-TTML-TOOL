@@ -19,6 +19,10 @@ import { notifySectionIssues } from "$/modules/lyric-editor/utils/notify-section
 import { validateSections } from "$/modules/lyric-editor/utils/section-system.ts";
 import exportTTMLText from "$/modules/project/logic/ttml-writer";
 import {
+	formatBlockingSummary,
+	runSubmissionChecks,
+} from "$/modules/submission-checklist/runChecks";
+import {
 	segmentationEngineAtom,
 	segmentationSplitEnglishAtom,
 } from "$/modules/segmentation/states";
@@ -39,6 +43,7 @@ import {
 	autoSegmentDialogAtom,
 	confirmDialogAtom,
 	findReplaceStateAtom,
+	geniusLyricsRefreshDialogAtom,
 	historyRestoreDialogAtom,
 	jooxAudioSearchDialogAtom,
 	latencyTestDialogAtom,
@@ -116,6 +121,9 @@ export const useTopMenuActions = () => {
 	const setTimeStretchDialog = useSetAtom(timeStretchDialogAtom);
 	const setTTMLChecklistDialog = useSetAtom(ttmlChecklistDialogAtom);
 	const setGrammarCheckDialog = useSetAtom(grammarCheckDialogAtom);
+	const setGeniusLyricsRefreshDialog = useSetAtom(
+		geniusLyricsRefreshDialogAtom,
+	);
 	const setSpotMatchDialog = useSetAtom(spotMatchDialogAtom);
 	const { openFile } = useFileOpener();
 	const setProjectId = useSetAtom(projectIdAtom);
@@ -263,6 +271,45 @@ export const useTopMenuActions = () => {
 		}
 	}, [openFile]);
 
+	const confirmSubmissionBeforeExport = useCallback(
+		(action: () => void) => {
+			const result = runSubmissionChecks(store.get(lyricLinesAtom), {
+				normalization: store.get(lyricTextNormalizationOptionsAtom),
+				allowConsecutiveBackgroundLines: store.get(
+					allowConsecutiveBackgroundLinesAtom,
+				),
+			});
+			if (result.blockedCount === 0) {
+				action();
+				return;
+			}
+
+			const summary = formatBlockingSummary(result);
+			setConfirmDialog({
+				open: true,
+				title: t(
+					"confirmDialog.submissionChecklist.title",
+					"Submission checklist issues remain",
+				),
+				description: t(
+					"confirmDialog.submissionChecklist.description",
+					"{{summary}} remain in this project. You can still export, but the file may be rejected. Review the Submission Checklist if you want to fix them first.",
+					{ summary },
+				),
+				confirmText: t(
+					"confirmDialog.submissionChecklist.exportAnyway",
+					"Export anyway",
+				),
+				cancelText: t(
+					"confirmDialog.submissionChecklist.goBack",
+					"Go back",
+				),
+				onConfirm: action,
+			});
+		},
+		[store, setConfirmDialog, t],
+	);
+
 	const onSaveFile = useCallback(async () => {
 		const action = async () => {
 			try {
@@ -371,7 +418,7 @@ export const useTopMenuActions = () => {
 					"Export Anyway",
 				),
 				cancelText: t("confirmDialog.untimedLyrics.fixIt", "Fix It"),
-				onConfirm: action,
+				onConfirm: () => confirmSubmissionBeforeExport(action),
 				onCancel: () => {
 					store.set(selectedLinesAtom, new Set([untimedLine!.id]));
 					store.set(selectedWordsAtom, new Set([untimedWord!.id]));
@@ -380,9 +427,16 @@ export const useTopMenuActions = () => {
 				},
 			});
 		} else {
-			action();
+			confirmSubmissionBeforeExport(action);
 		}
-	}, [saveFileName, store, setSaveFileName, setConfirmDialog, t]);
+	}, [
+		saveFileName,
+		store,
+		setSaveFileName,
+		setConfirmDialog,
+		t,
+		confirmSubmissionBeforeExport,
+	]);
 
 	const onOpenHistoryRestore = useCallback(() => {
 		setHistoryRestoreDialog(true);
@@ -445,7 +499,7 @@ export const useTopMenuActions = () => {
 					"Export Anyway",
 				),
 				cancelText: t("confirmDialog.untimedLyrics.fixIt", "Fix It"),
-				onConfirm: action,
+				onConfirm: () => confirmSubmissionBeforeExport(action),
 				onCancel: () => {
 					store.set(selectedLinesAtom, new Set([untimedLine!.id]));
 					store.set(selectedWordsAtom, new Set([untimedWord!.id]));
@@ -454,9 +508,9 @@ export const useTopMenuActions = () => {
 				},
 			});
 		} else {
-			action();
+			confirmSubmissionBeforeExport(action);
 		}
-	}, [store, setConfirmDialog, t]);
+	}, [store, setConfirmDialog, t, confirmSubmissionBeforeExport]);
 
 	const onOpenMetadataEditor = useCallback(() => {
 		setMetadataEditorOpened(true);
@@ -477,6 +531,10 @@ export const useTopMenuActions = () => {
 	const onOpenGrammarCheck = useCallback(() => {
 		setGrammarCheckDialog(true);
 	}, [setGrammarCheckDialog]);
+
+	const onOpenGeniusLyricsRefresh = useCallback(() => {
+		setGeniusLyricsRefreshDialog(true);
+	}, [setGeniusLyricsRefreshDialog]);
 
 	const onOpenStatsAndProfiles = useCallback(async () => {
 		await openExternal("https://ttml.bobjoerules.com/#stats");
@@ -899,6 +957,7 @@ export const useTopMenuActions = () => {
 		onOpenLatencyTest,
 		onOpenTTMLChecklist,
 		onOpenGrammarCheck,
+		onOpenGeniusLyricsRefresh,
 		onOpenStatsAndProfiles,
 		onOpenSpotMatch,
 		onDownloadAudio,

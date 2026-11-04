@@ -244,6 +244,12 @@ export function DownloaderDialog() {
 					);
 				} catch (loadErr) {
 					console.warn("Failed to auto-load audio into editor:", loadErr);
+					toast.error(
+						t(
+							"downloader.loadFailed",
+							"Download saved, but it could not be loaded into the editor.",
+						),
+					);
 				}
 			}
 		} catch (error) {
@@ -600,6 +606,12 @@ export function DownloaderDialog() {
 																console.warn(
 																	"Failed to load audio into editor:",
 																	loadErr,
+																);
+																toast.error(
+																	t(
+																		"downloader.loadFailed",
+																		"Download saved, but it could not be loaded into the editor.",
+																	),
 																);
 															}
 														}}

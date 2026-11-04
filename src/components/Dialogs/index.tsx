@@ -3,6 +3,7 @@ import { LatencyTestDialog } from "$/modules/audio/modals/LatencyTest.tsx";
 import { CloudFileManagerModal } from "$/modules/cloud/modals/CloudFileManagerModal.tsx";
 import { DownloaderDialog } from "$/modules/downloader/DownloaderDialog.tsx";
 import { GeniusImportLyricsDialog } from "$/modules/genius/modals/GeniusImportLyricsDialog.tsx";
+import { GeniusLyricsRefreshDialog } from "$/modules/genius/modals/GeniusLyricsRefreshDialog.tsx";
 import { GeniusSearchDialog } from "$/modules/genius/modals/GeniusSearchDialog.tsx";
 import { ImportFromLRCLIB } from "$/modules/lrclib/modals/ImportDialog.tsx";
 import { GrammarCheckDialog } from "$/modules/lyric-editor/modals/GrammarCheckDialog.tsx";
@@ -72,6 +73,7 @@ export const Dialogs = () => {
 
 			<GeniusSearchDialog />
 			<GeniusImportLyricsDialog />
+			<GeniusLyricsRefreshDialog />
 			<ChangelogDialog />
 			<WhatsNewDialog />
 			<FontSelectionDialog />

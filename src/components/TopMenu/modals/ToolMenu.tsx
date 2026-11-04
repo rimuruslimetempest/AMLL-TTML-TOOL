@@ -93,6 +93,15 @@ const ToolMenuItems = () => {
 			<DropdownMenu.Item onSelect={menu.onOpenGrammarCheck}>
 				{t("topBar.menu.grammarCheck", "Grammar and Spelling Check...")}
 			</DropdownMenu.Item>
+			<DropdownMenu.Item
+				onSelect={menu.onOpenGeniusLyricsRefresh}
+				disabled={lyricLines.lyricLines.length === 0}
+			>
+				{t(
+					"topBar.menu.refreshGeniusLyrics",
+					"Refresh Lyrics from Genius...",
+				)}
+			</DropdownMenu.Item>
 			<DropdownMenu.Item onSelect={menu.onOpenStatsAndProfiles}>
 				{t("topBar.menu.statsAndProfiles", "User Profiles & Stats...")}
 			</DropdownMenu.Item>

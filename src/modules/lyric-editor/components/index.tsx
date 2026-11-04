@@ -79,6 +79,7 @@ import {
 } from "$/states/main.ts";
 import type { LyricLine } from "$/types/ttml.ts";
 import { AI_CHECK_SCROLL_EVENT } from "$/modules/ai-check/types";
+import { SUBMISSION_CHECKLIST_SCROLL_EVENT } from "$/modules/submission-checklist/types";
 import { repairSectionIntegrity } from "../utils/section-system.ts";
 import {
 	clampScrollTop,
@@ -466,38 +467,56 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 		[editLyric, lyricLines, collapsedSections],
 	);
 
-	const scrollToLineIndex = useCallback(
-		(index: number) => {
-			const viewEl = viewElRef.current;
-			if (!viewEl) return;
-			const viewContainerEl = viewEl.parentElement;
-			if (!viewContainerEl) return;
-			let visibleIndex = visibleItems.findIndex(
-				(item) => item.sourceIndex === index,
-			);
-			if (visibleIndex === -1) {
-				const targetLine = lyricLines[index];
-				if (targetLine?.sectionId) {
-					visibleIndex = visibleItems.findIndex(
-						(item) => item.line?.sectionId === targetLine.sectionId,
-					);
-				}
+	const visibleItemsRef = useRef(visibleItems);
+	const lyricLinesRef = useRef(lyricLines);
+	visibleItemsRef.current = visibleItems;
+	lyricLinesRef.current = lyricLines;
+
+	// Keep this callback stable. It changes whenever the project is edited if
+	// it closes over lyricLines, which makes the initial-scroll effect run again
+	// after every timing key and snap the viewport back to the original line.
+	const scrollToLineIndex = useCallback((index: number) => {
+		const viewEl = viewElRef.current;
+		if (!viewEl) return;
+		const viewContainerEl = viewEl.parentElement;
+		if (!viewContainerEl) return;
+		const visibleItems = visibleItemsRef.current;
+		const lyricLines = lyricLinesRef.current;
+		let visibleIndex = visibleItems.findIndex(
+			(item) => item.sourceIndex === index,
+		);
+		if (visibleIndex === -1) {
+			const targetLine = lyricLines[index];
+			if (targetLine?.sectionId) {
+				visibleIndex = visibleItems.findIndex(
+					(item) => item.line?.sectionId === targetLine.sectionId,
+				);
 			}
-			if (visibleIndex === -1) return;
-			viewRef.current?.scrollToIndex({
-				index: visibleIndex,
-				offset: viewContainerEl.clientHeight / -2 + 50,
-			});	}, [visibleItems, lyricLines],
-	);
+		}
+		if (visibleIndex === -1) return;
+		viewRef.current?.scrollToIndex({
+			index: visibleIndex,
+			offset: viewContainerEl.clientHeight / -2 + 50,
+		});
+	}, []);
 
 	useEffect(() => {
-		const handleAiCheckScroll = (event: Event) => {
+		const handleLineScroll = (event: Event) => {
 			const index = (event as CustomEvent<number>).detail;
 			if (typeof index === "number") scrollToLineIndex(index);
 		};
-		window.addEventListener(AI_CHECK_SCROLL_EVENT, handleAiCheckScroll);
-		return () =>
-			window.removeEventListener(AI_CHECK_SCROLL_EVENT, handleAiCheckScroll);
+		window.addEventListener(AI_CHECK_SCROLL_EVENT, handleLineScroll);
+		window.addEventListener(
+			SUBMISSION_CHECKLIST_SCROLL_EVENT,
+			handleLineScroll,
+		);
+		return () => {
+			window.removeEventListener(AI_CHECK_SCROLL_EVENT, handleLineScroll);
+			window.removeEventListener(
+				SUBMISSION_CHECKLIST_SCROLL_EVENT,
+				handleLineScroll,
+			);
+		};
 	}, [scrollToLineIndex]);
 
 	const initialTargetIndex = useMemo(() => {
