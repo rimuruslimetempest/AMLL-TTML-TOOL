@@ -90,6 +90,16 @@ fn validate_url(value: &str) -> Result<(), DownloadError> {
     Ok(())
 }
 
+pub(crate) fn find_tool(app: &tauri::AppHandle, name: &str) -> Option<PathBuf> {
+    if let Ok(tools) = tools_dir(app) {
+        let candidate = tools.join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
+        if candidate.is_file() {
+            return Some(candidate);
+        }
+    }
+    find_system_binary(name)
+}
+
 fn find_system_binary(name: &str) -> Option<PathBuf> {
     let name_with_ext = format!("{name}{}", std::env::consts::EXE_SUFFIX);
     if let Some(paths) = std::env::var_os("PATH") {
@@ -171,7 +181,7 @@ fn tools_dir(app: &tauri::AppHandle) -> Result<PathBuf, DownloadError> {
 #[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
-fn command(program: impl AsRef<std::ffi::OsStr>) -> Command {
+pub(crate) fn command(program: impl AsRef<std::ffi::OsStr>) -> Command {
     let mut cmd = Command::new(program);
     #[cfg(windows)]
     {
@@ -230,7 +240,7 @@ fn kill_on_close_job() -> Option<windows_sys::Win32::Foundation::HANDLE> {
 /// only then runs, so everything it starts (yt-dlp's bootloader child, FFmpeg,
 /// Deno) inherits the job. If it can't be contained it is killed instead of
 /// being left to outlive the editor.
-fn spawn_contained(cmd: &mut Command) -> std::io::Result<Child> {
+pub(crate) fn spawn_contained(cmd: &mut Command) -> std::io::Result<Child> {
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
@@ -392,7 +402,7 @@ fn arguments(request: &DownloadRequest, dir: &Path, tools: &Path) -> Vec<String>
     args
 }
 
-fn terminate(child: &mut Child) {
+pub(crate) fn terminate(child: &mut Child) {
     #[cfg(windows)]
     {
         let _ = command("taskkill")

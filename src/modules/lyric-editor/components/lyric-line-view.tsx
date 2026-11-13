@@ -11,8 +11,10 @@
 
 import {
 	AddFilled,
+	Chat16Regular,
+	ClipboardPaste16Regular,
 	LinkMultiple20Regular,
-	TextAlignRightFilled,
+	LockClosed16Regular,
 	VideoBackgroundEffectFilled,
 	Warning20Filled,
 } from "@fluentui/react-icons";
@@ -26,7 +28,14 @@ import {
 	TextField,
 } from "@radix-ui/themes";
 import classNames from "classnames";
-import { type Atom, atom, useAtom, useAtomValue, useStore } from "jotai";
+import {
+	type Atom,
+	atom,
+	useAtom,
+	useAtomValue,
+	useSetAtom,
+	useStore,
+} from "jotai";
 import { selectAtom, splitAtom } from "jotai/utils";
 import { useSetImmerAtom } from "jotai-immer";
 import {
@@ -44,6 +53,16 @@ import {
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { currentTimeAtom } from "$/modules/audio/states/index.ts";
+import { collabLineBadgesAtom } from "$/modules/collab/badges";
+import { collabClient } from "$/modules/collab/client";
+import { activeLineLocks } from "$/modules/collab/logic";
+import {
+	collabActiveAtom,
+	collabLocksAtom,
+	collabPanelAtom,
+	collabSelfIdAtom,
+} from "$/modules/collab/states";
+import { focusLine, ReviewIcon } from "$/modules/collab/ui";
 import {
 	advGeniusHeaderColorAtom,
 	compactBGInSyncAtom,
@@ -53,6 +72,8 @@ import {
 	showLineTranslationAtom,
 	showTimestampsAtom,
 	showWordRomanizationInputAtom,
+	UiLayer,
+	uiLayerAtom,
 	wrapLyricLinesAtom,
 } from "$/modules/settings/states/index.ts";
 import {
@@ -92,7 +113,6 @@ import {
 	duplicateLinesWithSections,
 	repairSectionIntegrity,
 } from "../utils/section-system.ts";
-import { isWordSynced } from "../utils/normalize-line-time";
 import { hasOutOfOrderWordTimings } from "../utils/time-line-edit";
 import { getWordConnections } from "../utils/word-connections.ts";
 import styles from "./index.module.css";
@@ -100,14 +120,15 @@ import {
 	globalEnableInsertAtom,
 	lastLineDragEndAtom,
 	lineDragAtom,
-	timingCopyPlacementAtom,
+	newLineTextFocusAtom,
 	timeLineEditorAtom,
+	timingCopyPlacementAtom,
 } from "./lyric-line-view-states.ts";
-import LyricWordView, { splitTrailingSpace } from "./lyric-word-view.tsx";
 import {
 	LyricWordSettingsContext,
 	useLyricWordSettings,
 } from "./lyric-word-settings-context.tsx";
+import LyricWordView, { splitTrailingSpace } from "./lyric-word-view.tsx";
 import { RomanWordView } from "./roman-word-view.tsx";
 import { SectionActions, SyncSectionButton } from "./SectionActions.tsx";
 import { shouldAutoCenterSelection } from "./selection-scroll";
@@ -243,7 +264,22 @@ const SubLineEdit = memo(
 		const wrapLyricLines = useAtomValue(wrapLyricLinesAtom);
 		const [editing, setEditing] = useState(false);
 		const [inputValue, setInputValue] = useState("");
+		const lastTapRef = useRef<number>(0);
 		const { t } = useTranslation();
+
+		const handleStartEditing = useCallback((evt: SyntheticEvent) => {
+			evt.stopPropagation();
+			setEditing(true);
+		}, []);
+
+		const handleTouchEnd = useCallback((evt: React.TouchEvent) => {
+			const now = Date.now();
+			if (now - lastTapRef.current < 350) {
+				evt.stopPropagation();
+				setEditing(true);
+			}
+			lastTapRef.current = now;
+		}, []);
 
 		const onEnter = useCallback(
 			(evt: SyntheticEvent<HTMLInputElement>) => {
@@ -316,6 +352,7 @@ const SubLineEdit = memo(
 						className={wrapLyricLines ? styles.subLineWrap : undefined}
 						style={{
 							color: "inherit",
+							cursor: "pointer",
 							...(wrapLyricLines
 								? {
 										whiteSpace: "normal",
@@ -326,10 +363,16 @@ const SubLineEdit = memo(
 									}
 								: {}),
 						}}
+						title={
+							line[type]
+								? t("lyricLineView.doubleClickToEdit", "Double-click to edit")
+								: t("lyricLineView.doubleClickToAdd", "Double-click to add")
+						}
 						onClick={(evt) => {
 							evt.stopPropagation();
-							setEditing(true);
 						}}
+						onDoubleClick={handleStartEditing}
+						onTouchEnd={handleTouchEnd}
 					>
 						{line[type] || (
 							<Text color="gray">{t("lyricLineView.empty", "None")}</Text>
@@ -419,6 +462,22 @@ export const LyricLineView: FC<{
 	);
 	const words = useAtomValue(wordsAtom);
 	const lineSelected = useAtomValue(lineSelectedAtom);
+	const collabActive = useAtomValue(collabActiveAtom);
+	const collabLocks = useAtomValue(collabLocksAtom);
+	const collabSelfId = useAtomValue(collabSelfIdAtom);
+	const [lockClock, setLockClock] = useState(Date.now());
+	const lineLocks = useMemo(
+		() =>
+			activeLineLocks(collabLocks, lockClock).filter(
+				(lock) => lock.lineId === line.id && lock.clientId !== collabSelfId,
+			),
+		[collabLocks, collabSelfId, line.id, lockClock],
+	);
+	useEffect(() => {
+		if (!collabActive || lineLocks.length === 0) return;
+		const timer = window.setInterval(() => setLockClock(Date.now()), 1000);
+		return () => window.clearInterval(timer);
+	}, [collabActive, lineLocks.length]);
 	const setSelectedWords = useSetImmerAtom(selectedWordsAtom);
 	const editLyricLines = useSetImmerAtom(lyricLinesAtom);
 	const visualizeTimestampUpdate = useAtomValue(visualizeTimestampUpdateAtom);
@@ -431,6 +490,8 @@ export const LyricLineView: FC<{
 	const effectiveToolMode =
 		toolMode === ToolMode.Sync && isEditingLine ? ToolMode.Edit : toolMode;
 	const store = useStore();
+	const newLineTextFocus = useAtomValue(newLineTextFocusAtom);
+	const setNewLineTextFocus = useSetAtom(newLineTextFocusAtom);
 	const lyricWordSettings = useLyricWordSettings();
 	const { autoSplitTrailingSpaceOnInput } = lyricWordSettings;
 	const effectiveLyricWordSettings = useMemo(() => {
@@ -472,7 +533,7 @@ export const LyricLineView: FC<{
 		if (!line.sectionId) return 0;
 		const lyricLines = store.get(lyricLinesAtom).lyricLines;
 		return lyricLines.filter((l) => l.sectionId === line.sectionId).length || 1;
-	}, [store, line.sectionId, collapsedSections]);
+	}, [store, line.sectionId]);
 
 	const customHeaderColor = useAtomValue(advGeniusHeaderColorAtom);
 
@@ -573,6 +634,9 @@ export const LyricLineView: FC<{
 	);
 	const displayNumber = useAtomValue(displayNumberAtom);
 	const selectedLinesCount = useAtomValue(selectedLinesCountAtom);
+	const lineBadges = useAtomValue(collabLineBadgesAtom).get(line.id);
+	const setCollabPanel = useSetAtom(collabPanelAtom);
+	const needsReview = line.words.some((word) => word.needsReview);
 
 	const hasError = useMemo(() => {
 		if (line.startTime > line.endTime) {
@@ -585,6 +649,33 @@ export const LyricLineView: FC<{
 		}
 		return false;
 	}, [line.startTime, line.endTime, line.words]);
+
+	const lineHasTiming =
+		Boolean(line.isLineSynced) ||
+		line.endTime > line.startTime ||
+		line.words.some(
+			(word) => word.endTime > word.startTime || word.startTime > 0,
+		);
+
+	// Focus the inline editor only after the new row has mounted. The request is
+	// consumed once so undo/redo and unrelated re-renders never steal focus.
+	useEffect(() => {
+		if (newLineTextFocus !== line.id || effectiveToolMode !== ToolMode.Edit) {
+			return;
+		}
+		const frame = requestAnimationFrame(() => {
+			const row = document.querySelector(
+				`[data-lyric-line-id="${CSS.escape(line.id)}"]`,
+			);
+			const input = row?.querySelector<HTMLInputElement>(
+				"input[data-new-line-text-input]",
+			);
+			input?.scrollIntoView({ block: "nearest" });
+			input?.focus();
+			setNewLineTextFocus((current) => (current === line.id ? null : current));
+		});
+		return () => cancelAnimationFrame(frame);
+	}, [newLineTextFocus, line.id, effectiveToolMode, setNewLineTextFocus]);
 
 	const hasTimingOrderWarning = useMemo(
 		() => hasOutOfOrderWordTimings(line.words),
@@ -606,6 +697,7 @@ export const LyricLineView: FC<{
 	const compactBGInSync = useAtomValue(compactBGInSyncAtom);
 	const legacySpaceLabels = useAtomValue(legacySpaceLabelsAtom);
 	const wrapLyricLines = useAtomValue(wrapLyricLinesAtom);
+	const isNewUi = useAtomValue(uiLayerAtom) === UiLayer.New;
 
 	const startTimeRef = useRef<HTMLDivElement>(null);
 	const endTimeRef = useRef<HTMLButtonElement>(null);
@@ -773,6 +865,7 @@ export const LyricLineView: FC<{
 			)}
 			{timingCopyPlacement && (
 				<Button
+					data-new-timing-apply={isNewUi ? "" : undefined}
 					mx="1"
 					my="1"
 					variant="soft"
@@ -821,6 +914,12 @@ export const LyricLineView: FC<{
 						if (warnings.length > 0) toast.info(warnings.join(" "));
 					}}
 				>
+					{isNewUi && (
+						<ClipboardPaste16Regular
+							aria-hidden="true"
+							style={{ width: 14, height: 14 }}
+						/>
+					)}
 					{Math.min(
 						timingCopyPlacement.snapshots.length,
 						store.get(lyricLinesAtom).lyricLines.length - lineIndex,
@@ -873,6 +972,7 @@ export const LyricLineView: FC<{
 					effectiveToolMode === ToolMode.Sync && styles.sync,
 					effectiveToolMode === ToolMode.Edit && styles.edit,
 					line.ignoreSync && styles.ignoreSync,
+					!lineHasTiming && styles.unsyncedLine,
 					hasError && effectiveToolMode === ToolMode.Edit && styles.error,
 				)}
 				align="center"
@@ -925,6 +1025,9 @@ export const LyricLineView: FC<{
 							}
 						: {}),
 				}}
+				onPointerDownCapture={() => {
+					if (collabActive) collabClient.acquireLineLock(line.id);
+				}}
 				onPointerDown={(evt) => {
 					if (
 						(evt.target as HTMLElement | null)?.closest(
@@ -951,6 +1054,12 @@ export const LyricLineView: FC<{
 				}}
 				onPointerUp={() => {
 					blockDragRef.current = false;
+				}}
+				onFocusCapture={() => {
+					if (collabActive) collabClient.acquireLineLock(line.id);
+				}}
+				onKeyDownCapture={() => {
+					if (collabActive) collabClient.touchLineLock();
 				}}
 				onClick={(evt) => {
 					if (
@@ -1047,6 +1156,90 @@ export const LyricLineView: FC<{
 								>
 									{displayNumber > 0 && displayNumber}
 								</Text>
+								{!lineHasTiming && (
+									<span
+										className={styles.unsyncedMarker}
+										title={t(
+											"lyricLineView.unsynced",
+											"Unsynced — no timing yet",
+										)}
+									>
+										{t("lyricLineView.unsyncedShort", "UNSYNCED")}
+									</span>
+								)}
+								{lineBadges?.claim ? (
+									<span
+										title={`${lineBadges.claim.name} is working on this line`}
+										style={{
+											color: lineBadges.claim.color,
+											display: "inline-flex",
+										}}
+									>
+										<LockClosed16Regular style={{ width: 12, height: 12 }} />
+									</span>
+								) : null}
+								{lineBadges?.comments ? (
+									<button
+										type="button"
+										title={`${lineBadges.comments} open comment${lineBadges.comments === 1 ? "" : "s"}`}
+										onClick={(event) => {
+											event.preventDefault();
+											event.stopPropagation();
+											focusLine(line.id);
+											setCollabPanel("comments");
+										}}
+										style={{
+											border: "none",
+											background: "var(--blue-a3)",
+											color: "var(--blue-11)",
+											borderRadius: 999,
+											display: "inline-flex",
+											alignItems: "center",
+											gap: 2,
+											padding: "1px 4px",
+											fontSize: 9,
+											cursor: "pointer",
+										}}
+									>
+										<Chat16Regular style={{ width: 11, height: 11 }} />
+										{lineBadges.comments}
+									</button>
+								) : null}
+								{lineBadges?.review ? (
+									<button
+										type="button"
+										title="Open review mode"
+										onClick={(event) => {
+											event.preventDefault();
+											event.stopPropagation();
+											focusLine(line.id);
+											setCollabPanel("review");
+										}}
+										style={{
+											border: "none",
+											background: "transparent",
+											padding: 0,
+											cursor: "pointer",
+										}}
+									>
+										<ReviewIcon status={lineBadges.review} />
+									</button>
+								) : null}
+								{needsReview ? (
+									<span
+										title="The text changed; check whether this word needs a new split. Timing was kept."
+										style={{
+											fontSize: 9,
+											fontWeight: 700,
+											color: "var(--amber-11)",
+											background: "var(--amber-a3)",
+											borderRadius: 3,
+											padding: "0 3px",
+										}}
+									>
+										SPLIT?
+									</span>
+								) : null}
 								{line.isBG && (
 									<VideoBackgroundEffectFilled color="var(--accent-9)" />
 								)}
@@ -1113,9 +1306,46 @@ export const LyricLineView: FC<{
 							effectiveToolMode === ToolMode.Edit && styles.edit,
 							effectiveToolMode === ToolMode.Sync && styles.sync,
 						)}
+						style={{ position: "relative" }}
 					>
+						{lineLocks.length > 0 && (
+							<Badge
+								size="1"
+								variant="soft"
+								title={lineLocks
+									.map((lock) => `${lock.name} is editing this line`)
+									.join(", ")}
+								style={{
+									position: "absolute",
+									top: 4,
+									right: 8,
+									zIndex: 3,
+									pointerEvents: "none",
+									color: lineLocks[0].color,
+									background: "var(--color-panel-solid)",
+									border: `1px solid ${lineLocks[0].color}66`,
+								}}
+							>
+								<span
+									style={{
+										maxWidth: 110,
+										overflow: "hidden",
+										textOverflow: "ellipsis",
+										whiteSpace: "nowrap",
+									}}
+								>
+									{lineLocks[0].name}
+								</span>
+								{lineLocks.length > 1 ? ` +${lineLocks.length - 1}` : ""}
+							</Badge>
+						)}
 						{isSectionStart && (
-							<Flex gap="2" mb={isSectionCollapsed ? "0" : "1"} align="center">
+							<Flex
+								gap="2"
+								mb={isSectionCollapsed ? "0" : "1"}
+								align="center"
+								style={{ width: "100%" }}
+							>
 								<Text
 									size="1"
 									weight="bold"
@@ -1141,12 +1371,6 @@ export const LyricLineView: FC<{
 											},
 										)}
 									</Badge>
-								)}
-								{!isSectionCollapsed && effectiveToolMode === ToolMode.Edit && (
-									<SyncSectionButton
-										section={activeSection}
-										lineIndex={lineIndex}
-									/>
 								)}
 								{!isSectionCollapsed && effectiveToolMode === ToolMode.Sync && (
 									<Button
@@ -1213,6 +1437,20 @@ export const LyricLineView: FC<{
 											"Copy Previous Timing",
 										)}
 									</Button>
+								)}
+								{!isSectionCollapsed && effectiveToolMode === ToolMode.Edit && (
+									<div
+										style={{
+											marginLeft: "auto",
+											display: "inline-flex",
+											alignItems: "center",
+										}}
+									>
+										<SyncSectionButton
+											section={activeSection}
+											lineIndex={lineIndex}
+										/>
+									</div>
 								)}
 							</Flex>
 						)}
@@ -1317,9 +1555,7 @@ export const LyricLineView: FC<{
 														"Timing order does not match word order.",
 													)}
 												>
-													<Warning20Filled
-														style={{ width: 12, height: 12 }}
-													/>
+													<Warning20Filled style={{ width: 12, height: 12 }} />
 													{t("timeLineEditor.timingOrder", "Timing order")}
 												</Badge>
 											</Flex>
@@ -1343,6 +1579,7 @@ export const LyricLineView: FC<{
 									)}
 									{effectiveToolMode === ToolMode.Edit && (
 										<TextField.Root
+											data-new-line-text-input=""
 											placeholder={t(
 												"lyricLineView.insertWord",
 												"Insert word…",

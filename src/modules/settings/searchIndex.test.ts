@@ -16,6 +16,19 @@ describe("Settings searchIndex", () => {
 		expect(hasThemeMode).toBe(true);
 	});
 
+	it("finds interface layer and performance settings", () => {
+		const layerResults = filterSettings("classic interface");
+		expect(layerResults.some((r) => r.id === "appearance-ui-layer")).toBe(
+			true,
+		);
+		const performanceResults = filterSettings("performance mode");
+		expect(
+			performanceResults.some(
+				(r) => r.id === "appearance-performance-mode",
+			),
+		).toBe(true);
+	});
+
 	it("finds audio and equalizer settings", () => {
 		const results = filterSettings("equalizer");
 		expect(results.length).toBeGreaterThan(0);
@@ -44,6 +57,7 @@ describe("Settings searchIndex", () => {
 			"audio",
 			"keybinding",
 			"appearance",
+			"privacy",
 			"discord",
 			"about",
 			"dev",

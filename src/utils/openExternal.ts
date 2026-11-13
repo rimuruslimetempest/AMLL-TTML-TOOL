@@ -5,6 +5,12 @@ import { open } from "@tauri-apps/plugin-shell";
  * Uses Tauri shell plugin on desktop platforms and falls back to window.open on web.
  */
 export async function openExternal(url: string): Promise<void> {
+	// Mail links are handed to the OS mail client directly; the Tauri shell
+	// allowlist only covers http(s) URLs.
+	if (url.startsWith("mailto:") && typeof window !== "undefined") {
+		window.location.href = url;
+		return;
+	}
 	const isTauri =
 		typeof window !== "undefined" &&
 		Boolean(

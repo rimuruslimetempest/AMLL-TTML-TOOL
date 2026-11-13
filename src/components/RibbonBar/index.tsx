@@ -10,11 +10,11 @@
  */
 
 import { Box } from "@radix-ui/themes";
-import { AnimatePresence } from "framer-motion";
 import { useAtomValue } from "jotai";
 import { forwardRef, memo } from "react";
 import { lazy } from "$/utils/lazy.ts";
 import SuspensePlaceHolder from "$/components/SuspensePlaceHolder";
+import { UiLayer, uiLayerAtom } from "$/modules/settings/states/index.ts";
 import { ToolMode, toolModeAtom } from "$/states/main.ts";
 
 const EditModeRibbonBar = lazy(() => import("./edit-mode"));
@@ -34,10 +34,13 @@ export const RibbonBar = memo(
 			ref,
 		) => {
 			const toolMode = useAtomValue(toolModeAtom);
+			const uiLayer = useAtomValue(uiLayerAtom);
 
 			return (
 				<Box
 					data-guide-target="ribbon"
+					data-ui-chrome="ribbon"
+					data-new-ribbon={uiLayer === UiLayer.New ? "" : undefined}
 					style={{
 						minHeight: isSidebar ? "100%" : "fit-content",
 						minWidth: isSidebar ? "240px" : 0,
@@ -70,8 +73,7 @@ export const RibbonBar = memo(
 							paddingBottom: isSidebar ? 0 : "4px",
 						}}
 					>
-						<AnimatePresence mode="wait">
-							{toolMode === ToolMode.Edit && (
+						{toolMode === ToolMode.Edit && (
 								<SuspensePlaceHolder key="edit">
 									<EditModeRibbonBar isSidebar={isSidebar} />
 								</SuspensePlaceHolder>
@@ -86,7 +88,6 @@ export const RibbonBar = memo(
 									<PreviewModeRibbonBar isSidebar={isSidebar} />
 								</SuspensePlaceHolder>
 							)}
-						</AnimatePresence>
 					</div>
 				</Box>
 			);

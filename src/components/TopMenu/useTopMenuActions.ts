@@ -19,10 +19,6 @@ import { notifySectionIssues } from "$/modules/lyric-editor/utils/notify-section
 import { validateSections } from "$/modules/lyric-editor/utils/section-system.ts";
 import exportTTMLText from "$/modules/project/logic/ttml-writer";
 import {
-	formatBlockingSummary,
-	runSubmissionChecks,
-} from "$/modules/submission-checklist/runChecks";
-import {
 	segmentationEngineAtom,
 	segmentationSplitEnglishAtom,
 } from "$/modules/segmentation/states";
@@ -33,6 +29,7 @@ import {
 } from "$/modules/segmentation/utils/segmentation";
 import { SYLLABIFICATION_ENGINES } from "$/modules/segmentation/utils/syllabification-engines";
 import { useSegmentationConfig } from "$/modules/segmentation/utils/useSegmentationConfig";
+import { usePrivacyGate } from "$/modules/privacy/usePrivacyGate";
 import {
 	allowConsecutiveBackgroundLinesAtom,
 	lyricTextNormalizationOptionsAtom,
@@ -121,6 +118,7 @@ export const useTopMenuActions = () => {
 	const setTimeStretchDialog = useSetAtom(timeStretchDialogAtom);
 	const setTTMLChecklistDialog = useSetAtom(ttmlChecklistDialogAtom);
 	const setGrammarCheckDialog = useSetAtom(grammarCheckDialogAtom);
+	const requestPrivacyConsent = usePrivacyGate();
 	const setGeniusLyricsRefreshDialog = useSetAtom(
 		geniusLyricsRefreshDialogAtom,
 	);
@@ -271,45 +269,6 @@ export const useTopMenuActions = () => {
 		}
 	}, [openFile]);
 
-	const confirmSubmissionBeforeExport = useCallback(
-		(action: () => void) => {
-			const result = runSubmissionChecks(store.get(lyricLinesAtom), {
-				normalization: store.get(lyricTextNormalizationOptionsAtom),
-				allowConsecutiveBackgroundLines: store.get(
-					allowConsecutiveBackgroundLinesAtom,
-				),
-			});
-			if (result.blockedCount === 0) {
-				action();
-				return;
-			}
-
-			const summary = formatBlockingSummary(result);
-			setConfirmDialog({
-				open: true,
-				title: t(
-					"confirmDialog.submissionChecklist.title",
-					"Submission checklist issues remain",
-				),
-				description: t(
-					"confirmDialog.submissionChecklist.description",
-					"{{summary}} remain in this project. You can still export, but the file may be rejected. Review the Submission Checklist if you want to fix them first.",
-					{ summary },
-				),
-				confirmText: t(
-					"confirmDialog.submissionChecklist.exportAnyway",
-					"Export anyway",
-				),
-				cancelText: t(
-					"confirmDialog.submissionChecklist.goBack",
-					"Go back",
-				),
-				onConfirm: action,
-			});
-		},
-		[store, setConfirmDialog, t],
-	);
-
 	const onSaveFile = useCallback(async () => {
 		const action = async () => {
 			try {
@@ -418,7 +377,7 @@ export const useTopMenuActions = () => {
 					"Export Anyway",
 				),
 				cancelText: t("confirmDialog.untimedLyrics.fixIt", "Fix It"),
-				onConfirm: () => confirmSubmissionBeforeExport(action),
+				onConfirm: action,
 				onCancel: () => {
 					store.set(selectedLinesAtom, new Set([untimedLine!.id]));
 					store.set(selectedWordsAtom, new Set([untimedWord!.id]));
@@ -427,7 +386,7 @@ export const useTopMenuActions = () => {
 				},
 			});
 		} else {
-			confirmSubmissionBeforeExport(action);
+			action();
 		}
 	}, [
 		saveFileName,
@@ -435,7 +394,6 @@ export const useTopMenuActions = () => {
 		setSaveFileName,
 		setConfirmDialog,
 		t,
-		confirmSubmissionBeforeExport,
 	]);
 
 	const onOpenHistoryRestore = useCallback(() => {
@@ -499,7 +457,7 @@ export const useTopMenuActions = () => {
 					"Export Anyway",
 				),
 				cancelText: t("confirmDialog.untimedLyrics.fixIt", "Fix It"),
-				onConfirm: () => confirmSubmissionBeforeExport(action),
+				onConfirm: action,
 				onCancel: () => {
 					store.set(selectedLinesAtom, new Set([untimedLine!.id]));
 					store.set(selectedWordsAtom, new Set([untimedWord!.id]));
@@ -508,9 +466,9 @@ export const useTopMenuActions = () => {
 				},
 			});
 		} else {
-			confirmSubmissionBeforeExport(action);
+			action();
 		}
-	}, [store, setConfirmDialog, t, confirmSubmissionBeforeExport]);
+	}, [store, setConfirmDialog, t]);
 
 	const onOpenMetadataEditor = useCallback(() => {
 		setMetadataEditorOpened(true);
@@ -850,18 +808,22 @@ export const useTopMenuActions = () => {
 	const openAccountSettings = useSetAtom(openAccountSettingsAtom);
 
 	const onOpenFromCloud = useCallback(() => {
-		setCloudFileManagerTab("open");
-		setCloudFileManagerOpen(true);
-	}, [setCloudFileManagerTab, setCloudFileManagerOpen]);
+		requestPrivacyConsent("cloud", () => {
+			setCloudFileManagerTab("open");
+			setCloudFileManagerOpen(true);
+		});
+	}, [requestPrivacyConsent, setCloudFileManagerTab, setCloudFileManagerOpen]);
 
 	const onSaveToCloud = useCallback(() => {
-		setCloudFileManagerTab("save");
-		setCloudFileManagerOpen(true);
-	}, [setCloudFileManagerTab, setCloudFileManagerOpen]);
+		requestPrivacyConsent("cloud", () => {
+			setCloudFileManagerTab("save");
+			setCloudFileManagerOpen(true);
+		});
+	}, [requestPrivacyConsent, setCloudFileManagerTab, setCloudFileManagerOpen]);
 
 	const onOpenCloudAuth = useCallback(() => {
-		openAccountSettings();
-	}, [openAccountSettings]);
+		requestPrivacyConsent("cloud", openAccountSettings);
+	}, [openAccountSettings, requestPrivacyConsent]);
 
 	const onDownloadAudio = useCallback(() => {
 		const lyrics = store.get(lyricLinesAtom);

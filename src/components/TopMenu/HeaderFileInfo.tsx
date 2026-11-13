@@ -12,12 +12,15 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getSuggestedTtmlFileName } from "$/modules/project/logic/metadata-filename";
+import { UiLayer, uiLayerAtom } from "$/modules/settings/states";
 import { confirmDialogAtom } from "$/states/dialogs";
 import {
+	isDirtyAtom,
 	lyricLinesAtom,
 	saveFileNameAtom,
 } from "$/states/main";
 import { useSyncProgress } from "$/hooks/useSyncProgress";
+import styles from "./index.module.css";
 
 export const getProgressBadgeColor = (
 	percent: number,
@@ -31,6 +34,8 @@ export const getProgressBadgeColor = (
 export const HeaderFileInfo = () => {
 	const { t } = useTranslation();
 	const syncProgress = useSyncProgress();
+	const isDirty = useAtomValue(isDirtyAtom);
+	const uiLayer = useAtomValue(uiLayerAtom);
 	const [filename, setFilename] = useAtom(saveFileNameAtom);
 	const setConfirmDialog = useSetAtom(confirmDialogAtom);
 	const metadata = useAtomValue(lyricLinesAtom).metadata;
@@ -169,6 +174,14 @@ export const HeaderFileInfo = () => {
 									<Text size="2" style={{ flexShrink: 0 }}>
 										{suffix}
 									</Text>
+									{isDirty && uiLayer === UiLayer.New ? (
+										<span
+											className={styles.dirtyDot}
+											role="status"
+											title={t("header.unsaved", "Unsaved changes")}
+											aria-label={t("header.unsaved", "Unsaved changes")}
+										/>
+									) : null}
 								</Flex>
 							</Flex>
 						</Button>

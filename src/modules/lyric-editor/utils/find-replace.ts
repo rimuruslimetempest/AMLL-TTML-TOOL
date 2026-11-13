@@ -9,6 +9,10 @@ export interface FindOptions {
 	wholeWord?: boolean;
 	useRegex?: boolean;
 	scope?: SearchScope;
+	/** Only inspect these stable line ids (selection-only mode). */
+	lineIds?: Set<string>;
+	/** Never edit these lines (locked or claimed by someone else). */
+	skipLineIds?: Set<string>;
 }
 
 export type MatchTarget = "word" | "translation" | "romanWord" | "romanLine";
@@ -73,6 +77,8 @@ export function findMatches(
 	const matches: FindMatch[] = [];
 
 	lyrics.lyricLines.forEach((line, lineIndex) => {
+		if (options.lineIds && !options.lineIds.has(line.id)) return;
+		if (options.skipLineIds?.has(line.id)) return;
 		// 1. Search in main lyric words
 		if (scope === "all" || scope === "lyrics") {
 			line.words.forEach((word, wordIndex) => {
@@ -271,18 +277,35 @@ export function replaceCurrentMatch(
 export function replaceAllMatches(
 	lyrics: TTMLLyric,
 	options: FindOptions,
-): { nextLyrics: TTMLLyric; replacedCount: number; linesAffected: number } {
+): {
+	nextLyrics: TTMLLyric;
+	replacedCount: number;
+	linesAffected: number;
+	skippedLines: number;
+} {
 	const regex = buildSearchRegex(options);
 	const replacement = options.replacement ?? "";
 	if (!regex) {
-		return { nextLyrics: lyrics, replacedCount: 0, linesAffected: 0 };
+		return {
+			nextLyrics: lyrics,
+			replacedCount: 0,
+			linesAffected: 0,
+			skippedLines: 0,
+		};
 	}
 
 	const scope = options.scope || "all";
 	let totalReplaced = 0;
 	let affectedLines = 0;
+	let skippedLines = 0;
+	const replacementMaySplit = /\s/u.test(replacement);
 
 	const nextLines: LyricLine[] = lyrics.lyricLines.map((line) => {
+		if (options.lineIds && !options.lineIds.has(line.id)) return line;
+		if (options.skipLineIds?.has(line.id)) {
+			skippedLines += 1;
+			return line;
+		}
 		let lineModified = false;
 
 		// 1. Replace in main words
@@ -299,6 +322,9 @@ export function replaceAllMatches(
 					return {
 						...word,
 						word: updated,
+						...(replacementMaySplit && updated !== word.word
+							? { needsReview: true as const }
+							: {}),
 					};
 				}
 				return word;
@@ -375,5 +401,6 @@ export function replaceAllMatches(
 				: lyrics,
 		replacedCount: totalReplaced,
 		linesAffected: affectedLines,
+		skippedLines,
 	};
 }

@@ -52,6 +52,7 @@ import {
 	geniusHeaderRestorationTextAtom,
 } from "$/modules/settings/states/index.ts";
 import { segmentLyricLines } from "$/modules/segmentation/utils/segmentation";
+import { savedSplitsImportOfferAtom } from "$/modules/split-library/states";
 import { useSegmentationConfig } from "$/modules/segmentation/utils/useSegmentationConfig";
 
 import { error as logError } from "$/utils/logging.ts";
@@ -410,6 +411,7 @@ export const ImportFromText = () => {
 				store.set(selectedWordsAtom, new Set());
 			}
 			setImportFromTextDialog(false);
+			store.set(savedSplitsImportOfferAtom, Date.now());
 		},
 		[store, setImportFromTextDialog, geniusCategorizationEnabled],
 	);

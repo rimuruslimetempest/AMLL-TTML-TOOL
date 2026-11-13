@@ -10,7 +10,6 @@
  */
 
 import * as AMLLLyric from "@applemusic-like-lyrics/lyric";
-import * as Sentry from "@sentry/react";
 import { enableMapSet } from "immer";
 import { Provider } from "jotai";
 import { StrictMode } from "react";
@@ -20,12 +19,30 @@ import "react-toastify/dist/ReactToastify.css";
 import App from "./App.tsx";
 import "./i18n/index.ts";
 import "./index.css";
+import "./styles/tokens.css";
+import "./styles/new-theme.css";
 import "./utils/pwa.tsx";
 import { initFirebase } from "$/modules/cloud/firebase";
 import { isMigrationPath } from "$/modules/domain-migration/config";
 import { MigrationRouteApp } from "$/modules/domain-migration/MigrationRouteApp";
 import { pluginManager } from "$/modules/plugins/plugin-manager";
+import { hasStoredFeatureConsent } from "$/modules/privacy/consent";
+import { initializeStoredDiagnostics } from "$/modules/privacy/diagnostics";
+import {
+	contrastAtom,
+	densityAtom,
+	performanceModeAtom,
+	uiLayerAtom,
+} from "$/modules/settings/states";
 import { globalStore } from "./states/store.ts";
+
+const initialRoot = document.documentElement;
+initialRoot.dataset.uiLayer = globalStore.get(uiLayerAtom);
+initialRoot.dataset.density = globalStore.get(densityAtom);
+initialRoot.dataset.contrast = globalStore.get(contrastAtom);
+initialRoot.dataset.performanceMode = globalStore.get(performanceModeAtom)
+	? "true"
+	: "false";
 
 async function startApp() {
 	const rootEl = document.getElementById("root");
@@ -52,17 +69,15 @@ async function startApp() {
 		}
 
 		await pluginManager.loadEnabledPlugins();
-		initFirebase();
+		if (hasStoredFeatureConsent("cloud")) {
+			initFirebase();
+		}
 	} catch (e) {
 		console.error("Error during App initialization:", e);
 	}
 
 	enableMapSet();
-
-	Sentry.init({
-		dsn: import.meta.env.SENTRY_DSN,
-		integrations: [],
-	});
+	initializeStoredDiagnostics();
 
 	try {
 		createRoot(rootEl).render(

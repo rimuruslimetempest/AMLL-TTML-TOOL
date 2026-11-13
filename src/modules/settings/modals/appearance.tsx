@@ -111,6 +111,7 @@ import {
 	SettingsCustomBackgroundCard,
 	SettingsCustomBackgroundSettings,
 } from "./customBackground";
+import { PresentationSettings } from "./presentation";
 import { UIScaleSetting } from "./UIScaleSetting";
 
 const BUILTIN_PRESETS: AppearancePreset[] = [
@@ -835,6 +836,8 @@ export const SettingsAppearanceTab = () => {
 					</SegmentedControl.Item>
 				</SegmentedControl.Root>
 			</Flex>
+
+			<PresentationSettings />
 
 			<Flex direction="column" gap="3">
 				<Heading size="4">

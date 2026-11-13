@@ -1,5 +1,6 @@
 import { ImportAppleTtmlDialog } from "$/modules/apple-ttml/modals/ImportAppleTtmlDialog.tsx";
 import { LatencyTestDialog } from "$/modules/audio/modals/LatencyTest.tsx";
+import { TimingPasteDialog } from "$/modules/clipboard-timing/components/TimingPasteDialog";
 import { CloudFileManagerModal } from "$/modules/cloud/modals/CloudFileManagerModal.tsx";
 import { DownloaderDialog } from "$/modules/downloader/DownloaderDialog.tsx";
 import { GeniusImportLyricsDialog } from "$/modules/genius/modals/GeniusImportLyricsDialog.tsx";
@@ -25,8 +26,11 @@ import { AutoSegmentDialog } from "$/modules/segmentation/components/AutoSegment
 import { LearnedSplitsDialog } from "$/modules/segmentation/components/LearnedSplits.tsx";
 import { SuggestedSplitsDialog } from "$/modules/segmentation/components/SuggestedSplits.tsx";
 import { SplitWordDialog } from "$/modules/segmentation/components/split-word.tsx";
+import { ApplySavedSplitsDialog } from "$/modules/split-library/components/ApplySavedSplitsDialog";
+import { SplitLibraryDialog } from "$/modules/split-library/components/SplitLibraryDialog";
 import { FontSelectionDialog } from "$/modules/settings/modals/FontSelectionDialog.tsx";
 import { SettingsDialog } from "$/modules/settings/modals/index.tsx";
+import { SongInfoDialog } from "$/modules/song-info/SongInfoDialog";
 import { SpotMatchDialog } from "$/modules/spotmatch/SpotMatchDialog.tsx";
 import { TTMLChecklistDialog } from "$/modules/ttml-checklist/TTMLChecklistDialog.tsx";
 import { ChangelogDialog } from "./changelog.tsx";
@@ -52,11 +56,15 @@ export const Dialogs = () => {
 			<ImportAppleTtmlDialog />
 			<MetadataEditor />
 			<SettingsDialog />
+			<SongInfoDialog />
 			<SplitWordDialog />
+			<SplitLibraryDialog />
+			<ApplySavedSplitsDialog />
 			<CombineWordsDialog />
 			<ReplaceWordDialog />
 			<ReplaceRomanizationDialog />
 			<FindReplaceBar />
+			<TimingPasteDialog />
 			<LatencyTestDialog />
 			<TTMLChecklistDialog />
 			<SpotMatchDialog />

@@ -10,6 +10,7 @@ import {
 	loadedAudioAtom,
 	loadedAudioFileNameAtom,
 	loadedAudioPathAtom,
+	loadedAudioTransientAtom,
 } from "$/modules/audio/states";
 import {
 	isDirtyAtom,
@@ -33,6 +34,7 @@ export const AutosaveManager = () => {
 	const loadedAudioFileName = useAtomValue(loadedAudioFileNameAtom);
 	const loadedAudioPath = useAtomValue(loadedAudioPathAtom);
 	const loadedAudio = useAtomValue(loadedAudioAtom);
+	const loadedAudioTransient = useAtomValue(loadedAudioTransientAtom);
 
 	const setSaveStatus = useSetAtom(saveStatusAtom);
 	const setLastSavedTime = useSetAtom(lastSavedTimeAtom);
@@ -64,9 +66,12 @@ export const AutosaveManager = () => {
 					intervalMinutes * 60 * 1000,
 					{
 						saveFileName,
-						audioFileName: loadedAudioFileName,
-						audioPath: loadedAudioPath,
-						audioBlob: loadedAudio && loadedAudio.size > 0 ? loadedAudio : null,
+						audioFileName: loadedAudioTransient ? null : loadedAudioFileName,
+						audioPath: loadedAudioTransient ? null : loadedAudioPath,
+						audioBlob:
+							!loadedAudioTransient && loadedAudio && loadedAudio.size > 0
+								? loadedAudio
+								: null,
 					},
 				)
 					.then(() => {
@@ -93,6 +98,7 @@ export const AutosaveManager = () => {
 		loadedAudioFileName,
 		loadedAudioPath,
 		loadedAudio,
+		loadedAudioTransient,
 		setSaveStatus,
 		setLastSavedTime,
 		intervalMinutes,

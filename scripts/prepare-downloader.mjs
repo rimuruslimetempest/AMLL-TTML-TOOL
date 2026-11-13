@@ -95,6 +95,7 @@ console.log(`Preparing downloader tools for ${target}...`);
 const ytVersion = "2026.10.26";
 const denoVersion = "v2.9.8";
 const ffmpegStaticVersion = "b6.1.1";
+const cloudflaredVersion = "2026.10.7";
 
 const exeSuffix = platform === "win32" ? ".exe" : "";
 
@@ -249,7 +250,61 @@ const denoLicense = await download(
 );
 await cp(denoLicense, path.join(destination, "deno-LICENSE.md"));
 
-// 4. THIRD-PARTY NOTICE
+// 4. CLOUDFLARED (optional Cloudflare Quick Tunnel)
+const cloudflaredTargets = {
+	"win32-x64": {
+		artifact: "cloudflared-windows-amd64.exe",
+		hash: "2493dbc168923bb3e59e5e7716f71deced92992eea9acd6e9d74f84ac7751343",
+	},
+	"darwin-arm64": {
+		artifact: "cloudflared-darwin-arm64.tgz",
+		hash: "3586ccf397e98e5f437e60e7c307ca6ac463e110580503af8bb8e6f9ebf831bd",
+	},
+	"darwin-x64": {
+		artifact: "cloudflared-darwin-amd64.tgz",
+		hash: "02f3edfd87684dd5b705607688e4eb4b323f6e777b81e7b3a85af556aa356848",
+	},
+	"linux-x64": {
+		artifact: "cloudflared-linux-amd64",
+		hash: "1f99fb518b83dec2ba8d870a7cc991d82a77e6196295a3d2754ba17ab9f91872",
+	},
+	"linux-arm64": {
+		artifact: "cloudflared-linux-arm64",
+		hash: "3df43aedc9ff291d1735b5cb576cb97e0b157488796db2e32b28aecabb445775",
+	},
+};
+
+const cloudflaredInfo = cloudflaredTargets[target];
+const cloudflaredDownload = await download(
+	`https://github.com/cloudflare/cloudflared/releases/download/${cloudflaredVersion}/${cloudflaredInfo.artifact}`,
+	`cloudflared-${target}-${cloudflaredInfo.artifact}`,
+	cloudflaredInfo.hash,
+);
+const cloudflaredName = `cloudflared${exeSuffix}`;
+if (cloudflaredInfo.artifact.endsWith(".tgz")) {
+	const cloudflaredDir = path.join(scratch, `cloudflared-${target}`);
+	await mkdir(cloudflaredDir, { recursive: true });
+	execFileSync("tar", ["-xzf", cloudflaredDownload, "-C", cloudflaredDir], {
+		stdio: "inherit",
+	});
+	await cp(
+		path.join(cloudflaredDir, "cloudflared"),
+		path.join(destination, cloudflaredName),
+	);
+} else {
+	await cp(cloudflaredDownload, path.join(destination, cloudflaredName));
+}
+if (platform !== "win32") {
+	await chmod(path.join(destination, cloudflaredName), 0o755);
+}
+
+const cloudflaredLicense = await download(
+	`https://raw.githubusercontent.com/cloudflare/cloudflared/${cloudflaredVersion}/LICENSE`,
+	"cloudflared-LICENSE",
+);
+await cp(cloudflaredLicense, path.join(destination, "cloudflared-LICENSE"));
+
+// 5. THIRD-PARTY NOTICE
 await cp(
 	path.join(root, "packaging", "downloader", "THIRD-PARTY.md"),
 	path.join(destination, "THIRD-PARTY.md"),
@@ -258,9 +313,11 @@ await cp(
 // 5. Test execution if target matches host platform and architecture
 if (target === currentTarget) {
 	console.log("Verifying binary execution on host...");
-	for (const binary of ["yt-dlp", "ffmpeg", "ffprobe", "deno"]) {
+	for (const binary of ["yt-dlp", "ffmpeg", "ffprobe", "deno", "cloudflared"]) {
 		const flag =
-			binary === "deno" || binary === "yt-dlp" ? "--version" : "-version";
+			binary === "deno" || binary === "yt-dlp" || binary === "cloudflared"
+				? "--version"
+				: "-version";
 		const binaryPath = path.join(destination, `${binary}${exeSuffix}`);
 		const version = execFileSync(binaryPath, [flag], {
 			encoding: "utf8",

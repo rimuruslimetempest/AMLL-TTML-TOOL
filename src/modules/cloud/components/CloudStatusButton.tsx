@@ -8,6 +8,7 @@ import { Avatar, Button, DropdownMenu, Flex, Text } from "@radix-ui/themes";
 import { useAtomValue, useSetAtom } from "jotai";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { usePrivacyGate } from "$/modules/privacy/usePrivacyGate";
 import { openAccountSettingsAtom } from "$/states/dialogs";
 import {
 	cloudFileManagerInitialTabAtom,
@@ -23,14 +24,17 @@ export const CloudStatusButton: FC = () => {
 	const openAccountSettings = useSetAtom(openAccountSettingsAtom);
 	const setCloudFileManagerOpen = useSetAtom(cloudFileManagerOpenAtom);
 	const setCloudFileManagerTab = useSetAtom(cloudFileManagerInitialTabAtom);
+	const requestConsent = usePrivacyGate();
 
 	const handleOpenAuth = () => {
-		openAccountSettings();
+		requestConsent("cloud", openAccountSettings);
 	};
 
 	const handleOpenCloudManager = (tab: "save" | "open") => {
-		setCloudFileManagerTab(tab);
-		setCloudFileManagerOpen(true);
+		requestConsent("cloud", () => {
+			setCloudFileManagerTab(tab);
+			setCloudFileManagerOpen(true);
+		});
 	};
 
 	if (!user) {

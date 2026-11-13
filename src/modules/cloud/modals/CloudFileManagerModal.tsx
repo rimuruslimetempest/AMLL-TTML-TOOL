@@ -83,8 +83,9 @@ import {
 	openAccountSettingsAtom,
 } from "$/states/dialogs";
 import { lyricLinesAtom, saveFileNameAtom } from "$/states/main";
-import {
-	cloudFileManagerInitialTabAtom,
+import { hasFeatureConsent } from "$/modules/privacy/consent";
+import { privacyConsentAtom, privacyPromptAtom } from "$/modules/privacy/states";
+import { cloudFileManagerInitialTabAtom,
 	cloudFileManagerOpenAtom,
 	cloudTTMLListAtom,
 	cloudTTMLLoadingAtom,
@@ -785,6 +786,9 @@ export const CloudFileManagerModal: FC = () => {
 	const { t } = useTranslation();
 	const [open, setOpen] = useAtom(cloudFileManagerOpenAtom);
 	const initialTab = useAtomValue(cloudFileManagerInitialTabAtom);
+	const consent = useAtomValue(privacyConsentAtom);
+	const cloudConsentAccepted = hasFeatureConsent(consent, "cloud");
+	const setPrivacyPrompt = useSetAtom(privacyPromptAtom);
 	const [activeTab, setActiveTab] = useState<"open" | "save" | "batch">("open");
 	const [filterTab, setFilterTab] = useState<
 		"all" | "pending" | "completed" | "public" | "private"
@@ -920,7 +924,19 @@ export const CloudFileManagerModal: FC = () => {
 	}, [lyricLines]);
 
 	useEffect(() => {
-		if (open) {
+		if (open && !cloudConsentAccepted) {
+			setOpen(false);
+			setPrivacyPrompt({
+				feature: "cloud",
+				reason:
+					"The cloud library needs consent before it can load account data.",
+				action: () => setOpen(true),
+			});
+		}
+	}, [open, cloudConsentAccepted, setOpen, setPrivacyPrompt]);
+
+	useEffect(() => {
+		if (open && cloudConsentAccepted) {
 			setActiveTab(initialTab === "save" ? "save" : "open");
 			setSaveTitle(currentTrackInfo.title);
 			setSaveArtist(currentTrackInfo.artist);
@@ -946,7 +962,7 @@ export const CloudFileManagerModal: FC = () => {
 				fetchUserTTMLList().catch(console.error);
 			}
 		}
-	}, [open, initialTab, user]);
+	}, [open, initialTab, user, cloudConsentAccepted]);
 
 	// Group saved songs by title and artist to consolidate multiple versions
 	const songGroups = useMemo(() => {

@@ -50,6 +50,7 @@ import {
 	spotMatchExactTitleAtom,
 	spotMatchIncludeOriginalIdAtom,
 	spotMatchInitialTrackIdAtom,
+	spotMatchLastOutputAtom,
 	spotMatchMaxDurationSecondsAtom,
 	spotMatchMinScoreAtom,
 	spotMatchPresetAtom,
@@ -63,6 +64,7 @@ export function SpotMatchDialog() {
 	const [initialTrackId, setInitialTrackId] = useAtom(
 		spotMatchInitialTrackIdAtom,
 	);
+	const [, setSpotMatchLastOutput] = useAtom(spotMatchLastOutputAtom);
 
 	const [preset, setPreset] = useAtom(spotMatchPresetAtom);
 	const [minScore, setMinScore] = useAtom(spotMatchMinScoreAtom);
@@ -233,6 +235,7 @@ export function SpotMatchDialog() {
 			selectedCandidates,
 			includeOriginalId ? sourceTrack?.id : undefined,
 		);
+		setSpotMatchLastOutput(formatted);
 		try {
 			await navigator.clipboard.writeText(formatted);
 			setCopiedNotice(true);
@@ -260,6 +263,7 @@ export function SpotMatchDialog() {
 			selectedCandidates,
 			includeOriginalId ? sourceTrack?.id : undefined,
 		);
+		setSpotMatchLastOutput(formatted);
 		const suggestedName = getSpotMatchTxtFileName(sourceTrack);
 
 		try {

@@ -13,11 +13,15 @@ import {
 	formatVoiceLabel,
 	getLineVoice,
 	getVoiceColor,
-	type LyricLine,
 	newLyricLine,
-	newLyricWord,
 	normalizeVoice,
 } from "$/types/ttml";
+import {
+	copyLineText,
+	copyLineWithTiming,
+	pasteAsNewLine,
+	pasteLineText,
+} from "$/modules/clipboard-timing/actions";
 import {
 	globalEnableInsertAtom,
 	timingCopyPlacementAtom,
@@ -25,6 +29,8 @@ import {
 import { mergeLyricLines } from "../utils/merge-lines";
 import { MergeLineDialog } from "../modals/MergeLineDialog";
 import { repairSectionIntegrity } from "../utils/section-system";
+import { duplicateLinesAfterSelection } from "../utils/line-creation";
+import { newLineTextFocusAtom } from "./lyric-line-view-states";
 
 const selectedLinesSizeAtom = atom((get) => get(selectedLinesAtom).size);
 const totalLinesAtom = selectAtom(
@@ -211,21 +217,18 @@ export const LyricLineMenu = ({ lineIndex }: { lineIndex: number }) => {
 		});
 	}
 
-	function copyLines() {
+	function copyLines(keepTiming: boolean) {
+		let copyIds: string[] = [];
 		editLyricLines((state) => {
-			state.lyricLines = state.lyricLines.flatMap((line) => {
-				if (!selectedLines.has(line.id)) return line;
-				const newLine: LyricLine = {
-					...line,
-					id: newLyricLine().id,
-					words: line.words.map((word) => ({
-						...word,
-						id: newLyricWord().id,
-					})),
-				};
-				return [line, newLine];
+			copyIds = duplicateLinesAfterSelection(state, selectedLines, {
+				keepTiming,
 			});
+			repairSectionIntegrity(state);
 		});
+		if (copyIds.length === 0) return;
+		store.set(selectedLinesAtom, new Set(copyIds));
+		store.set(selectedWordsAtom, new Set());
+		store.set(newLineTextFocusAtom, copyIds[0]);
 	}
 
 	return (
@@ -319,10 +322,22 @@ export const LyricLineMenu = ({ lineIndex }: { lineIndex: number }) => {
 			>
 				{t("contextMenu.insertLineAfter", "Insert Empty Line After")}
 			</ContextMenu.Item>
-			<ContextMenu.Item onSelect={copyLines} disabled={selectedLinesSize === 0}>
-				{t("contextMenu.copyLine", {
+			<ContextMenu.Item
+				onSelect={() => copyLines(false)}
+				disabled={selectedLinesSize === 0}
+			>
+				{t("contextMenu.duplicateLine", {
 					count: selectedLinesSize,
-					defaultValue: "Copy Line",
+					defaultValue: "Duplicate Line",
+				})}
+			</ContextMenu.Item>
+			<ContextMenu.Item
+				onSelect={() => copyLines(true)}
+				disabled={selectedLinesSize === 0}
+			>
+				{t("contextMenu.duplicateLineWithTiming", {
+					count: selectedLinesSize,
+					defaultValue: "Duplicate with Timing",
 				})}
 			</ContextMenu.Item>
 			<ContextMenu.Item
@@ -335,6 +350,31 @@ export const LyricLineMenu = ({ lineIndex }: { lineIndex: number }) => {
 				{t("contextMenu.duplicateTo", "Duplicate to...")}
 			</ContextMenu.Item>
 			<ContextMenu.Separator />
+			<ContextMenu.Sub>
+				<ContextMenu.SubTrigger>
+					{t("contextMenu.clipboard", "Clipboard")}
+				</ContextMenu.SubTrigger>
+				<ContextMenu.SubContent>
+					<ContextMenu.Item onSelect={copyLineText}>
+						{t("contextMenu.copyLineText", "Copy line text")}
+					</ContextMenu.Item>
+					<ContextMenu.Item onSelect={copyLineWithTiming}>
+						{t("contextMenu.copyLineWithTiming", "Copy line with timing")}
+					</ContextMenu.Item>
+					<ContextMenu.Item onSelect={pasteAsNewLine}>
+						{t(
+							"contextMenu.pasteAsNewLine",
+							"Paste as new line after selected",
+						)}
+					</ContextMenu.Item>
+					<ContextMenu.Item onSelect={pasteLineText}>
+						{t(
+							"contextMenu.pasteLineText",
+							"Paste line text into line",
+						)}
+					</ContextMenu.Item>
+				</ContextMenu.SubContent>
+			</ContextMenu.Sub>
 			<ContextMenu.Sub>
 				<ContextMenu.SubTrigger>
 					{t("contextMenu.mergeLine", "Merge line")}

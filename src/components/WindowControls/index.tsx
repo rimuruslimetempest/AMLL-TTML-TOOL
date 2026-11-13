@@ -201,7 +201,7 @@ export default function WindowControls(props: WindowControlsProps) {
 	})();
 
 	return (
-		<div className={styles.windowControls}>
+		<div className={styles.windowControls} data-ui-chrome="titlebar">
 			<div className={styles.leftSide}>
 				{placeLeft && systemControls}
 				<div className={styles.leftSlot}>{props.startChildren}</div>

@@ -27,6 +27,7 @@ vi.mock("$/modules/audio/states/index.ts", async () => {
 		loadedAudioAtom: atom(new Blob()),
 		loadedAudioFileNameAtom: atom<string | null>(null),
 		loadedAudioPathAtom: atom<string | null>(null),
+		loadedAudioTransientAtom: atom(false),
 		EQ_FREQUENCIES: [100],
 		equalizerEnabledAtom: atom(false),
 		equalizerGainsAtom: atom([0]),

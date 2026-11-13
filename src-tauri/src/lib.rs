@@ -1,4 +1,6 @@
+mod collab;
 mod downloader;
+mod recorder;
 
 use std::fs;
 use std::sync::Mutex;
@@ -298,7 +300,7 @@ async fn create_new_window(app: tauri::AppHandle) -> Result<(), String> {
         tauri::WebviewUrl::App("index.html".into()),
     )
     .inner_size(800.0, 600.0)
-    .min_inner_size(640.0, 480.0)
+    .min_inner_size(760.0, 520.0)
     .resizable(true)
     .devtools(true)
     .disable_drag_drop_handler()
@@ -518,9 +520,11 @@ pub fn run() {
         );
     }
 
-    builder
+    let app = builder
         .manage(DiscordState::default())
         .manage(downloader::DownloaderState::default())
+        .manage(collab::CollabServerState::default())
+        .manage(recorder::RecorderState::default())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -873,7 +877,22 @@ pub fn run() {
             downloader::search_media,
             downloader::cancel_download,
             ai_check_request,
+            collab::start_collab_server,
+            collab::stop_collab_server,
+            collab::share_collab_media,
+            recorder::start_screen_recording,
+            recorder::stop_screen_recording,
+            recorder::save_screen_recording,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|app_handle, event| {
+        if let tauri::RunEvent::Exit = event {
+            let state = tauri::Manager::state::<collab::CollabServerState>(app_handle);
+            collab::shutdown(state.inner());
+            let recorder_state = tauri::Manager::state::<recorder::RecorderState>(app_handle);
+            recorder::shutdown(recorder_state.inner());
+        }
+    });
 }

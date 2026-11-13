@@ -21,7 +21,6 @@ import {
 	Flash16Regular,
 	Flow16Regular,
 	Keyboard16Regular,
-	LayoutRowTwo16Regular,
 	Lightbulb16Regular,
 	List24Regular,
 	LocalLanguage16Regular,
@@ -41,7 +40,6 @@ import {
 	IconButton,
 	Popover,
 	SegmentedControl,
-	Slider,
 	Switch,
 	Text,
 	TextField,
@@ -56,7 +54,6 @@ import { getProgressBadgeColor } from "$/components/TopMenu/HeaderFileInfo";
 import { useSyncProgress } from "$/hooks/useSyncProgress";
 import { currentTimeAtom } from "$/modules/audio/states/index.ts";
 import { snapSelectedLineTimingsToTime } from "$/modules/lyric-editor/utils/line-timing.ts";
-import { useCurrentLocation } from "$/modules/lyric-editor/utils/lyric-states.ts";
 import { advancedRibbonControlsAtom } from "$/modules/onboarding/states";
 import {
 	displayRomanizationInSyncAtom,
@@ -66,6 +63,8 @@ import {
 	highlightErrorsAtom,
 	showTimestampsAtom,
 	showWordRomanizationInputAtom,
+	UiLayer,
+	uiLayerAtom,
 	wrapLyricLinesAtom,
 } from "$/modules/settings/states/index.ts";
 import { instantHighlightFadeAtom } from "$/modules/settings/states/preview";
@@ -74,17 +73,12 @@ import {
 	autoSegmentOnLineSyncAtom,
 	autoSegmentSyncModeAtom,
 	enableTimeModeDoubleClickEditAtom,
-	type SyncLevelMode,
 	showTouchSyncPanelAtom,
 	syncCommitOffsetAtom,
 	syncLevelModeAtom,
 	syncTimeOffsetAtom,
 	visualizeTimestampUpdateAtom,
 } from "$/modules/settings/states/sync.ts";
-import {
-	spectrogramOnlyShowSyncLineAtom,
-	spectrogramSplitBgMainAtom,
-} from "$/modules/spectrogram/states/index.ts";
 import {
 	bgLyricIgnoreSyncAtom,
 	type CopiedTimingsData,
@@ -93,7 +87,6 @@ import {
 	mainLyricIgnoreSyncAtom,
 	selectedLinesAtom,
 	selectedWordsAtom,
-	showPreviewPanelAtom,
 } from "$/states/main.ts";
 import { RibbonFrame, RibbonSection } from "./common";
 
@@ -473,6 +466,30 @@ export const RibbonSyncProgressWidget = () => {
 	);
 };
 
+export const RibbonSyncProgressSection: FC<{ isSidebar?: boolean }> = ({
+	isSidebar,
+}) => {
+	const syncProgress = useSyncProgress();
+	const uiLayer = useAtomValue(uiLayerAtom);
+	const { t } = useTranslation();
+
+	if (!syncProgress.hasLyrics && uiLayer === UiLayer.New) return null;
+
+	return (
+		<RibbonSection
+			isSidebar={isSidebar}
+			label={
+				<Flex align="center" gap="1" style={{ display: "inline-flex" }}>
+					<Timer16Regular style={{ width: "12px", height: "12px" }} />
+					<span>{t("ribbonBar.syncMode.syncProgress", "Sync Progress")}</span>
+				</Flex>
+			}
+		>
+			<RibbonSyncProgressWidget />
+		</RibbonSection>
+	);
+};
+
 export const SyncModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 	HTMLDivElement,
 	{ isSidebar?: boolean }
@@ -483,7 +500,6 @@ export const SyncModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 	const [showTouchSyncPanel, setShowTouchSyncPanel] = useAtom(
 		showTouchSyncPanelAtom,
 	);
-	const [showPreviewPanel, setShowPreviewPanel] = useAtom(showPreviewPanelAtom);
 	const [showTimestamps, setShowTimestamps] = useAtom(showTimestampsAtom);
 	const [highlightErrors, setHighlightErrors] = useAtom(highlightErrorsAtom);
 	const [highlightActiveWord, setHighlightActiveWord] = useAtom(
@@ -519,29 +535,15 @@ export const SyncModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 		autoSegmentSyncModeAtom,
 	);
 	const [instantFade, setInstantFade] = useAtom(instantHighlightFadeAtom);
-	const [spectrogramOnlyShowSyncLine, setSpectrogramOnlyShowSyncLine] = useAtom(
-		spectrogramOnlyShowSyncLineAtom,
-	);
-	const [spectrogramSplitBgMain, setSpectrogramSplitBgMain] = useAtom(
-		spectrogramSplitBgMainAtom,
-	);
 	const [wrapLyricLines, setWrapLyricLines] = useAtom(wrapLyricLinesAtom);
 	const { t } = useTranslation();
 	const [showAdvanced, setShowAdvanced] = useAtom(advancedRibbonControlsAtom);
+	const uiLayer = useAtomValue(uiLayerAtom);
+	const showTimeSettings = showAdvanced || uiLayer === UiLayer.New;
 
 	return (
 		<RibbonFrame ref={ref} isSidebar={isSidebar}>
-			<RibbonSection
-				isSidebar={isSidebar}
-				label={
-					<Flex align="center" gap="1" style={{ display: "inline-flex" }}>
-						<Timer16Regular style={{ width: "12px", height: "12px" }} />
-						<span>{t("ribbonBar.syncMode.syncProgress", "Sync Progress")}</span>
-					</Flex>
-				}
-			>
-				<RibbonSyncProgressWidget />
-			</RibbonSection>
+			<RibbonSyncProgressSection isSidebar={isSidebar} />
 			<RibbonSection
 				isSidebar={isSidebar}
 				label={
@@ -556,8 +558,9 @@ export const SyncModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 				</Flex>
 			</RibbonSection>
 
-			{showAdvanced && (
+			{showTimeSettings && (
 				<RibbonSection
+					data-sync-adjustment=""
 					isSidebar={isSidebar}
 					label={
 						<Flex align="center" gap="1" style={{ display: "inline-flex" }}>
@@ -621,6 +624,7 @@ export const SyncModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 				</RibbonSection>
 			)}
 			<RibbonSection
+				data-sync-level=""
 				isSidebar={isSidebar}
 				label={
 					<Flex align="center" gap="1" style={{ display: "inline-flex" }}>
@@ -670,8 +674,9 @@ export const SyncModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 					</Button>
 				</Flex>
 			</RibbonSection>
-			{showAdvanced && (
+			{showTimeSettings && (
 				<RibbonSection
+					data-sync-options=""
 					isSidebar={isSidebar}
 					label={
 						<Flex align="center" gap="1" style={{ display: "inline-flex" }}>
@@ -982,34 +987,6 @@ export const SyncModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 										/>
 										<Text size="2" style={{ color: "var(--accent-11)" }}>
 											<Flex gap="2" align="center">
-												<DocumentSync16Regular />
-												{t(
-													"ribbonBar.syncMode.onlyShowSyncLineOnSpectrogram",
-													"Only Show Synced Line on Spectrogram",
-												)}
-											</Flex>
-										</Text>
-										<Checkbox
-											checked={spectrogramOnlyShowSyncLine}
-											onCheckedChange={(v) =>
-												setSpectrogramOnlyShowSyncLine(!!v)
-											}
-										/>
-										<Text size="2" style={{ color: "var(--accent-11)" }}>
-											<Flex gap="2" align="center">
-												<LayoutRowTwo16Regular />
-												{t(
-													"ribbonBar.syncMode.splitBgMainOnSpectrogram",
-													"Split Vocals on Spectrogram",
-												)}
-											</Flex>
-										</Text>
-										<Checkbox
-											checked={spectrogramSplitBgMain}
-											onCheckedChange={(v) => setSpectrogramSplitBgMain(!!v)}
-										/>
-										<Text size="2" style={{ color: "var(--accent-11)" }}>
-											<Flex gap="2" align="center">
 												<TextWrap16Regular />
 												{t(
 													"ribbonBar.syncMode.wrapLyricLines",
@@ -1056,7 +1033,12 @@ export const SyncModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 				}
 				isSidebar={isSidebar}
 			>
-				<Switch checked={showAdvanced} onCheckedChange={setShowAdvanced} />
+				<Switch
+					checked={showAdvanced}
+					onCheckedChange={setShowAdvanced}
+					aria-label={t("ribbonBar.advanced", "Advanced")}
+					title={t("ribbonBar.advanced", "Advanced")}
+				/>
 			</RibbonSection>
 		</RibbonFrame>
 	);

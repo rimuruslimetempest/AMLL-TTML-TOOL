@@ -6,13 +6,27 @@ import {
 	Dismiss16Regular,
 	Search16Regular,
 } from "@fluentui/react-icons";
-import { Button, DropdownMenu, TextField } from "@radix-ui/themes";
+import {
+	Button,
+	Checkbox,
+	Dialog,
+	DropdownMenu,
+	TextField,
+} from "@radix-ui/themes";
 import classNames from "classnames";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { useSetImmerAtom } from "jotai-immer";
-import { type FC, useCallback, useEffect, useMemo, useRef } from "react";
+import {
+	type FC,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
+import { collabLocksAtom, collabSelfIdAtom } from "$/modules/collab/states";
 import { findReplaceStateAtom } from "$/states/dialogs";
 import {
 	lyricLinesAtom,
@@ -32,13 +46,33 @@ export const FindReplaceBar: FC = () => {
 	const [state, setState] = useAtom(findReplaceStateAtom);
 	const lyricData = useAtomValue(lyricLinesAtom);
 	const editLyricLines = useSetImmerAtom(lyricLinesAtom);
-	const setSelectedLines = useSetAtom(selectedLinesAtom);
-	const setSelectedWords = useSetAtom(selectedWordsAtom);
+	const [selectedLineIds, setSelectedLines] = useAtom(selectedLinesAtom);
+	const [selectedWordIds, setSelectedWords] = useAtom(selectedWordsAtom);
+	const locks = useAtomValue(collabLocksAtom);
+	const selfId = useAtomValue(collabSelfIdAtom);
+	const [previewOpen, setPreviewOpen] = useState(false);
+
+	const lockedLineIds = useMemo(() => {
+		const now = Date.now();
+		return new Set(
+			locks
+				.filter(
+					(lock) =>
+						lock.expiresAt > now && (!selfId || lock.clientId !== selfId),
+				)
+				.map((lock) => lock.lineId),
+		);
+	}, [locks, selfId]);
 
 	const findInputRef = useRef<HTMLInputElement>(null);
 	const replaceInputRef = useRef<HTMLInputElement>(null);
 
-	const matches = useMemo(() => {
+	// Only make selection changes invalidate matches when selection-only is active.
+	// Otherwise highlighting a match would recompute matches and re-highlight it
+	// forever, eventually tripping React's maximum update depth guard.
+	const searchLineIds = state.selectionOnly ? selectedLineIds : undefined;
+
+	const allMatches = useMemo(() => {
 		if (!state.open || !state.query) return [];
 		return findMatches(lyricData, {
 			query: state.query,
@@ -47,6 +81,7 @@ export const FindReplaceBar: FC = () => {
 			wholeWord: state.wholeWord,
 			useRegex: state.useRegex,
 			scope: state.scope,
+			lineIds: searchLineIds,
 		});
 	}, [
 		state.open,
@@ -56,8 +91,14 @@ export const FindReplaceBar: FC = () => {
 		state.wholeWord,
 		state.useRegex,
 		state.scope,
+		searchLineIds,
 		lyricData,
 	]);
+
+	const matches = useMemo(
+		() => allMatches.filter((match) => !lockedLineIds.has(match.lineId)),
+		[allMatches, lockedLineIds],
+	);
 
 	const activeIndex = useMemo(() => {
 		if (matches.length === 0) return -1;
@@ -76,14 +117,32 @@ export const FindReplaceBar: FC = () => {
 			const match = matches[index];
 			if (!match) return;
 
-			setSelectedLines(new Set([match.lineId]));
+			// In selection-only mode the result line is already part of the search
+			// scope. Keep the user's multi-line selection instead of replacing it
+			// with the single result line.
+			if (
+				!state.selectionOnly &&
+				(selectedLineIds.size !== 1 || !selectedLineIds.has(match.lineId))
+			) {
+				setSelectedLines(new Set([match.lineId]));
+			}
+
 			if (match.wordId) {
-				setSelectedWords(new Set([match.wordId]));
-			} else {
+				if (selectedWordIds.size !== 1 || !selectedWordIds.has(match.wordId)) {
+					setSelectedWords(new Set([match.wordId]));
+				}
+			} else if (selectedWordIds.size > 0) {
 				setSelectedWords(new Set());
 			}
 		},
-		[matches, setSelectedLines, setSelectedWords],
+		[
+			matches,
+			selectedLineIds,
+			selectedWordIds,
+			state.selectionOnly,
+			setSelectedLines,
+			setSelectedWords,
+		],
 	);
 
 	const goToNext = useCallback(() => {
@@ -138,7 +197,13 @@ export const FindReplaceBar: FC = () => {
 				}
 			});
 		}
-	}, [state.open, state.focusTrigger, state.focusTarget]);
+	}, [
+		state.open,
+		state.focusTrigger,
+		state.focusTarget,
+		state.replaceMode,
+		state.query,
+	]);
 
 	const handleClose = useCallback(() => {
 		setState((prev) => ({ ...prev, open: false }));
@@ -160,27 +225,25 @@ export const FindReplaceBar: FC = () => {
 			}
 		});
 
-		// Jump to next after replacement
-		if (matches.length > 1) {
-			goToNext();
-		}
-	}, [activeIndex, matches, editLyricLines, state.replaceText, goToNext]);
+		// Keep the same index: the next match shifts into this slot after the
+		// current occurrence is removed, so advancing here would skip it.
+	}, [activeIndex, matches, editLyricLines, state.replaceText]);
 
-	const handleReplaceAll = useCallback(() => {
+	const applyReplaceAll = useCallback(() => {
 		if (!state.query) return;
 
 		editLyricLines((draft) => {
-			const { nextLyrics, replacedCount, linesAffected } = replaceAllMatches(
-				draft,
-				{
+			const { nextLyrics, replacedCount, linesAffected, skippedLines } =
+				replaceAllMatches(draft, {
 					query: state.query,
 					replacement: state.replaceText,
 					matchCase: state.matchCase,
 					wholeWord: state.wholeWord,
 					useRegex: state.useRegex,
 					scope: state.scope,
-				},
-			);
+					lineIds: state.selectionOnly ? selectedLineIds : undefined,
+					skipLineIds: lockedLineIds,
+				});
 
 			if (replacedCount > 0) {
 				draft.lyricLines = nextLyrics.lyricLines;
@@ -192,7 +255,10 @@ export const FindReplaceBar: FC = () => {
 							count: replacedCount,
 							lines: linesAffected,
 						},
-					),
+					) +
+						(skippedLines
+							? ` ${skippedLines} locked or claimed line${skippedLines === 1 ? "" : "s"} skipped.`
+							: ""),
 				);
 			} else {
 				toast.info(t("findReplace.noMatches", "No matches found"));
@@ -205,9 +271,17 @@ export const FindReplaceBar: FC = () => {
 		state.wholeWord,
 		state.useRegex,
 		state.scope,
+		state.selectionOnly,
+		selectedLineIds,
+		lockedLineIds,
 		editLyricLines,
 		t,
 	]);
+
+	const handleReplaceAll = useCallback(() => {
+		if (!state.query || matches.length === 0) return;
+		setPreviewOpen(true);
+	}, [state.query, matches.length]);
 
 	if (!state.open) return null;
 
@@ -463,6 +537,29 @@ export const FindReplaceBar: FC = () => {
 						</DropdownMenu.Content>
 					</DropdownMenu.Root>
 
+					<label
+						style={{
+							display: "flex",
+							alignItems: "center",
+							gap: 4,
+							fontSize: 11,
+							whiteSpace: "nowrap",
+						}}
+						title="Only search and replace inside selected lines"
+					>
+						<Checkbox
+							checked={Boolean(state.selectionOnly)}
+							onCheckedChange={(value) =>
+								setState((prev) => ({
+									...prev,
+									selectionOnly: value === true,
+									activeMatchIndex: 0,
+								}))
+							}
+						/>
+						Selection only
+					</label>
+
 					{/* Actions */}
 					<div className={styles.replaceActions}>
 						<Button
@@ -488,6 +585,125 @@ export const FindReplaceBar: FC = () => {
 					</div>
 				</div>
 			)}
+
+			{state.query && matches.length > 0 && (
+				<div
+					style={{
+						marginTop: 4,
+						maxHeight: 132,
+						overflowY: "auto",
+						borderTop: "1px solid var(--gray-a4)",
+						paddingTop: 4,
+						fontSize: 11,
+					}}
+				>
+					{matches.slice(0, 40).map((match, index) => (
+						<button
+							key={match.id}
+							type="button"
+							onClick={() => {
+								setState((prev) => ({
+									...prev,
+									activeMatchIndex: index,
+								}));
+								highlightMatch(index);
+							}}
+							style={{
+								display: "flex",
+								gap: 6,
+								width: "100%",
+								textAlign: "left",
+								border: "none",
+								background:
+									index === activeIndex ? "var(--accent-a3)" : "transparent",
+								color: "inherit",
+								cursor: "pointer",
+								padding: "2px 4px",
+								borderRadius: 4,
+							}}
+						>
+							<span style={{ opacity: 0.6, minWidth: 26 }}>
+								L{match.lineIndex + 1}
+							</span>
+							<span style={{ fontWeight: 600 }}>{match.matchText}</span>
+							<span
+								style={{
+									overflow: "hidden",
+									textOverflow: "ellipsis",
+									whiteSpace: "nowrap",
+									opacity: 0.7,
+								}}
+							>
+								{match.preview}
+							</span>
+						</button>
+					))}
+					{allMatches.length > matches.length ? (
+						<div style={{ opacity: 0.65, padding: "2px 4px" }}>
+							{allMatches.length - matches.length} match(es) on locked or
+							claimed lines are skipped.
+						</div>
+					) : null}
+				</div>
+			)}
+
+			<Dialog.Root open={previewOpen} onOpenChange={setPreviewOpen}>
+				<Dialog.Content maxWidth="560px">
+					<Dialog.Title>Preview replace all</Dialog.Title>
+					<Dialog.Description size="1" color="gray">
+						{matches.length} match{matches.length === 1 ? "" : "es"} will be
+						replaced with "{state.replaceText}". Timing is not changed. This is
+						one undo step and one batched room operation.
+						{lockedLineIds.size
+							? " Lines locked or claimed by someone else are skipped."
+							: ""}
+					</Dialog.Description>
+					<div
+						style={{
+							maxHeight: 240,
+							overflowY: "auto",
+							marginTop: 12,
+							fontSize: 12,
+						}}
+					>
+						{matches.slice(0, 80).map((match) => (
+							<div
+								key={match.id}
+								style={{
+									padding: "4px 6px",
+									borderBottom: "1px solid var(--gray-a4)",
+								}}
+							>
+								<span style={{ opacity: 0.6 }}>Line {match.lineIndex + 1}</span>{" "}
+								<span style={{ fontWeight: 600 }}>{match.matchText}</span>{" "}
+								<span style={{ opacity: 0.7 }}>{match.preview}</span>
+							</div>
+						))}
+					</div>
+					<div
+						style={{
+							display: "flex",
+							justifyContent: "flex-end",
+							gap: 8,
+							marginTop: 16,
+						}}
+					>
+						<Dialog.Close>
+							<Button variant="soft" color="gray">
+								Cancel
+							</Button>
+						</Dialog.Close>
+						<Button
+							onClick={() => {
+								applyReplaceAll();
+								setPreviewOpen(false);
+							}}
+						>
+							Replace {matches.length}
+						</Button>
+					</div>
+				</Dialog.Content>
+			</Dialog.Root>
 		</div>
 	);
 };

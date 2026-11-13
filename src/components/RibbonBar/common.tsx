@@ -14,64 +14,140 @@ import { motion } from "framer-motion";
 import {
 	type FC,
 	forwardRef,
+	type HTMLAttributes,
 	type PropsWithChildren,
 	type ReactNode,
 	useImperativeHandle,
 	useRef,
 	useEffect,
+	useLayoutEffect,
 } from "react";
 
 export const RibbonSection: FC<
-	PropsWithChildren<{ label?: ReactNode; isSidebar?: boolean }>
-> = ({ children, label, isSidebar }) => (
-	<>
-		<Flex
-			direction="column"
-			gap="1"
-			flexShrink="0"
-			style={{
-				alignSelf: "stretch",
-				width: isSidebar ? "100%" : "unset",
-			}}
-		>
+	PropsWithChildren<
+		{
+			label?: ReactNode;
+			isSidebar?: boolean;
+			minWidth?: number;
+		} & HTMLAttributes<HTMLDivElement>
+	>
+> = ({ children, label, isSidebar, minWidth = 0, ...rest }) => {
+	const sectionRef = useRef<HTMLDivElement>(null);
+	const contentRef = useRef<HTMLDivElement>(null);
+	const minimumWidth = Math.max(0, minWidth);
+
+	// Some WebView/flex combinations collapse a section to the width of its
+	// label even though the controls inside are wider. Pin the section's
+	// minimum width to the content row's scroll width.
+	useLayoutEffect(() => {
+		if (isSidebar) return;
+		const section = sectionRef.current;
+		const content = contentRef.current;
+		if (!section || !content) return;
+
+		const update = () => {
+			const labelWidth = section.firstElementChild?.scrollWidth ?? 0;
+			const width = Math.ceil(
+				Math.max(content.scrollWidth, labelWidth, minimumWidth),
+			);
+			if (width > 0 && section.style.minWidth !== `${width}px`) {
+				section.style.minWidth = `${width}px`;
+			}
+		};
+
+		update();
+
+		const resizeObserver =
+			typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
+		const mutationObserver =
+			typeof MutationObserver === "undefined" ? null : new MutationObserver(update);
+
+		if (resizeObserver) {
+			resizeObserver.observe(content);
+			for (const child of Array.from(content.children)) {
+				resizeObserver.observe(child);
+			}
+		}
+		mutationObserver?.observe(content, {
+			childList: true,
+			subtree: true,
+			characterData: true,
+			attributes: true,
+		});
+
+		let cancelled = false;
+		document.fonts?.ready.then(() => {
+			if (!cancelled) update();
+		});
+
+		return () => {
+			cancelled = true;
+			resizeObserver?.disconnect();
+			mutationObserver?.disconnect();
+			section.style.minWidth = "";
+		};
+	}, [isSidebar, minimumWidth]);
+
+	return (
+		<>
 			<Flex
-				flexGrow="1"
-				align="center"
-				justify={isSidebar ? "start" : "center"}
-				direction={isSidebar ? "column" : "row"}
-				gap="2"
-				p={isSidebar ? "2" : "0"}
+				{...rest}
+				ref={sectionRef}
+				data-ribbon-group=""
+				direction="column"
+				gap="1"
+				flexShrink="0"
+				style={{
+					alignSelf: "stretch",
+					width: isSidebar ? "100%" : "unset",
+					minWidth: isSidebar ? 0 : minimumWidth || "max-content",
+				}}
 			>
-				{children}
-			</Flex>
-			{isSidebar && label && (
+				{!isSidebar && label && (
+					<div data-ribbon-group-label="">{label}</div>
+				)}
 				<Flex
-					px="3"
-					py="1"
-					style={{
-						backgroundColor: "var(--accent-3)",
-						color: "var(--accent-11)",
-						fontSize: "10px",
-						fontWeight: "bold",
-						textTransform: "uppercase",
-						letterSpacing: "0.05em",
-					}}
+					ref={contentRef}
+					data-ribbon-group-body=""
+					flexGrow="1"
+					align="center"
+					justify={isSidebar ? "start" : "center"}
+					direction={isSidebar ? "column" : "row"}
+					gap="2"
+					p={isSidebar ? "2" : "0"}
+					style={{ minWidth: isSidebar ? 0 : "max-content" }}
 				>
-					{label}
+					{children}
 				</Flex>
-			)}
-		</Flex>
-		<Separator
-			orientation={isSidebar ? "horizontal" : "vertical"}
-			size="4"
-			style={{
-				height: isSidebar ? "1px" : "unset",
-				width: isSidebar ? "100%" : "1px",
-				alignSelf: "stretch",
-			}}
-		/>
-	</>
-);
+				{isSidebar && label && (
+					<Flex
+						px="3"
+						py="1"
+						style={{
+							backgroundColor: "var(--accent-3)",
+							color: "var(--accent-11)",
+							fontSize: "10px",
+							fontWeight: "bold",
+							textTransform: "uppercase",
+							letterSpacing: "0.05em",
+						}}
+					>
+						{label}
+					</Flex>
+				)}
+			</Flex>
+			<Separator
+				orientation={isSidebar ? "horizontal" : "vertical"}
+				size="4"
+				style={{
+					height: isSidebar ? "1px" : "unset",
+					width: isSidebar ? "100%" : "1px",
+					alignSelf: "stretch",
+				}}
+			/>
+		</>
+	);
+};
 
 const RibbonHeightReserve: FC<{ rows: number }> = ({ rows }) => (
 	<Flex
@@ -141,14 +217,15 @@ export const RibbonFrame = forwardRef<
 			asChild
 		>
 			<motion.div
+				data-ribbon-scroll=""
 				initial={isSidebar ? { y: 10, opacity: 0 } : { x: 10, opacity: 0 }}
 				animate={isSidebar ? { y: 0, opacity: 1 } : { x: 0, opacity: 1 }}
 				exit={isSidebar ? { y: -10, opacity: 0 } : { x: -10, opacity: 0 }}
 				ref={frameRef}
 			>
-				{!isSidebar && reserveControlRows && (
+				{!isSidebar && reserveControlRows ? (
 					<RibbonHeightReserve rows={reserveControlRows} />
-				)}
+				) : null}
 				{children}
 			</motion.div>
 		</Flex>

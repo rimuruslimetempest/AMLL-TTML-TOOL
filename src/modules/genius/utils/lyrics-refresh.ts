@@ -11,6 +11,12 @@ import {
 const GENIUS_HEADER_LINE = /^\[[^\]]+\]$/;
 const IGNORED_GENIUS_LINES = new Set(["embed", "you might also like"]);
 const GAP_SCORE = 0.65;
+/**
+ * A low-confidence pair is worse than treating both lines as changed. This is
+ * deliberately conservative: attaching a newly written line to an unrelated
+ * old timestamp is much harder to notice and undo than an added/removed line.
+ */
+const MIN_PAIR_SIMILARITY = 0.32;
 
 export type GeniusRefreshEntryStatus =
 	| "unchanged"
@@ -56,9 +62,22 @@ const normalizeDisplayText = (text: string): string =>
 
 const comparableText = (text: string): string =>
 	text
-		.normalize("NFKC")
+		.normalize("NFKD")
 		.toLocaleLowerCase()
+		.replace(/&/g, " and ")
+		.replace(/\p{M}+/gu, "")
 		.replace(/[^\p{L}\p{N}]+/gu, "");
+
+/**
+ * Genius and exported TTML append background vocals as trailing
+ * parenthetical groups. They are compared separately from the main line so a
+ * line that only gains or loses its background part is not reported as
+ * rewritten.
+ */
+const TRAILING_PARENTHETICALS = /(?:\s*[(（][^()（）]*[)）])+\s*$/;
+
+const stripTrailingParentheticals = (text: string): string =>
+	normalizeDisplayText(text.replace(TRAILING_PARENTHETICALS, ""));
 
 /** Returns the visible text of an existing lyric line. */
 export const getGeniusRefreshLineText = (line: LyricLine): string =>
@@ -72,7 +91,11 @@ export const extractGeniusLyricLines = (lyrics: string): string[] =>
 		.map(normalizeDisplayText)
 		.filter((line) => {
 			if (!line || GENIUS_HEADER_LINE.test(line)) return false;
-			return !IGNORED_GENIUS_LINES.has(line.toLocaleLowerCase());
+			const lower = line.toLocaleLowerCase();
+			return (
+				!IGNORED_GENIUS_LINES.has(lower) &&
+				!/^you might also like\b/i.test(line)
+			);
 		});
 
 const characterGrams = (text: string): Set<string> => {
@@ -111,6 +134,7 @@ interface AlignmentStep {
 const alignLyricLines = (
 	oldLines: string[],
 	newLines: string[],
+	oldHasBackground: boolean[],
 ): AlignmentStep[] => {
 	const rows = oldLines.length + 1;
 	const columns = newLines.length + 1;
@@ -135,8 +159,20 @@ const alignLyricLines = (
 		for (let column = 1; column < columns; column++) {
 			const oldText = oldLines[row - 1];
 			const newText = newLines[column - 1];
-			const similarity = textSimilarity(oldText, newText);
-			const matchScore = oldText.length > 0 ? similarity * 2 - 1 : -2.5;
+			const hasBackground = oldHasBackground[row - 1] === true;
+			const oldComparable = hasBackground
+				? stripTrailingParentheticals(oldText)
+				: oldText;
+			const newComparable = hasBackground
+				? stripTrailingParentheticals(newText)
+				: newText;
+			const similarity = textSimilarity(oldComparable, newComparable);
+			const matchScore =
+				oldComparable.length > 0 &&
+				newComparable.length > 0 &&
+				similarity >= MIN_PAIR_SIMILARITY
+					? similarity * 2 - 1
+					: Number.NEGATIVE_INFINITY;
 			const diagonal = scores[row - 1][column - 1] + matchScore;
 			const remove = scores[row - 1][column] - GAP_SCORE;
 			const add = scores[row][column - 1] - GAP_SCORE;
@@ -159,11 +195,21 @@ const alignLyricLines = (
 	let column = newLines.length;
 	while (row > 0 || column > 0) {
 		const move = moves[row][column];
-		if (row > 0 && column > 0 && (move === 1 || (move === 0 && row > 0))) {
+		if (row > 0 && column > 0 && move === 1) {
 			const oldText = oldLines[row - 1];
 			const newText = newLines[column - 1];
+			const hasBackground = oldHasBackground[row - 1] === true;
+			const oldComparable = hasBackground
+				? stripTrailingParentheticals(oldText)
+				: oldText;
+			const newComparable = hasBackground
+				? stripTrailingParentheticals(newText)
+				: newText;
 			reversed.push({
-				status: oldText === newText ? "unchanged" : "changed",
+				status:
+					textSimilarity(oldComparable, newComparable) === 1
+						? "unchanged"
+						: "changed",
 				oldIndex: row - 1,
 				newIndex: column - 1,
 				oldText,
@@ -199,8 +245,20 @@ export const buildGeniusRefreshPlan = (
 	geniusLyrics: string,
 ): GeniusRefreshPlan => {
 	const newLines = extractGeniusLyricLines(geniusLyrics);
-	const oldLines = lyrics.lyricLines.map(getGeniusRefreshLineText);
-	const entries = alignLyricLines(oldLines, newLines);
+	const oldLines: string[] = [];
+	const oldIndices: number[] = [];
+	const oldHasBackground: boolean[] = [];
+	lyrics.lyricLines.forEach((line, index) => {
+		if (line.isBG) return;
+		oldLines.push(getGeniusRefreshLineText(line));
+		oldIndices.push(index);
+		oldHasBackground.push(Boolean(lyrics.lyricLines[index + 1]?.isBG));
+	});
+	const entries = alignLyricLines(oldLines, newLines, oldHasBackground);
+	for (const entry of entries) {
+		if (entry.oldIndex === null) continue;
+		entry.oldIndex = oldIndices[entry.oldIndex] ?? null;
+	}
 
 	return {
 		entries,
@@ -257,6 +315,7 @@ const buildRefreshedLineWords = (
 	const oldWords = line.words;
 	if (line.isLineSynced || line.ignoreSync || oldWords.length <= 1) {
 		const source = oldWords[0];
+		const hasLineRange = line.endTime > line.startTime;
 		return [
 			{
 				...(source ?? newLyricWord()),
@@ -264,8 +323,12 @@ const buildRefreshedLineWords = (
 				romanWord: "",
 				ruby: undefined,
 				obscene: false,
-				startTime: source?.startTime ?? line.startTime,
-				endTime: source?.endTime ?? line.endTime,
+				startTime: hasLineRange
+					? line.startTime
+					: (source?.startTime ?? line.startTime),
+				endTime: hasLineRange
+					? line.endTime
+					: (source?.endTime ?? line.endTime),
 			},
 		];
 	}
@@ -355,15 +418,38 @@ const createAddedLine = (
 	return line;
 };
 
+const trailingBackgroundLines = (
+	lines: LyricLine[],
+	lineIndex: number,
+): LyricLine[] => {
+	const background: LyricLine[] = [];
+	for (let index = lineIndex + 1; index < lines.length; index++) {
+		const line = lines[index];
+		if (!line.isBG) break;
+		background.push(line);
+	}
+	return background;
+};
+
 export const applyGeniusRefreshPlan = (
 	lyrics: TTMLLyric,
 	plan: GeniusRefreshPlan,
 	options: ApplyGeniusRefreshOptions,
 ): ApplyGeniusRefreshResult => {
+	const sourceLines = lyrics.lyricLines;
 	const nextLines: LyricLine[] = [];
 	let changedCount = 0;
 	let addedCount = 0;
 	let removedCount = 0;
+
+	let leadingBackground = 0;
+	while (
+		leadingBackground < sourceLines.length &&
+		sourceLines[leadingBackground].isBG
+	) {
+		nextLines.push(sourceLines[leadingBackground]);
+		leadingBackground++;
+	}
 
 	for (const entry of plan.entries) {
 		if (entry.status === "removed") {
@@ -372,8 +458,12 @@ export const applyGeniusRefreshPlan = (
 				continue;
 			}
 			if (entry.oldIndex === null) continue;
-			const oldLine = lyrics.lyricLines[entry.oldIndex];
-			if (oldLine) nextLines.push(oldLine);
+			const oldLine = sourceLines[entry.oldIndex];
+			if (!oldLine) continue;
+			nextLines.push(
+				oldLine,
+				...trailingBackgroundLines(sourceLines, entry.oldIndex),
+			);
 			continue;
 		}
 
@@ -391,21 +481,32 @@ export const applyGeniusRefreshPlan = (
 		}
 
 		if (entry.oldIndex === null) continue;
-		const oldLine = lyrics.lyricLines[entry.oldIndex];
+		const oldLine = sourceLines[entry.oldIndex];
 		if (!oldLine) continue;
-		if (entry.oldText === entry.newText) {
-			nextLines.push(oldLine);
+		const backgroundLines = trailingBackgroundLines(
+			sourceLines,
+			entry.oldIndex,
+		);
+		if (entry.status === "unchanged") {
+			nextLines.push(oldLine, ...backgroundLines);
 			continue;
 		}
 		changedCount++;
-		nextLines.push({
-			...oldLine,
-			words: buildRefreshedLineWords(
-				oldLine,
-				entry.newText,
-				options.segmentationConfig,
-			),
-		});
+		const nextText =
+			backgroundLines.length > 0
+				? stripTrailingParentheticals(entry.newText) || entry.newText
+				: entry.newText;
+		nextLines.push(
+			{
+				...oldLine,
+				words: buildRefreshedLineWords(
+					oldLine,
+					nextText,
+					options.segmentationConfig,
+				),
+			},
+			...backgroundLines,
+		);
 	}
 
 	return {

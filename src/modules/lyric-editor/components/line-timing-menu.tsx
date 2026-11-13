@@ -3,6 +3,10 @@ import { atom, useAtomValue, useSetAtom, useStore } from "jotai";
 import { useSetImmerAtom } from "jotai-immer";
 import { useTranslation } from "react-i18next";
 import { currentTimeAtom } from "$/modules/audio/states";
+import {
+	copyLineTiming,
+	openTimingPaste,
+} from "$/modules/clipboard-timing/actions";
 import { lyricLinesAtom, selectedLinesAtom } from "$/states/main";
 import {
 	createLineTimingSnapshots,
@@ -73,6 +77,37 @@ export function LineTimingMenuItems() {
 				{t(
 					"contextMenu.snapSelectedLinesToPlayhead",
 					"Snap selected lines to playhead",
+				)}
+			</ContextMenu.Item>
+			<ContextMenu.Separator />
+			<ContextMenu.Item
+				disabled={selectedLinesSize === 0}
+				onSelect={copyLineTiming}
+			>
+				{t("contextMenu.copyLineTiming", "Copy line timing")}
+			</ContextMenu.Item>
+			<ContextMenu.Item
+				disabled={selectedLinesSize === 0}
+				onSelect={() => openTimingPaste("position")}
+			>
+				{t("contextMenu.pasteLineTiming", "Paste line timing…")}
+			</ContextMenu.Item>
+			<ContextMenu.Item
+				disabled={selectedLinesSize === 0}
+				onSelect={() => openTimingPaste("stretch")}
+			>
+				{t(
+					"contextMenu.pasteTimingStretch",
+					"Paste timing with offset / stretch…",
+				)}
+			</ContextMenu.Item>
+			<ContextMenu.Item
+				disabled={selectedLinesSize === 0}
+				onSelect={() => openTimingPaste("position", true)}
+			>
+				{t(
+					"contextMenu.pasteTimingRelative",
+					"Paste as relative…",
 				)}
 			</ContextMenu.Item>
 		</>

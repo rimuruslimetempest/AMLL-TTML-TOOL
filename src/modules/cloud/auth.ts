@@ -10,6 +10,7 @@ import {
 	updateProfile,
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { hasStoredFeatureConsent } from "$/modules/privacy/consent";
 import { globalStore } from "$/states/store";
 import {
 	getFirebaseAuth,
@@ -233,6 +234,11 @@ export async function optimizeAvatarImage(
 }
 
 export async function uploadProfilePhoto(file: Blob | File): Promise<string> {
+	if (!hasStoredFeatureConsent("cloud")) {
+		throw new Error(
+			"Review and accept the current privacy policy before uploading a profile photo.",
+		);
+	}
 	const store = globalStore;
 	const localUser = store.get(currentUserAtom);
 	let authUser = null;

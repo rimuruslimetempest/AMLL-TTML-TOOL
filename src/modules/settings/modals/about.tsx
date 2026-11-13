@@ -17,6 +17,7 @@ import {
 	Box,
 	Button,
 	Card,
+	Checkbox,
 	Flex,
 	Grid,
 	Heading,
@@ -24,8 +25,14 @@ import {
 	Progress,
 	Text,
 } from "@radix-ui/themes";
+import { useAtom } from "jotai";
 import { useState } from "react";
+import { APP_VERSION } from "$/modules/changelog/data";
+import { whatsNewAutoOpenAtom } from "$/modules/changelog/states";
+import { buildReportProblemUrl, RELEASES_URL } from "$/config/links";
+import { whatsNewDialogAtom } from "$/states/dialogs";
 import { useTranslation } from "react-i18next";
+import { PrivacyLinksCard } from "$/modules/privacy/PrivacyDialogs";
 import { openExternal } from "$/utils/openExternal";
 import { clearWebsiteCache, forceWebsiteRefresh } from "$/utils/pwa";
 import { useAppUpdate } from "$/utils/useAppUpdate";
@@ -43,6 +50,8 @@ export const SettingsAboutTab = () => {
 		checkUpdate,
 		relaunchApp,
 	} = useAppUpdate();
+	const [autoWhatsNew, setAutoWhatsNew] = useAtom(whatsNewAutoOpenAtom);
+	const [, setWhatsNewOpen] = useAtom(whatsNewDialogAtom);
 	const [cacheConfirmationOpen, setCacheConfirmationOpen] = useState(false);
 	const [recoveryAction, setRecoveryAction] = useState<
 		"refresh" | "clear" | null
@@ -71,6 +80,46 @@ export const SettingsAboutTab = () => {
 
 	return (
 		<Flex direction="column" gap="4">
+			<PrivacyLinksCard />
+			<Card>
+				<Flex direction="column" gap="3">
+					<Heading size="3">Help &amp; releases</Heading>
+					<Text size="2" color="gray">
+						Current version: v{APP_VERSION}. Report a problem opens an email
+						with only the app version and operating-system name filled in.
+					</Text>
+					<Flex gap="2" wrap="wrap">
+						<Button variant="soft" onClick={() => setWhatsNewOpen(true)}>
+							What&apos;s new
+						</Button>
+						{RELEASES_URL && (
+							<Button
+								variant="soft"
+								onClick={() => openExternal(RELEASES_URL)}
+							>
+								Releases
+							</Button>
+						)}
+						<Button
+							variant="soft"
+							onClick={() => openExternal(buildReportProblemUrl(APP_VERSION))}
+						>
+							Report a problem
+						</Button>
+					</Flex>
+					<Text as="label" size="2">
+						<Flex gap="2" align="center">
+							<Checkbox
+								checked={autoWhatsNew}
+								onCheckedChange={(checked) =>
+									setAutoWhatsNew(checked === true)
+								}
+							/>
+							Show What&apos;s New automatically after an update
+						</Flex>
+					</Text>
+				</Flex>
+			</Card>
 			{/* Software Update at top (Desktop) */}
 			{!isWebsite && (
 				<Card>

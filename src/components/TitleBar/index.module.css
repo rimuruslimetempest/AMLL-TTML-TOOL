@@ -21,9 +21,22 @@
 	font-weight: 500;
 }
 
-@media screen and (max-width: 850px) {
+@media screen and (max-width: 1120px) {
+	.previewToggle,
 	.previewPanelLabel {
-		display: none;
+		display: none !important;
+	}
+}
+
+@media screen and (max-width: 1040px) {
+	.geniusToggle {
+		display: none !important;
+	}
+}
+
+@media screen and (max-width: 960px) {
+	.timerBadge {
+		display: none !important;
 	}
 }
 

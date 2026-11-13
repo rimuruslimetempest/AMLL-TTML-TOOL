@@ -7,6 +7,7 @@ import {
 	persistentLocalCache,
 	persistentMultipleTabManager,
 } from "firebase/firestore";
+import { hasStoredFeatureConsent } from "$/modules/privacy/consent";
 import { globalStore } from "$/states/store";
 import {
 	authLoadingAtom,
@@ -20,6 +21,9 @@ let currentApp: FirebaseApp | null = null;
 let currentAuth: Auth | null = null;
 let currentDb: Firestore | null = null;
 let authUnsubscribe: (() => void) | null = null;
+
+export const CLOUD_PRIVACY_REQUIRED_MESSAGE =
+	"Review and accept the current privacy policy before using cloud features.";
 
 export function getActiveFirebaseConfig(
 	config?: FirebaseProjectConfig,
@@ -45,6 +49,13 @@ export function initFirebase(config?: FirebaseProjectConfig): {
 	auth: Auth | null;
 	db: Firestore | null;
 } {
+	if (!hasStoredFeatureConsent("cloud")) {
+		const store = globalStore;
+		store.set(authLoadingAtom, false);
+		store.set(currentUserAtom, null);
+		return { app: null, auth: null, db: null };
+	}
+
 	const cfg = config || getActiveFirebaseConfig();
 
 	if (!isFirebaseConfigured(cfg)) {
@@ -149,6 +160,9 @@ export function initFirebase(config?: FirebaseProjectConfig): {
 }
 
 export function getFirebaseAuth(): Auth {
+	if (!hasStoredFeatureConsent("cloud")) {
+		throw new Error(CLOUD_PRIVACY_REQUIRED_MESSAGE);
+	}
 	if (!currentAuth) {
 		const { auth } = initFirebase();
 		if (!auth) {
@@ -162,6 +176,9 @@ export function getFirebaseAuth(): Auth {
 }
 
 export function getFirebaseFirestore(): Firestore {
+	if (!hasStoredFeatureConsent("cloud")) {
+		throw new Error(CLOUD_PRIVACY_REQUIRED_MESSAGE);
+	}
 	if (!currentDb) {
 		const { db } = initFirebase();
 		if (!db) {

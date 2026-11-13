@@ -59,6 +59,8 @@ export const audioPlayingAtom = atom(false);
 export const loadedAudioAtom = atom(new Blob([]));
 export const loadedAudioFileNameAtom = atom<string | null>(null);
 export const loadedAudioPathAtom = atom<string | null>(null);
+/** Streamed audio stays in memory and must not be written to the audio cache. */
+export const loadedAudioTransientAtom = atom(false);
 /** Object URL for artwork embedded in the currently loaded audio file. */
 export const audioCoverArtAtom = atom<string | null>(null);
 export const currentTimeAtom = atom(0);

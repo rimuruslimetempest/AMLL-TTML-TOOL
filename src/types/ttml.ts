@@ -14,6 +14,7 @@ import type {
 	LyricWord as AMLLLyricWord,
 } from "@applemusic-like-lyrics/lyric";
 import { uid } from "uid";
+import type { SongInfo } from "$/modules/song-info/types";
 
 export interface TTMLMetadata {
 	key: string;
@@ -32,6 +33,8 @@ export interface TTMLLyric {
 	lyricLines: LyricLine[];
 	marks?: Mark[];
 	sections?: LyricSection[];
+	/** Project-only details. The TTML writer never reads this field. */
+	songInfo?: SongInfo;
 }
 
 export const LYRIC_SECTION_CATEGORIES = [
@@ -83,6 +86,18 @@ export interface LyricWord extends AMLLLyricWord {
 	obscene: boolean;
 	romanWarning?: boolean;
 	grammarWarning?: boolean;
+	/**
+	 * Set when a text edit may have changed how this word should be split.
+	 * Timing is intentionally left untouched; the editor shows a review dot.
+	 */
+	needsReview?: boolean;
+	/**
+	 * How the parts of this token were produced. Purely an editor hint; the
+	 * exporter ignores it, just like ids.
+	 */
+	splitSource?: "manual" | "library" | "room" | "auto-segment";
+	/** Personal library pattern used for this token, when any. */
+	splitPatternId?: string;
 	ruby?: LyricWordBase[];
 	romanWord: string;
 }

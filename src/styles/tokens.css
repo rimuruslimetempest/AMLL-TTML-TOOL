@@ -1,0 +1,238 @@
+/*
+ * New interface tokens.
+ *
+ * Everything is scoped to data-ui-layer="new". Classic continues to use the
+ * existing index.css rules untouched.
+ */
+
+:root[data-ui-layer="new"] {
+	color-scheme: dark;
+
+	/* Typography */
+	--ttml-font-sans:
+		"Segoe UI Variable Text", "Segoe UI", Inter, system-ui, -apple-system,
+		BlinkMacSystemFont, sans-serif;
+	--ttml-font-mono:
+		"Cascadia Mono", "Cascadia Code", "SFMono-Regular", Consolas,
+		"Liberation Mono", monospace;
+	--ttml-font-12: 12px;
+	--ttml-font-13: 13px;
+	--ttml-font-14: 14px;
+	--ttml-font-16: 16px;
+	--ttml-font-20: 20px;
+	--ttml-font-24: 24px;
+	--ttml-line-12: 16px;
+	--ttml-line-13: 18px;
+	--ttml-line-14: 20px;
+	--ttml-line-16: 23px;
+	--ttml-line-20: 28px;
+	--ttml-line-24: 32px;
+	--ttml-weight-regular: 400;
+	--ttml-weight-medium: 500;
+	--ttml-weight-semibold: 600;
+	--ttml-weight-bold: 700;
+
+	/* Spacing */
+	--ttml-space-1: 4px;
+	--ttml-space-2: 8px;
+	--ttml-space-3: 12px;
+	--ttml-space-4: 16px;
+	--ttml-space-5: 24px;
+	--ttml-space-6: 32px;
+
+	/* Radii */
+	--ttml-radius-sm: 7px;
+	--ttml-radius-md: 10px;
+	--ttml-radius-lg: 14px;
+	--ttml-radius-xl: 16px;
+	--ttml-radius-full: 999px;
+
+	/* Background and surfaces */
+	--ttml-bg-base: #07070b;
+	--ttml-bg-raised: #0e0e14;
+	--ttml-bg-overlay: #15151d;
+	--ttml-surface: #101016;
+	--ttml-surface-2: #16161f;
+	--ttml-surface-3: #1c1c26;
+	--ttml-surface-hover: #20202b;
+	--ttml-border: rgba(255, 255, 255, 0.09);
+	--ttml-border-strong: rgba(255, 255, 255, 0.17);
+	--ttml-text: #f4f6fb;
+	--ttml-text-secondary: #b9becd;
+	--ttml-text-muted: #8d94a5;
+	--ttml-text-disabled: #5e6473;
+
+	/* Accent and semantic states */
+	--ttml-accent: #5b5ef0;
+	--ttml-accent-hover: color-mix(
+		in srgb,
+		var(--ttml-accent) 82%,
+		white
+	);
+	--ttml-accent-active: color-mix(
+		in srgb,
+		var(--ttml-accent) 78%,
+		black
+	);
+	--ttml-accent-subtle: color-mix(
+		in srgb,
+		var(--ttml-accent) 16%,
+		transparent
+	);
+	--ttml-accent-contrast: #ffffff;
+	--ttml-success: #55d68b;
+	--ttml-success-subtle: rgba(85, 214, 139, 0.12);
+	--ttml-warning: #f2bd5c;
+	--ttml-warning-subtle: rgba(242, 189, 92, 0.12);
+	--ttml-danger: #f07476;
+	--ttml-danger-subtle: rgba(240, 116, 118, 0.12);
+	--ttml-info: #71b7ff;
+	--ttml-info-subtle: rgba(113, 183, 255, 0.12);
+
+	/* Lyric line states */
+	--ttml-lyric-playing: #a9b4ff;
+	--ttml-lyric-playing-bg: rgba(91, 94, 240, 0.15);
+	--ttml-lyric-selected-bg: rgba(91, 94, 240, 0.19);
+	--ttml-lyric-unsynced: #f2bd5c;
+	--ttml-lyric-unsynced-bg: rgba(242, 189, 92, 0.1);
+	--ttml-lyric-synced: #55d68b;
+	--ttml-lyric-synced-bg: rgba(85, 214, 139, 0.09);
+	--ttml-lyric-flagged: #f07476;
+	--ttml-lyric-flagged-bg: rgba(240, 116, 118, 0.1);
+	--ttml-lyric-locked: #b89cff;
+	--ttml-lyric-locked-bg: rgba(184, 156, 255, 0.1);
+
+	/* Elevation: intentionally cheap, no colored or layered shadows */
+	--ttml-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.28);
+	--ttml-shadow-2: 0 4px 14px rgba(0, 0, 0, 0.3);
+	--ttml-shadow-3: 0 14px 32px rgba(0, 0, 0, 0.38);
+	--ttml-shadow-4: 0 24px 56px rgba(0, 0, 0, 0.46);
+
+	/* Motion */
+	--ttml-duration-fast: 100ms;
+	--ttml-duration-base: 150ms;
+	--ttml-duration-slow: 200ms;
+	--ttml-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+	/* Controls */
+	--ttml-control-height: 32px;
+	--ttml-control-height-sm: 28px;
+	--ttml-focus-ring:
+		0 0 0 2px var(--ttml-bg-base), 0 0 0 4px var(--ttml-accent);
+
+	/* Layers */
+	--ttml-z-base: 0;
+	--ttml-z-sticky: 10;
+	--ttml-z-menu: 1000;
+	--ttml-z-popover: 1100;
+	--ttml-z-dialog: 1200;
+	--ttml-z-toast: 1300;
+	--ttml-z-tooltip: 1400;
+}
+
+:root[data-ui-layer="new"].light {
+	color-scheme: light;
+	--ttml-bg-base: #f3f5f9;
+	--ttml-bg-raised: #ffffff;
+	--ttml-bg-overlay: #ffffff;
+	--ttml-surface: #ffffff;
+	--ttml-surface-2: #edf0f6;
+	--ttml-surface-3: #e4e9f1;
+	--ttml-surface-hover: #e8edf5;
+	--ttml-border: rgba(15, 23, 42, 0.12);
+	--ttml-border-strong: rgba(15, 23, 42, 0.22);
+	--ttml-text: #10121a;
+	--ttml-text-secondary: #495266;
+	--ttml-text-muted: #6a7486;
+	--ttml-text-disabled: #98a1b0;
+	--ttml-accent-hover: color-mix(
+		in srgb,
+		var(--ttml-accent) 86%,
+		black
+	);
+	--ttml-accent-active: color-mix(
+		in srgb,
+		var(--ttml-accent) 72%,
+		black
+	);
+	--ttml-accent-subtle: color-mix(
+		in srgb,
+		var(--ttml-accent) 12%,
+		transparent
+	);
+	--ttml-success: #16844b;
+	--ttml-success-subtle: rgba(22, 132, 75, 0.1);
+	--ttml-warning: #946200;
+	--ttml-warning-subtle: rgba(148, 98, 0, 0.1);
+	--ttml-danger: #c62f36;
+	--ttml-danger-subtle: rgba(198, 47, 54, 0.09);
+	--ttml-info: #1769b0;
+	--ttml-info-subtle: rgba(23, 105, 176, 0.09);
+	--ttml-lyric-playing: #303fd0;
+	--ttml-lyric-playing-bg: rgba(91, 94, 240, 0.1);
+	--ttml-lyric-selected-bg: rgba(91, 94, 240, 0.13);
+	--ttml-lyric-unsynced: #8d6100;
+	--ttml-lyric-unsynced-bg: rgba(141, 97, 0, 0.1);
+	--ttml-lyric-synced: #137a46;
+	--ttml-lyric-synced-bg: rgba(19, 122, 70, 0.08);
+	--ttml-lyric-flagged: #b52831;
+	--ttml-lyric-flagged-bg: rgba(181, 40, 49, 0.09);
+	--ttml-lyric-locked: #6941c6;
+	--ttml-lyric-locked-bg: rgba(105, 65, 198, 0.08);
+	--ttml-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.08);
+	--ttml-shadow-2: 0 4px 12px rgba(15, 23, 42, 0.09);
+	--ttml-shadow-3: 0 12px 28px rgba(15, 23, 42, 0.12);
+	--ttml-shadow-4: 0 22px 48px rgba(15, 23, 42, 0.16);
+	--ttml-focus-ring: 0 0 0 2px var(--ttml-bg-base), 0 0 0 4px var(--ttml-accent);
+}
+
+:root[data-ui-layer="new"][data-density="compact"] {
+	--ttml-control-height: 30px;
+	--ttml-control-height-sm: 26px;
+	--ttml-space-3: 8px;
+	--ttml-space-4: 12px;
+	--ttml-space-5: 16px;
+	--ttml-space-6: 24px;
+}
+
+:root[data-ui-layer="new"][data-contrast="high"] {
+	--ttml-border: rgba(255, 255, 255, 0.34);
+	--ttml-border-strong: rgba(255, 255, 255, 0.58);
+	--ttml-text: #ffffff;
+	--ttml-text-secondary: #dce5f2;
+	--ttml-text-muted: #bdc9d9;
+	--ttml-text-disabled: #8e9aab;
+	--ttml-focus-ring:
+		0 0 0 2px var(--ttml-bg-base), 0 0 0 4px var(--ttml-accent);
+}
+
+:root[data-ui-layer="new"].light[data-contrast="high"] {
+	--ttml-border: rgba(15, 23, 42, 0.3);
+	--ttml-border-strong: rgba(15, 23, 42, 0.52);
+	--ttml-text: #000000;
+	--ttml-text-secondary: #202b3b;
+	--ttml-text-muted: #334155;
+	--ttml-text-disabled: #64748b;
+	--ttml-focus-ring: 0 0 0 2px var(--ttml-bg-base), 0 0 0 4px var(--ttml-accent);
+}
+
+:root[data-ui-layer="new"]
+	:is(
+		button,
+		a,
+		input,
+		select,
+		textarea,
+		[tabindex]:not(.rt-DialogContent):not(.rt-AlertDialogContent)
+	):focus-visible {
+	outline: 2px solid var(--ttml-accent);
+	outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:root[data-ui-layer="new"] {
+		--ttml-duration-fast: 0ms;
+		--ttml-duration-base: 0ms;
+		--ttml-duration-slow: 0ms;
+	}
+}

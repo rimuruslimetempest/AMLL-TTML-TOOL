@@ -53,6 +53,16 @@ const line = (
 	words,
 });
 
+const backgroundLine = (
+	id: string,
+	text: string,
+	startTime: number,
+	endTime: number,
+): LyricLine => ({
+	...line(id, text, startTime, endTime),
+	isBG: true,
+});
+
 const lyrics = (...lines: LyricLine[]): TTMLLyric => ({
 	metadata: [],
 	lyricLines: lines,
@@ -178,5 +188,150 @@ describe("Genius lyric refresh", () => {
 		expect(plan.unchangedCount).toBe(1);
 		expect(result.changedCount).toBe(0);
 		expect(result.lyrics.lyricLines[0]).toBe(current.lyricLines[0]);
+	});
+
+	it("matches a background line against its parenthetical on Genius", () => {
+		const current = lyrics(
+			line(
+				"line-1",
+				"Survival of the fit, only the strong survive",
+				1000,
+				4000,
+			),
+			backgroundLine("line-2", "We still livin' it", 3000, 5000),
+		);
+		const plan = buildGeniusRefreshPlan(
+			current,
+			"Survival of the fit, only the strong survive (We still livin' it)",
+		);
+
+		expect(plan.entries).toHaveLength(1);
+		expect(plan.changedCount).toBe(0);
+		expect(plan.removedCount).toBe(0);
+		expect(plan.unchangedCount).toBe(1);
+
+		const result = applyGeniusRefreshPlan(current, plan, {
+			includeStructuralChanges: true,
+			segmentationConfig,
+		});
+		expect(result.lyrics.lyricLines).toHaveLength(2);
+		expect(result.lyrics.lyricLines[0]).toBe(current.lyricLines[0]);
+		expect(result.lyrics.lyricLines[1]).toBe(current.lyricLines[1]);
+	});
+
+	it("does not report background lines as missing when Genius omits them", () => {
+		const current = lyrics(
+			line("line-1", "Main line", 1000, 2000),
+			backgroundLine("line-2", "Background", 1200, 2200),
+		);
+		const plan = buildGeniusRefreshPlan(current, "Main line");
+
+		expect(plan.removedCount).toBe(0);
+		expect(plan.entries).toHaveLength(1);
+
+		const result = applyGeniusRefreshPlan(current, plan, {
+			includeStructuralChanges: true,
+			segmentationConfig,
+		});
+		expect(result.lyrics.lyricLines).toEqual(current.lyricLines);
+	});
+
+	it("keeps the background line when the main line changes", () => {
+		const current = lyrics(
+			line("line-1", "Old main", 1000, 3000),
+			backgroundLine("line-2", "Old background", 1500, 3500),
+		);
+		const plan = buildGeniusRefreshPlan(current, "New main (New background)");
+
+		expect(plan.changedCount).toBe(1);
+		expect(plan.removedCount).toBe(0);
+
+		const result = applyGeniusRefreshPlan(current, plan, {
+			includeStructuralChanges: false,
+			segmentationConfig,
+		});
+		expect(result.lyrics.lyricLines.map(getGeniusRefreshLineText)).toEqual([
+			"New main",
+			"Old background",
+		]);
+		expect(result.lyrics.lyricLines[1].isBG).toBe(true);
+		expect(result.lyrics.lyricLines[1].startTime).toBe(1500);
+	});
+
+	it("treats heavily rewritten lines as new and missing instead of reusing a timestamp", () => {
+		const current = lyrics(
+			line("line-1", "Quantum physics", 1000, 2000),
+			line("line-2", "Purple monkey", 2000, 3000),
+		);
+		const plan = buildGeniusRefreshPlan(
+			current,
+			"Completely different\nAnother unrelated line",
+		);
+
+		expect(plan.changedCount).toBe(0);
+		expect(plan.removedCount).toBe(2);
+		expect(plan.addedCount).toBe(2);
+
+		const result = applyGeniusRefreshPlan(current, plan, {
+			includeStructuralChanges: true,
+			segmentationConfig,
+		});
+		expect(result.lyrics.lyricLines.map(getGeniusRefreshLineText)).toEqual([
+			"Completely different",
+			"Another unrelated line",
+		]);
+		expect(result.lyrics.lyricLines.map((item) => item.startTime)).toEqual([
+			0, 0,
+		]);
+
+		const preserved = applyGeniusRefreshPlan(current, plan, {
+			includeStructuralChanges: false,
+			segmentationConfig,
+		});
+		expect(preserved.lyrics.lyricLines.map(getGeniusRefreshLineText)).toEqual([
+			"Quantum physics",
+			"Purple monkey",
+		]);
+	});
+
+	it("normalizes accents and typographic punctuation before comparing", () => {
+		const current = lyrics(line("line-1", "Café — l’amour", 1000, 2000));
+		const plan = buildGeniusRefreshPlan(current, "Cafe - l'amour");
+
+		expect(plan.unchangedCount).toBe(1);
+		expect(plan.changedCount).toBe(0);
+	});
+
+	it("preserves line timing when a line-synced line changes", () => {
+		const oldLine = {
+			...line("line-1", "Old words", 1000, 4000, [
+				word("word-1", "Old ", 1000, 2000),
+				word("word-2", "words", 2000, 4000),
+			]),
+			isLineSynced: true,
+		};
+		const current = lyrics(oldLine);
+		const plan = buildGeniusRefreshPlan(current, "New words");
+
+		expect(plan.changedCount).toBe(1);
+		const result = applyGeniusRefreshPlan(current, plan, {
+			includeStructuralChanges: false,
+			segmentationConfig,
+		});
+		const refreshed = result.lyrics.lyricLines[0];
+		expect(refreshed.words).toHaveLength(1);
+		expect(refreshed.startTime).toBe(1000);
+		expect(refreshed.endTime).toBe(4000);
+		expect(refreshed.words[0].startTime).toBe(1000);
+		expect(refreshed.words[0].endTime).toBe(4000);
+	});
+
+	it("keeps a short line that only gains a word", () => {
+		const current = lyrics(line("line-1", "Oh", 1000, 2000));
+		const plan = buildGeniusRefreshPlan(current, "Oh yeah");
+
+		expect(plan.changedCount).toBe(1);
+		expect(plan.addedCount).toBe(0);
+		expect(plan.removedCount).toBe(0);
 	});
 });

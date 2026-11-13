@@ -87,17 +87,31 @@ const plugins: Plugin[] = [
 			description: "A TTML lyrics editor",
 			theme_color: "#18a058",
 			icons: [
-				{
-					src: "./icons/Square30x30Logo.png",
-					sizes: "30x30",
-					type: "image/png",
-				},
-				{
-					src: "./logo.png",
-					sizes: "1024x1024",
-					type: "image/png",
-				},
-			],
+					{
+						src: "./pwa-192x192.png",
+						sizes: "192x192",
+						type: "image/png",
+						purpose: "any",
+					},
+					{
+						src: "./pwa-512x512.png",
+						sizes: "512x512",
+						type: "image/png",
+						purpose: "any",
+					},
+					{
+						src: "./pwa-maskable-256x256.png",
+						sizes: "256x256",
+						type: "image/png",
+						purpose: "maskable",
+					},
+					{
+						src: "./pwa-maskable-512x512.png",
+						sizes: "512x512",
+						type: "image/png",
+						purpose: "maskable",
+					},
+				],
 		},
 	}),
 ];

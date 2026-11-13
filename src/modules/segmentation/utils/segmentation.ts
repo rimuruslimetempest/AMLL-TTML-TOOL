@@ -588,7 +588,15 @@ export function segmentLyricLines(
 		const newWords: LyricWord[] = [];
 		for (const word of wordsToProcess) {
 			const segments = segmentWord(word, config, context);
-			newWords.push(...segments);
+			newWords.push(
+				...(segments.length > 1
+					? segments.map((segment) => ({
+							...segment,
+							splitSource: "auto-segment" as const,
+							splitPatternId: undefined,
+						}))
+					: segments),
+			);
 		}
 
 		return {

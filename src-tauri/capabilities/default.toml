@@ -120,4 +120,17 @@ identifier = "fs:allow-exists"
 [[permissions]]
 identifier = "fs:allow-stat"
 
+[[permissions]]
+identifier = "fs:allow-temp-write-recursive"
 
+[[permissions]]
+identifier = "fs:allow-temp-read-recursive"
+
+
+
+[[permissions]]
+identifier = "fs:allow-appdata-read-recursive"
+[[permissions]]
+identifier = "fs:allow-appdata-write-recursive"
+[[permissions]]
+identifier = "fs:allow-mkdir"

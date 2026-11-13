@@ -1,0 +1,121 @@
+.bar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-shrink: 0;
+	min-height: 46px;
+	padding: 6px 12px;
+	border-bottom: 1px solid
+		color-mix(in srgb, var(--ttml-accent) 30%, var(--ttml-border));
+	background:
+		linear-gradient(
+			90deg,
+			color-mix(in srgb, var(--ttml-accent) 13%, transparent),
+			transparent 72%
+		), var(--ttml-surface);
+	color: var(--ttml-text);
+	z-index: 5;
+}
+
+.icon {
+	display: grid;
+	place-items: center;
+	flex: 0 0 auto;
+	width: 28px;
+	height: 28px;
+	border: 1px solid
+		color-mix(in srgb, var(--ttml-accent) 36%, var(--ttml-border));
+	border-radius: var(--ttml-radius-sm);
+	background: var(--ttml-accent-subtle);
+	color: var(--ttml-accent-hover);
+}
+
+.icon svg {
+	width: 15px;
+	height: 15px;
+}
+
+.copy {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	min-width: 0;
+	flex: 1 1 auto;
+}
+
+.title {
+	color: var(--ttml-text);
+	font-size: var(--ttml-font-13);
+	font-weight: var(--ttml-weight-semibold);
+	line-height: var(--ttml-line-13);
+}
+
+.hint {
+	overflow: hidden;
+	color: var(--ttml-text-muted);
+	font-size: var(--ttml-font-12);
+	line-height: var(--ttml-line-12);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.count {
+	flex: 0 0 auto;
+	padding: 3px 7px;
+	border: 1px solid
+		color-mix(in srgb, var(--ttml-accent) 26%, var(--ttml-border));
+	border-radius: var(--ttml-radius-full);
+	background: var(--ttml-surface-2);
+	color: var(--ttml-text-secondary);
+	font-family: var(--ttml-font-mono);
+	font-size: var(--ttml-font-12);
+	line-height: var(--ttml-line-12);
+	white-space: nowrap;
+}
+
+.cancel {
+	flex: 0 0 auto;
+	gap: 6px;
+	height: 28px !important;
+	min-height: 28px !important;
+	padding-inline: 8px !important;
+	border: 1px solid var(--ttml-border) !important;
+	background: var(--ttml-surface-2) !important;
+	color: var(--ttml-text-secondary) !important;
+	font-size: var(--ttml-font-12) !important;
+	white-space: nowrap;
+}
+
+.cancel:hover {
+	border-color: var(--ttml-border-strong) !important;
+	background: var(--ttml-surface-hover) !important;
+	color: var(--ttml-text) !important;
+}
+
+.cancel svg {
+	width: 14px;
+	height: 14px;
+}
+
+.kbd {
+	margin-left: 2px;
+	padding: 1px 4px;
+	border: 1px solid var(--ttml-border);
+	border-radius: 4px;
+	background: var(--ttml-bg-base);
+	color: var(--ttml-text-muted);
+	font-family: var(--ttml-font-mono);
+	font-size: var(--ttml-font-12);
+	line-height: 14px;
+}
+
+@media (max-width: 760px) {
+	.hint,
+	.count {
+		display: none;
+	}
+
+	.bar {
+		padding-inline: 8px;
+	}
+}

@@ -876,3 +876,113 @@ button.topMenuBarButton:where([data-state="open"], :active) {
 	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
 }
 
+/* ==========================================================================
+   Classic / New interface layers
+   ========================================================================== */
+
+:root[data-ui-layer="classic"] {
+	--titlebar-backdrop-filter: none;
+	--audio-bar-backdrop-filter: none;
+	--glass-blur: 0px;
+	--custom-backdrop-blur: 0px;
+}
+
+:root[data-ui-layer="classic"] [data-ui-chrome="titlebar"] {
+	height: calc(40px * var(--scaling, 1));
+	min-height: calc(40px * var(--scaling, 1));
+}
+
+:root[data-ui-layer="classic"] button.topMenuBarButton {
+	height: 24px !important;
+	line-height: 24px !important;
+	padding: 0 7px !important;
+	border-radius: 3px !important;
+	font-size: 12px !important;
+}
+
+:root[data-ui-layer="classic"]
+	:is(
+		.rt-Card,
+		.rt-DialogContent,
+		.rt-PopoverContent,
+		.rt-DropdownMenuContent,
+		.rt-DropdownMenuSubContent,
+		.rt-ContextMenuContent,
+		.rt-SelectContent
+	) {
+	border-radius: 6px !important;
+	box-shadow: none !important;
+}
+
+:root[data-ui-layer="classic"]
+	:is(
+		.rt-BaseButton,
+		.rt-IconButton,
+		.rt-TextFieldRoot,
+		.rt-SelectTrigger,
+		.rt-SegmentedControlRoot
+	) {
+	border-radius: 4px !important;
+}
+
+:root[data-ui-layer="classic"] .rt-SegmentedControlIndicator::before {
+	border-radius: 3px !important;
+}
+
+:root[data-ui-layer="classic"]
+	:is(
+		.rt-DropdownMenuContent,
+		.rt-DropdownMenuSubContent,
+		.rt-ContextMenuContent,
+		.rt-SelectContent,
+		.rt-PopoverContent
+	) {
+	animation: none !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
+}
+
+:root[data-ui-layer="classic"] .glassPanel {
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
+}
+
+/* ==========================================================================
+   Performance mode
+   ========================================================================== */
+
+:root[data-performance-mode="true"] {
+	--titlebar-backdrop-filter: none;
+	--audio-bar-backdrop-filter: none;
+	--glass-blur: 0px;
+	--custom-backdrop-blur: 0px;
+}
+
+:root[data-performance-mode="true"] *,
+:root[data-performance-mode="true"] *::before,
+:root[data-performance-mode="true"] *::after {
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
+	animation-duration: 0.001ms !important;
+	animation-iteration-count: 1 !important;
+	transition-duration: 0.001ms !important;
+	scroll-behavior: auto !important;
+}
+
+:root[data-performance-mode="true"]
+	[data-performance-decorative="background"] {
+	filter: none !important;
+	transform: none !important;
+}
+
+:root[data-performance-mode="true"]
+	:is(
+		.rt-Card,
+		.rt-DialogContent,
+		.rt-PopoverContent,
+		.rt-DropdownMenuContent,
+		.rt-SelectContent
+	) {
+	box-shadow: none !important;
+}
+

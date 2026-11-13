@@ -33,3 +33,4 @@ export const spotMatchIncludeOriginalIdAtom = atomWithStorage<boolean>(
 export const spotMatchSourceAtom = atom<SpotMatchSourceTrack | null>(null);
 export const spotMatchCandidatesAtom = atom<SpotMatchCandidate[]>([]);
 export const spotMatchSelectedIdsAtom = atom<Set<string>>(new Set<string>());
+export const spotMatchLastOutputAtom = atom<string>("");

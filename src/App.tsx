@@ -26,7 +26,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { getCurrentWindow, type PhysicalSize } from "@tauri-apps/api/window";
 import { platform, version } from "@tauri-apps/plugin-os";
-import { AnimatePresence, motion } from "framer-motion";
+import { MotionConfig, motion } from "framer-motion";
 import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai";
 import {
 	Suspense,
@@ -50,6 +50,7 @@ import {
 	boykisserModeAtom,
 	boykisserUnlockedAtom,
 	customAccentColorAtom,
+	newAccentColorAtom,
 	customGradientAngleAtom,
 	customGradientCenterAtom,
 	customGradientColorsAtom,
@@ -103,18 +104,25 @@ import {
 	allowConsecutiveBackgroundLinesAtom,
 	lyricTextNormalizationOptionsAtom,
 	legacyDarkThemeAtom,
+	performanceModeAtom,
+	contrastAtom,
+	densityAtom,
 	DEFAULT_UI_SCALE,
 	MAX_UI_SCALE,
 	MIN_UI_SCALE,
 	uiScaleAtom,
+	uiLayerAtom,
+	UiLayer,
 	spectrogramFullWidthAtom,
 } from "$/modules/settings/states/index.ts";
 import styles from "./App.module.css";
 import DarkThemeDetector from "./components/DarkThemeDetector";
 import RibbonBar from "./components/RibbonBar";
+import { NewTitleBar } from "./components/TitleBar/NewTitleBar";
 import { TitleBar } from "./components/TitleBar";
 import { ResizablePanel } from "./components/ResizablePanel";
 import { useFileOpener } from "./hooks/useFileOpener.ts";
+import { useViewportWidth } from "./hooks/useViewportWidth.ts";
 import AudioControls from "./modules/audio/components/index.tsx";
 import { useAudioFeedback } from "./modules/audio/hooks/useAudioFeedback.ts";
 import { useAudioCues } from "$/modules/audio/cues/useAudioCues";
@@ -126,7 +134,25 @@ import { AutosaveManager } from "./modules/project/autosave/AutosaveManager.tsx"
 import { ProjectTimerManager } from "./modules/project/timer/ProjectTimerManager.tsx";
 import exportTTMLText from "./modules/project/logic/ttml-writer.ts";
 import { AiCheckPanel } from "$/modules/ai-check/AiCheckPanel";
-import { SubmissionChecklistPanel } from "$/modules/submission-checklist/SubmissionChecklistPanel";
+import { TtmlUploaderPanel } from "$/modules/ttml-uploader/TtmlUploaderPanel";
+import { CollabDialog } from "$/modules/collab/CollabDialog";
+import { CollabAudioAutoLoad } from "$/modules/collab/CollabAudioAutoLoad";
+import { CollabOverlay } from "$/modules/collab/CollabChat";
+import { CollabJoinGate } from "$/modules/collab/CollabJoinGate";
+import { CollabPanels } from "$/modules/collab/CollabPanels";
+import { ChangelogAutoOpen } from "$/modules/changelog/ChangelogAutoOpen";
+import { ClipboardHotkeys } from "$/modules/clipboard-timing/components/ClipboardHotkeys";
+import { ClipboardIndicator } from "$/modules/clipboard-timing/components/ClipboardIndicator";
+import { SplitLibraryProvider } from "$/modules/split-library/SplitLibraryProvider";
+import { SplitSuggestion } from "$/modules/split-library/components/SplitSuggestion";
+import { EditMatchesPrompt } from "$/modules/edit-matching/EditMatchesPrompt";
+import { CrashReportPrompt } from "$/modules/privacy/CrashReportPrompt";
+import { NewBottomBar } from "$/components/AppShell/NewShellChrome";
+import { PrivacyDialogs } from "$/modules/privacy/PrivacyDialogs";
+import { captureDiagnosticException } from "$/modules/privacy/diagnostics";
+import { NewUiBoundary } from "$/design-system/NewUiBoundary";
+import { usePerformanceModeSuggestion } from "./hooks/usePerformanceModeSuggestion";
+import { ScreenRecorderDialog } from "$/modules/recorder/ScreenRecorderDialog";
 import { GlobalDragOverlay } from "./modules/project/modals/GlobalDragOverlay.tsx";
 import {
 	customBackgroundBlurAtom,
@@ -380,10 +406,12 @@ function App() {
 	const isCurrentlyFullscreen = useRef<boolean>(false);
 	const showTouchSyncPanel = useAtomValue(showTouchSyncPanelAtom);
 	const showPreviewPanel = useAtomValue(showPreviewPanelAtom);
+	const viewportWidth = useViewportWidth();
 	// Preview mode already owns the entire editor area. Keep the sync preview
 	// pane's setting intact for when the user returns, but never render a second
-	// preview beside it.
-	const previewPanelVisible = showPreviewPanel && toolMode !== ToolMode.Preview;
+	// preview beside it or squeeze it into a narrow workspace.
+	const previewPanelVisible =
+		showPreviewPanel && toolMode !== ToolMode.Preview && viewportWidth >= 1120;
 	const customBackgroundImage = useAtomValue(customBackgroundImageAtom);
 	const customBackgroundOpacity = useAtomValue(customBackgroundOpacityAtom);
 	const customBackgroundMask = useAtomValue(customBackgroundMaskAtom);
@@ -394,6 +422,15 @@ function App() {
 	const [accentColor, setAccentColor] = useAtom(accentColorAtom);
 	const useCustomAccent = useAtomValue(useCustomAccentAtom);
 	const customAccentColor = useAtomValue(customAccentColorAtom);
+	const newAccentColor = useAtomValue(newAccentColorAtom);
+	const resolvedNewAccent = /^#[0-9a-f]{6}$/i.test(newAccentColor)
+		? newAccentColor
+		: "#5b5ef0";
+	const newAccentLuminance = getLuminance(resolvedNewAccent);
+	const newAccentContrast =
+		newAccentLuminance !== null && newAccentLuminance > 0.55
+			? "#07070b"
+			: "#ffffff";
 
 	const useCustomGradient = useAtomValue(useCustomGradientAtom);
 	const customGradientColors = useAtomValue(customGradientColorsAtom);
@@ -444,7 +481,18 @@ function App() {
 	const vBackdropBlur = useAtomValue(advBackdropBlurAtom);
 	const appLayoutOrder = useAtomValue(appLayoutOrderAtom);
 	const vRibbonPosition = useAtomValue(vRibbonPositionAtom);
+	const responsiveRibbonPosition: "top" | "bottom" | "left" | "right" =
+		viewportWidth < 1024 &&
+		(vRibbonPosition === "left" || vRibbonPosition === "right")
+			? "top"
+			: vRibbonPosition;
+	const uiLayer = useAtomValue(uiLayerAtom);
+	const performanceMode = useAtomValue(performanceModeAtom);
+	const density = useAtomValue(densityAtom);
+	const contrast = useAtomValue(contrastAtom);
 	const spectrogramFullWidth = useAtomValue(spectrogramFullWidthAtom);
+
+	usePerformanceModeSuggestion();
 
 	useEffect(() => {
 		if (vActiveLine === "rgba(56, 189, 248, 0.2)") {
@@ -831,6 +879,29 @@ function App() {
 			font-style: ${appFontStyle} !important;
 			${vars}
 		}
+		html[data-ui-layer="new"] {
+			--ttml-accent: ${resolvedNewAccent} !important;
+			--ttml-accent-contrast: ${newAccentContrast} !important;
+			--accent-9: ${resolvedNewAccent} !important;
+			--accent-10: color-mix(in srgb, ${resolvedNewAccent} 82%, white) !important;
+			--accent-11: color-mix(in srgb, ${resolvedNewAccent} 82%, white) !important;
+			--accent-a3: color-mix(in srgb, ${resolvedNewAccent} 18%, transparent) !important;
+			--accent-contrast: ${newAccentContrast} !important;
+		}
+		html[data-ui-layer="new"] .radix-themes {
+			--ttml-accent: ${resolvedNewAccent} !important;
+			--ttml-accent-contrast: ${newAccentContrast} !important;
+			--accent-9: ${resolvedNewAccent} !important;
+			--accent-10: color-mix(in srgb, ${resolvedNewAccent} 82%, white) !important;
+			--accent-11: color-mix(in srgb, ${resolvedNewAccent} 82%, white) !important;
+			--accent-a3: color-mix(in srgb, ${resolvedNewAccent} 18%, transparent) !important;
+			--accent-contrast: ${newAccentContrast} !important;
+		}
+		html[data-ui-layer="new"].light,
+		html[data-ui-layer="new"].light .radix-themes {
+			--accent-10: color-mix(in srgb, ${resolvedNewAccent} 84%, black) !important;
+			--accent-11: color-mix(in srgb, ${resolvedNewAccent} 76%, black) !important;
+		}
 		`;
 	}, [
 		isDarkTheme,
@@ -875,6 +946,7 @@ function App() {
 		customEditorFontName,
 		customPreviewFontData,
 		customPreviewFontName,
+		newAccentColor,
 	]);
 
 	useLayoutEffect(() => {
@@ -1389,6 +1461,14 @@ function App() {
 			window.removeEventListener("keydown", handleZoomKeys, { capture: true });
 	}, [setUiScale]);
 
+	useLayoutEffect(() => {
+		const root = document.documentElement;
+		root.dataset.uiLayer = uiLayer;
+		root.dataset.performanceMode = performanceMode ? "true" : "false";
+		root.dataset.density = density;
+		root.dataset.contrast = contrast;
+	}, [uiLayer, performanceMode, density, contrast]);
+
 	useEffect(() => {
 		const isDark = effectiveTheme === "dark";
 		const addClass = isDark ? "dark" : "light";
@@ -1403,27 +1483,39 @@ function App() {
 		<Theme
 			appearance={effectiveTheme}
 			data-legacy-dark-theme={legacyDarkTheme || undefined}
+			data-ui-layer={uiLayer}
+			data-performance-mode={performanceMode ? "true" : "false"}
+			data-density={density}
+			data-contrast={contrast}
 			panelBackground="translucent"
 			hasBackground={true}
 			accentColor={accentColor}
 			className={styles.radixTheme}
 		>
-			<ErrorBoundary
-				FallbackComponent={AppErrorPage}
+			<MotionConfig reducedMotion={performanceMode ? "always" : "user"}>
+				<ErrorBoundary
+					FallbackComponent={AppErrorPage}
+				onError={(error, info) =>
+					captureDiagnosticException(error, {
+						componentStack: info.componentStack,
+					})
+				}
 				onReset={(_details) => {
 					// TODO
 				}}
 			>
-				<MigrationNotice />
-				<DiscordPresence />
+				<NewUiBoundary>
+					<MigrationNotice />
+					<DiscordPresence />
 				<BeginnerGuide />
 				<ChecklistBackgroundSync />
 				{customStyleString ? <style>{customStyleString}</style> : null}
 				{hasCustomBackground && (
-					<div className={styles.customBackgroundLayer} aria-hidden="true">
-						<div
-							className={styles.customBackgroundImage}
-							style={{
+							<div className={styles.customBackgroundLayer} aria-hidden="true">
+								<div
+									className={styles.customBackgroundImage}
+									data-performance-decorative="background"
+									style={{
 								backgroundImage:
 									backgroundMode === "image"
 										? `url("${customBackgroundImage}")`
@@ -1451,7 +1543,10 @@ function App() {
 						/>
 					</div>
 				)}
-				<div className={styles.appContent}>
+				<div
+					className={styles.appContent}
+					data-new-shell={uiLayer === UiLayer.New ? "" : undefined}
+				>
 					<AutosaveManager />
 					<ProjectTimerManager />
 					<GlobalDragOverlay />
@@ -1461,7 +1556,12 @@ function App() {
 					<LinePropertiesKeybinding />
 					<DarkThemeDetector />
 					<Flex direction="column" height="100vh">
-						{!isPreviewFullscreen && <TitleBar key="titlebar" />}
+						{!isPreviewFullscreen &&
+							(uiLayer === UiLayer.New ? (
+								<NewTitleBar key="titlebar" />
+							) : (
+								<TitleBar key="titlebar" />
+							))}
 						{(() => {
 							const sidePreviewPanelElement = previewPanelVisible ? (
 								<ResizablePanel>
@@ -1484,10 +1584,14 @@ function App() {
 								if (
 									id === "ribbonbar" &&
 									!isPreviewFullscreen &&
-									(vRibbonPosition === "top" || vRibbonPosition === "bottom")
+									(responsiveRibbonPosition === "top" ||
+										responsiveRibbonPosition === "bottom")
 								) {
 									return (
-										<RibbonBar key="ribbonbar" position={vRibbonPosition} />
+										<RibbonBar
+											key="ribbonbar"
+											position={responsiveRibbonPosition}
+										/>
 									);
 								}
 								if (id === "editor") {
@@ -1505,8 +1609,7 @@ function App() {
 										>
 											<Flex height="100%" overflow="hidden">
 												<Box flexGrow="1" minWidth="0" overflow="hidden">
-													<AnimatePresence mode="wait">
-														{toolMode !== ToolMode.Preview && (
+													{toolMode !== ToolMode.Preview && (
 															<SuspensePlaceHolder key={toolMode}>
 																<motion.div
 																	layout="position"
@@ -1539,19 +1642,17 @@ function App() {
 																	>
 																		<PreviewModeSwitcher />
 																	</motion.div>
-																</Box>
-															</SuspensePlaceHolder>
-														)}
-													</AnimatePresence>
-												</Box>
+																</Box>														</SuspensePlaceHolder>
+													)}
+											</Box>
 											</Flex>
 										</Box>
 									);
 
 									const renderedEditor =
 										!isPreviewFullscreen &&
-										(vRibbonPosition === "left" ||
-											vRibbonPosition === "right") ? (
+										(responsiveRibbonPosition === "left" ||
+											responsiveRibbonPosition === "right") ? (
 											<Flex
 												direction="row"
 												flexGrow="1"
@@ -1559,11 +1660,11 @@ function App() {
 												overflow="hidden"
 												key="editor-row"
 											>
-												{vRibbonPosition === "left" && (
+												{responsiveRibbonPosition === "left" && (
 													<RibbonBar isSidebar position="left" />
 												)}
 												{editorContent}
-												{vRibbonPosition === "right" && (
+												{responsiveRibbonPosition === "right" && (
 													<RibbonBar isSidebar position="right" />
 												)}
 											</Flex>
@@ -1654,11 +1755,25 @@ function App() {
 									</Flex>
 									{sidePreviewPanelElement}
 								</Flex>
-							);
-						})()}
-					</Flex>
-					<AiCheckPanel />
-					<SubmissionChecklistPanel />
+							);								})()}
+								{!isPreviewFullscreen && <NewBottomBar />}
+							</Flex>
+							<AiCheckPanel />
+					<TtmlUploaderPanel />
+					<SplitLibraryProvider />
+					<SplitSuggestion />
+					<ClipboardHotkeys />
+					<ClipboardIndicator />
+					<ChangelogAutoOpen />
+					<CollabAudioAutoLoad />
+					<CollabJoinGate />
+					<CollabOverlay />
+					<CollabPanels />
+					<EditMatchesPrompt />
+					<CrashReportPrompt />
+					<CollabDialog />
+					<PrivacyDialogs />
+					<ScreenRecorderDialog />
 					<Suspense fallback={null}>
 						<Dialogs />
 					</Suspense>
@@ -1690,8 +1805,10 @@ function App() {
 							/>
 						)}
 				</div>
-				<RainEffect isRaining={isRaining} />
-			</ErrorBoundary>
+				<RainEffect isRaining={isRaining && !performanceMode} />
+				</NewUiBoundary>
+				</ErrorBoundary>
+			</MotionConfig>
 		</Theme>
 	);
 }

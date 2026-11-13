@@ -27,4 +27,5 @@ describe("allowConsecutiveBackgroundLinesAtom", () => {
 		expect(store.get(allowConsecutiveBackgroundLinesAtom)).toBe(true);
 		expect(store.get(openSpotMatchAfterSaveAtom)).toBe(true);
 	});
+
 });

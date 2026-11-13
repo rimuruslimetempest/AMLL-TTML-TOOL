@@ -1,0 +1,14 @@
+.newShell {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-height: 0;
+	background: var(--ttml-bg-raised);
+}
+
+.spectrogramSlot {
+	flex: 0 0 auto;
+	overflow: hidden;
+	border-bottom: 1px solid var(--ttml-border);
+	background: var(--ttml-bg-base);
+}

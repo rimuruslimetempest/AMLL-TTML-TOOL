@@ -10,6 +10,7 @@ import {
 	PlugConnected24Regular,
 	Search24Regular,
 	Settings24Regular,
+	ShieldCheckmark24Regular,
 	Speaker224Regular,
 } from "@fluentui/react-icons";
 import {
@@ -39,6 +40,7 @@ import { SettingsBackupTab } from "./backup";
 import { SettingsCommonTab } from "./common";
 import { SettingsKeyBindingsDialog } from "./keybindings";
 import styles from "./settings.module.css";
+import { PrivacySettingsTab } from "$/modules/privacy/PrivacySettingsTab";
 import { SettingsSpectrogramTab } from "./spectrogram";
 import { DiscordPresenceSettings } from "$/modules/discord-presence/DiscordPresenceSettings";
 
@@ -282,6 +284,14 @@ export const SettingsDialog = memo(() => {
 								{t("settingsDialog.tab.account", "Account")}
 							</NavigationItem>
 							<NavigationItem
+								value="privacy"
+								icon={<ShieldCheckmark24Regular />}
+								matchCount={tabMatchCounts["privacy"]}
+								onSelect={() => searchQuery && setSearchQuery("")}
+							>
+								{t("settingsDialog.tab.privacy", "Privacy")}
+							</NavigationItem>
+							<NavigationItem
 								value="editor"
 								icon={<Edit24Regular />}
 								matchCount={tabMatchCounts["editor"]}
@@ -422,6 +432,15 @@ export const SettingsDialog = memo(() => {
 											</Flex>
 										)}
 
+										{matchingTabs.has("privacy") && (
+											<Flex direction="column" gap="2">
+												<Heading size="4">
+													{t("settingsDialog.tab.privacy", "Privacy")}
+												</Heading>
+												<PrivacySettingsTab />
+											</Flex>
+										)}
+
 										{matchingTabs.has("keybinding") && (
 											<Flex direction="column" gap="2">
 												<Heading size="4">
@@ -501,6 +520,17 @@ export const SettingsDialog = memo(() => {
 										)}
 									>
 										<SettingsAccountTab />
+									</SettingsPage>
+								</Tabs.Content>
+								<Tabs.Content value="privacy" className={styles.tabContent}>
+									<SettingsPage
+										title={t("settingsDialog.tab.privacy", "Privacy")}
+										description={t(
+											"settingsDialog.page.privacyDesc",
+											"Consent, diagnostic reports, local data, and deletion instructions.",
+										)}
+									>
+										<PrivacySettingsTab />
 									</SettingsPage>
 								</Tabs.Content>
 								<Tabs.Content value="editor" className={styles.tabContent}>

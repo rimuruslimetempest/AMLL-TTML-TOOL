@@ -143,6 +143,7 @@ export const serializeLyricState = (lyric: TTMLLyric): string => {
 		metadata: lyric.metadata,
 		marks: lyric.marks || [],
 		sections: lyric.sections || [],
+		songInfo: lyric.songInfo ?? null,
 	});
 };
 

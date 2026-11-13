@@ -6,18 +6,12 @@ import {
 	Search16Regular,
 } from "@fluentui/react-icons";
 import {
-	Badge,
-	Box,
 	Button,
-	Card,
 	Checkbox,
 	Dialog,
-	Flex,
-	Heading,
 	IconButton,
 	ScrollArea,
 	Spinner,
-	Text,
 	TextField,
 } from "@radix-ui/themes";
 import { useAtom, useAtomValue, useStore } from "jotai";
@@ -38,12 +32,14 @@ import type { TTMLMetadata } from "$/types/ttml";
 import { getGeniusKeyGuideUrl } from "$/utils/genius-guide";
 import { openExternal } from "$/utils/openExternal";
 import { msToTimestamp } from "$/utils/timestamp";
+import { getBetterGeniusCoverArt } from "../utils/image";
 import {
 	applyGeniusRefreshPlan,
 	buildGeniusRefreshPlan,
 	extractGeniusLyricLines,
 	type GeniusRefreshEntry,
 } from "../utils/lyrics-refresh";
+import styles from "./GeniusLyricsRefreshDialog.module.css";
 
 interface GeniusRefreshHit {
 	id: number;
@@ -94,20 +90,21 @@ const findDirectGeniusUrl = (metadata: TTMLMetadata[]): string | null => {
 const getErrorMessage = (error: unknown) =>
 	error instanceof Error ? error.message : String(error);
 
-const getBadgeColor = (
-	status: GeniusRefreshEntry["status"],
-): "gray" | "green" | "orange" | "blue" | "red" => {
+const getEntryStatusClass = (status: GeniusRefreshEntry["status"]) => {
 	switch (status) {
 		case "unchanged":
-			return "green";
+			return styles.statusUnchanged;
 		case "changed":
-			return "orange";
+			return styles.statusChanged;
 		case "added":
-			return "blue";
+			return styles.statusAdded;
 		case "removed":
-			return "red";
+			return styles.statusRemoved;
 	}
 };
+
+const getCoverUrl = (hit: GeniusRefreshHit) =>
+	getBetterGeniusCoverArt(hit.cover, 100);
 
 export const GeniusLyricsRefreshDialog = () => {
 	const { t, i18n } = useTranslation();
@@ -130,6 +127,7 @@ export const GeniusLyricsRefreshDialog = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [tempApiKey, setTempApiKey] = useState("");
 	const requestIdRef = useRef(0);
+	const searchRequestIdRef = useRef(0);
 
 	const initialQuery = useCallback(() => {
 		const directUrl = findDirectGeniusUrl(lyricLines.metadata);
@@ -180,6 +178,7 @@ export const GeniusLyricsRefreshDialog = () => {
 		async (rawQuery: string) => {
 			const normalizedQuery = rawQuery.trim();
 			if (!normalizedQuery) return;
+			const searchId = ++searchRequestIdRef.current;
 			setSearching(true);
 			setHasSearched(true);
 			setResults([]);
@@ -193,6 +192,7 @@ export const GeniusLyricsRefreshDialog = () => {
 						normalizedQuery,
 						geniusApiKey,
 					);
+					if (searchId !== searchRequestIdRef.current) return;
 					if (!resolved || !Number.isFinite(resolved.id)) {
 						throw new Error(
 							t(
@@ -221,6 +221,7 @@ export const GeniusLyricsRefreshDialog = () => {
 					const data = await GeniusApi.search(normalizedQuery, geniusApiKey, {
 						enrichAlbums: false,
 					});
+					if (searchId !== searchRequestIdRef.current) return;
 					for (const { result } of data.response.hits) {
 						hits.push({
 							id: result.id,
@@ -238,15 +239,18 @@ export const GeniusLyricsRefreshDialog = () => {
 					}
 				}
 				setResults(hits);
-				if (hits[0]) await loadLyrics(hits[0]);
+				// When there is more than one result, let the user pick instead
+				// of silently comparing against an unrelated version.
+				if (hits.length === 1) await loadLyrics(hits[0]);
 			} catch (searchError) {
+				if (searchId !== searchRequestIdRef.current) return;
 				setError(
 					t("genius.refresh.searchFailed", "Genius search failed: {error}", {
 						error: getErrorMessage(searchError),
 					}),
 				);
 			} finally {
-				setSearching(false);
+				if (searchId === searchRequestIdRef.current) setSearching(false);
 			}
 		},
 		[geniusApiKey, loadLyrics, t],
@@ -254,6 +258,8 @@ export const GeniusLyricsRefreshDialog = () => {
 
 	useEffect(() => {
 		if (!isOpen) return;
+		searchRequestIdRef.current++;
+		requestIdRef.current++;
 		const initial = initialQuery();
 		setQuery(initial);
 		setResults([]);
@@ -263,12 +269,20 @@ export const GeniusLyricsRefreshDialog = () => {
 		setIncludeStructuralChanges(false);
 		setError(null);
 		setTempApiKey("");
+		setSearching(false);
+		setLoadingLyrics(false);
 		if (!initial || (!geniusApiKey && !isGeniusSongUrl(initial))) return;
 		const timeout = window.setTimeout(() => {
 			void runSearch(initial);
 		}, 80);
 		return () => window.clearTimeout(timeout);
 	}, [isOpen, initialQuery, runSearch, geniusApiKey]);
+
+	useEffect(() => {
+		if (isOpen) return;
+		searchRequestIdRef.current++;
+		requestIdRef.current++;
+	}, [isOpen]);
 
 	const plan = useMemo(
 		() => (rawLyrics ? buildGeniusRefreshPlan(lyricLines, rawLyrics) : null),
@@ -284,6 +298,7 @@ export const GeniusLyricsRefreshDialog = () => {
 
 	const handleBack = useCallback(() => {
 		requestIdRef.current++;
+		searchRequestIdRef.current++;
 		setSelectedHit(null);
 		setRawLyrics("");
 		setLoadingLyrics(false);
@@ -348,6 +363,19 @@ export const GeniusLyricsRefreshDialog = () => {
 		t,
 	]);
 
+	const getEntryLabel = (entry: GeniusRefreshEntry) => {
+		switch (entry.status) {
+			case "unchanged":
+				return t("genius.refresh.matching", "Already matching");
+			case "changed":
+				return t("genius.refresh.changed", "Lyrics changed");
+			case "added":
+				return t("genius.refresh.added", "New on Genius");
+			case "removed":
+				return t("genius.refresh.removed", "Not on Genius");
+		}
+	};
+
 	const renderEntry = (entry: GeniusRefreshEntry, index: number) => {
 		const oldLine =
 			entry.oldIndex !== null
@@ -357,65 +385,81 @@ export const GeniusLyricsRefreshDialog = () => {
 			entry.status === "changed" ||
 			entry.status === "unchanged" ||
 			includeStructuralChanges;
-		const label =
-			entry.status === "unchanged"
-				? t("genius.refresh.matching", "Already matching")
-				: entry.status === "changed"
-					? t("genius.refresh.changed", "Lyrics changed")
-					: entry.status === "added"
-						? t("genius.refresh.added", "New on Genius")
-						: t("genius.refresh.removed", "Not on Genius");
 		const timestamp =
 			oldLine && oldLine.endTime > oldLine.startTime
 				? `${msToTimestamp(oldLine.startTime)} – ${msToTimestamp(oldLine.endTime)}`
 				: t("genius.refresh.untimed", "Needs timing");
+		const statusClass = getEntryStatusClass(entry.status);
 
 		return (
-			<Box
+			<div
+				className={`${styles.entry} ${applied ? "" : styles.entryPending}`}
+				data-status={entry.status}
 				key={`${entry.oldIndex ?? "new"}-${entry.newIndex ?? "old"}-${index}`}
-				style={{
-					padding: "8px 0",
-					borderBottom: "1px solid var(--gray-a4)",
-					opacity: applied ? 1 : 0.42,
-				}}
 			>
-				<Flex justify="between" align="center" gap="2" mb="1">
-					<Badge color={getBadgeColor(entry.status)} variant="soft" size="1">
-						{label}
-					</Badge>
-					<Text size="1" color="gray">
+				<div className={styles.entryMeta}>
+					<span className={`${styles.statusLabel} ${statusClass}`}>
+						{getEntryLabel(entry)}
+					</span>
+					<span className={styles.timestamp}>
 						{entry.status === "added"
 							? t("genius.refresh.untimed", "Needs timing")
 							: timestamp}
-					</Text>
-				</Flex>
-				{entry.status !== "added" && entry.oldText && (
-					<Text
-						size="2"
-						color="gray"
-						style={{
-							display: "block",
-							textDecoration:
-								entry.status === "removed" || entry.status === "changed"
-									? "line-through"
-									: undefined,
-							opacity: entry.status === "unchanged" ? 1 : 0.7,
-							whiteSpace: "pre-wrap",
-						}}
-					>
-						{entry.oldText}
-					</Text>
-				)}
-				{entry.status !== "removed" && entry.newText && (
-					<Text
-						size="2"
-						weight={entry.status === "changed" ? "medium" : "regular"}
-						style={{ display: "block", whiteSpace: "pre-wrap" }}
-					>
-						{entry.newText}
-					</Text>
-				)}
-			</Box>
+					</span>
+				</div>
+				<div className={styles.entryText}>
+					{entry.status !== "added" && entry.oldText && (
+						<span
+							className={
+								entry.status === "unchanged"
+									? styles.currentText
+									: styles.oldText
+							}
+						>
+							{entry.oldText}
+						</span>
+					)}
+					{entry.status !== "removed" &&
+						entry.status !== "unchanged" &&
+						entry.newText && (
+							<span className={styles.newText}>{entry.newText}</span>
+						)}
+				</div>
+			</div>
+		);
+	};
+
+	const renderResultCover = (hit: GeniusRefreshHit) => {
+		const cover = getCoverUrl(hit);
+		return cover ? (
+			<img
+				className={styles.cover}
+				src={cover}
+				alt=""
+				loading="lazy"
+				referrerPolicy="no-referrer"
+			/>
+		) : (
+			<span className={styles.coverFallback}>
+				<MusicNote1Regular style={{ width: 18, height: 18 }} />
+			</span>
+		);
+	};
+
+	const renderSelectedCover = () => {
+		const cover = selectedHit ? getCoverUrl(selectedHit) : "";
+		return cover ? (
+			<img
+				className={styles.selectedCover}
+				src={cover}
+				alt=""
+				loading="lazy"
+				referrerPolicy="no-referrer"
+			/>
+		) : (
+			<span className={styles.selectedCoverFallback}>
+				<MusicNote1Regular style={{ width: 18, height: 18 }} />
+			</span>
 		);
 	};
 
@@ -423,63 +467,45 @@ export const GeniusLyricsRefreshDialog = () => {
 		<Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
 			<Dialog.Content
 				aria-describedby={undefined}
-				style={{
-					maxWidth: 900,
-					width: "100%",
-					height: "85vh",
-					maxHeight: 820,
-					display: "flex",
-					flexDirection: "column",
-					overflow: "hidden",
-				}}
+				className={styles.dialog}
+				style={{ padding: 0 }}
 			>
-				<Flex
-					justify="between"
-					align="start"
-					gap="3"
-					mb="3"
-					style={{ flexShrink: 0 }}
-				>
-					<Flex align="center" gap="3">
-						<Box
-							style={{
-								width: 40,
-								height: 40,
-								borderRadius: "var(--radius-3)",
-								background: "var(--orange-3)",
-								color: "var(--orange-11)",
-								display: "flex",
-								alignItems: "center",
-								justifyContent: "center",
-								flexShrink: 0,
-							}}
-						>
-							<MusicNote1Regular style={{ width: 22, height: 22 }} />
-						</Box>
-						<Box>
-							<Dialog.Title size="5" mb="0" style={{ fontWeight: 600 }}>
+				<header className={styles.header}>
+					<div className={styles.headerMain}>
+						<span className={styles.dialogIcon}>
+							<MusicNote1Regular style={{ width: 18, height: 18 }} />
+						</span>
+						<div className={styles.titleBlock}>
+							<Dialog.Title className={styles.title}>
 								{t("genius.refresh.title", "Refresh Lyrics from Genius")}
 							</Dialog.Title>
-							<Dialog.Description size="2" color="gray">
+							<Dialog.Description className={styles.description}>
 								{t(
 									"genius.refresh.description",
 									"Compare with Genius and update the words without moving line timestamps.",
 								)}
 							</Dialog.Description>
-						</Box>
-					</Flex>
-					<Dialog.Close>
-						<IconButton variant="ghost" color="gray" size="2">
+						</div>
+					</div>
+					<Dialog.Close asChild>
+						<IconButton
+							className={styles.closeButton}
+							variant="ghost"
+							color="gray"
+							size="2"
+							aria-label={t("common.close", "Close")}
+						>
 							<DismissRegular />
 						</IconButton>
 					</Dialog.Close>
-				</Flex>
+				</header>
 
 				{!selectedHit ? (
-					<>
-						<Flex gap="2" mb="3" style={{ flexShrink: 0 }}>
+					<div className={styles.body}>
+						<div className={styles.searchRow}>
 							<TextField.Root
-								style={{ flex: 1 }}
+								className={styles.searchField}
+								size="2"
 								placeholder={t(
 									"genius.refresh.searchPlaceholder",
 									"Artist – Song title or Genius URL…",
@@ -497,42 +523,35 @@ export const GeniusLyricsRefreshDialog = () => {
 								</TextField.Slot>
 							</TextField.Root>
 							<Button
-								color="orange"
+								size="2"
 								onClick={() => void runSearch(query)}
 								disabled={searching || !query.trim()}
 							>
 								{searching ? <Spinner /> : t("common.search", "Search")}
 							</Button>
-						</Flex>
+						</div>
 
 						{!geniusApiKey && !isGeniusSongUrl(query.trim()) && (
-							<Card
-								variant="surface"
-								style={{
-									marginBottom: 12,
-									padding: "var(--space-3)",
-									background: "var(--gray-2)",
-									flexShrink: 0,
-								}}
-							>
-								<Flex align="center" gap="2" mb="1">
+							<div className={styles.setupPanel}>
+								<div className={styles.setupHeader}>
 									<Key20Regular />
-									<Text size="2" weight="medium">
+									<span className={styles.setupTitle}>
 										{t(
 											"genius.refresh.tokenSetupTitle",
 											"Genius token needed to search",
 										)}
-									</Text>
-								</Flex>
-								<Text size="1" color="gray">
+									</span>
+								</div>
+								<p className={styles.setupDescription}>
 									{t(
 										"genius.refresh.tokenSetup",
 										"Add a CLIENT ACCESS TOKEN, or paste a direct Genius song link above.",
 									)}
-								</Text>
-								<Flex gap="2" mt="2">
+								</p>
+								<div className={styles.setupInputRow}>
 									<TextField.Root
-										style={{ flex: 1 }}
+										className={styles.setupInput}
+										size="2"
 										placeholder={t(
 											"genius.refresh.tokenPlaceholder",
 											"Paste CLIENT ACCESS TOKEN",
@@ -542,6 +561,7 @@ export const GeniusLyricsRefreshDialog = () => {
 									/>
 									<Button
 										variant="soft"
+										size="2"
 										disabled={!tempApiKey.trim()}
 										onClick={() => {
 											setGeniusApiKey(tempApiKey.trim());
@@ -550,8 +570,9 @@ export const GeniusLyricsRefreshDialog = () => {
 									>
 										{t("genius.refresh.saveToken", "Save token")}
 									</Button>
-								</Flex>
+								</div>
 								<Button
+									className={styles.setupGuide}
 									variant="ghost"
 									size="1"
 									onClick={() =>
@@ -559,301 +580,250 @@ export const GeniusLyricsRefreshDialog = () => {
 											getGeniusKeyGuideUrl(i18n.resolvedLanguage),
 										)
 									}
-									style={{ paddingLeft: 0 }}
 								>
 									{t(
 										"genius.refresh.howToGetToken",
 										"How to create a Genius token",
 									)}
 								</Button>
-							</Card>
+							</div>
 						)}
 
-						{error && (
-							<Card
-								variant="surface"
-								style={{
-									marginBottom: 12,
-									padding: "var(--space-3)",
-									background: "var(--red-2)",
-									flexShrink: 0,
-								}}
-							>
-								<Text size="2" color="red">
-									{error}
-								</Text>
-							</Card>
-						)}
+						{error && <div className={styles.errorPanel}>{error}</div>}
 
 						<ScrollArea
+							className={styles.scroll}
 							type="auto"
 							scrollbars="vertical"
-							style={{ flex: 1, minHeight: 0 }}
 						>
-							<Flex direction="column" gap="2" pr="2">
-								{searching && (
-									<Flex align="center" justify="center" p="5" gap="2">
-										<Spinner size="3" />
-										<Text size="2" color="gray">
-											{t("genius.refresh.searching", "Searching Genius…")}
-										</Text>
-									</Flex>
-								)}
-								{!searching &&
-									results.map((hit) => (
-										<Card
-											key={hit.id}
-											variant="surface"
-											onClick={() => void loadLyrics(hit)}
-											style={{ cursor: "pointer", padding: "var(--space-3)" }}
-										>
-											<Flex align="center" gap="3">
-												<Box
-													style={{
-														width: 40,
-														height: 40,
-														borderRadius: 8,
-														background: "var(--orange-3)",
-														color: "var(--orange-11)",
-														display: "flex",
-														alignItems: "center",
-														justifyContent: "center",
-														flexShrink: 0,
-													}}
-												>
-													<MusicNote1Regular />
-												</Box>
-												<Box style={{ flex: 1, minWidth: 0 }}>
-													<Text size="3" weight="medium" truncate>
-														{hit.title}
-													</Text>
-													<Text size="1" color="gray" truncate>
-														{hit.artist}
-														{hit.album ? ` • ${hit.album}` : ""}
-													</Text>
-												</Box>
-												<Badge color="orange" variant="soft">
-													Genius
-												</Badge>
-											</Flex>
-										</Card>
-									))}
-								{!searching &&
-									hasSearched &&
-									!error &&
-									results.length === 0 && (
-										<Flex align="center" justify="center" p="5">
-											<Text size="2" color="gray">
-												{t(
-													"genius.refresh.noResults",
-													"No songs found. Try another search or paste a Genius link.",
-												)}
-											</Text>
-										</Flex>
-									)}
-								{!searching && !hasSearched && results.length === 0 && (
-									<Flex align="center" justify="center" p="5">
-										<Text size="2" color="gray">
+							{searching ? (
+								<div className={styles.loadingState}>
+									<Spinner size="3" />
+									<span>
+										{t("genius.refresh.searching", "Searching Genius…")}
+									</span>
+								</div>
+							) : results.length > 0 ? (
+								<>
+									{results.length > 1 && (
+										<div className={styles.listHeading}>
 											{t(
-												"genius.refresh.searchPrompt",
-												"Search for the song to refresh from Genius.",
+												"genius.refresh.chooseResult",
+												"Choose the correct Genius page",
 											)}
-										</Text>
-									</Flex>
-								)}
-							</Flex>
+										</div>
+									)}
+									<div className={styles.resultList}>
+										{results.map((hit) => (
+											<button
+												className={styles.resultRow}
+												key={hit.id}
+												type="button"
+												onClick={() => void loadLyrics(hit)}
+											>
+												{renderResultCover(hit)}
+												<div className={styles.resultText}>
+													<span className={styles.resultTitle}>
+														{hit.title}
+													</span>
+													<span className={styles.resultMeta}>
+														{hit.artist}
+														{hit.album ? ` · ${hit.album}` : ""}
+													</span>
+												</div>
+												<span
+													className={styles.resultAction}
+													aria-hidden="true"
+												>
+													›
+												</span>
+											</button>
+										))}
+									</div>
+								</>
+							) : hasSearched && !error ? (
+								<div className={styles.emptyState}>
+									<span className={styles.emptyIcon}>
+										<Search16Regular />
+									</span>
+									<span className={styles.emptyTitle}>
+										{t("genius.refresh.noResultsTitle", "No matches found")}
+									</span>
+									<span className={styles.emptyText}>
+										{t(
+											"genius.refresh.noResults",
+											"No songs found. Try another search or paste a Genius link.",
+										)}
+									</span>
+								</div>
+							) : (
+								<div className={styles.emptyState}>
+									<span className={styles.emptyIcon}>
+										<Search16Regular />
+									</span>
+									<span className={styles.emptyText}>
+										{t(
+											"genius.refresh.searchPrompt",
+											"Search for the song to refresh from Genius.",
+										)}
+									</span>
+								</div>
+							)}
 						</ScrollArea>
-					</>
+					</div>
 				) : (
-					<>
-						<Button
-							variant="ghost"
-							size="2"
-							color="gray"
-							onClick={handleBack}
-							style={{ alignSelf: "flex-start", flexShrink: 0 }}
-						>
-							<ArrowLeft20Regular style={{ width: 16, height: 16 }} />
-							{t("genius.refresh.backToResults", "Back to results")}
-						</Button>
-
-						<Card
-							variant="surface"
-							style={{
-								padding: "var(--space-2) var(--space-3)",
-								margin: "var(--space-2) 0",
-								flexShrink: 0,
-							}}
-						>
-							<Flex align="center" gap="3">
-								<Box
-									style={{
-										width: 42,
-										height: 42,
-										borderRadius: 8,
-										background: "var(--orange-3)",
-										color: "var(--orange-11)",
-										display: "flex",
-										alignItems: "center",
-										justifyContent: "center",
-										flexShrink: 0,
-									}}
-								>
-									<MusicNote1Regular />
-								</Box>
-								<Box style={{ flex: 1, minWidth: 0 }}>
-									<Heading size="3" truncate>
-										{selectedHit.title}
-									</Heading>
-									<Text size="1" color="gray" truncate>
-										{selectedHit.artist}
-										{selectedHit.album ? ` • ${selectedHit.album}` : ""}
-									</Text>
-								</Box>
-								<Badge color="orange" variant="soft">
-									{t("genius.refresh.currentGeniusPage", "Current Genius page")}
-								</Badge>
-							</Flex>
-						</Card>
-
-						{error && (
-							<Card
-								variant="surface"
-								style={{
-									marginBottom: 12,
-									padding: "var(--space-3)",
-									background: "var(--red-2)",
-									flexShrink: 0,
-								}}
+					<div className={styles.body}>
+						<div className={styles.backRow}>
+							<Button
+								variant="ghost"
+								size="1"
+								color="gray"
+								onClick={handleBack}
 							>
-								<Text size="2" color="red">
-									{error}
-								</Text>
-							</Card>
-						)}
+								<ArrowLeft20Regular style={{ width: 14, height: 14 }} />
+								{t("genius.refresh.backToResults", "Back to results")}
+							</Button>
+						</div>
+
+						<div className={styles.selectedHeader}>
+							{renderSelectedCover()}
+							<div className={styles.selectedText}>
+								<span className={styles.selectedTitle}>
+									{selectedHit.title}
+								</span>
+								<span className={styles.selectedMeta}>
+									{selectedHit.artist}
+									{selectedHit.album ? ` · ${selectedHit.album}` : ""}
+								</span>
+							</div>
+							<span className={styles.pageTag}>
+								<span className={styles.pageTagDot} />
+								{t("genius.refresh.currentGeniusPage", "Current Genius page")}
+							</span>
+						</div>
+
+						{error && <div className={styles.errorPanel}>{error}</div>}
 
 						{loadingLyrics ? (
-							<Flex align="center" justify="center" gap="2" style={{ flex: 1 }}>
+							<div className={styles.loadingState}>
 								<Spinner size="3" />
-								<Text size="2" color="gray">
+								<span>
 									{t(
 										"genius.refresh.loadingLyrics",
 										"Fetching current Genius lyrics…",
 									)}
-								</Text>
-							</Flex>
+								</span>
+							</div>
 						) : plan ? (
 							<>
-								<Flex
-									justify="between"
-									align="center"
-									gap="2"
-									mb="2"
-									style={{ flexShrink: 0, flexWrap: "wrap" }}
-								>
-									<Flex gap="2" style={{ flexWrap: "wrap" }}>
-										<Badge color="orange" variant="soft">
+								<div className={styles.summary}>
+									<div className={styles.stats}>
+										<span className={styles.stat}>
+											<span className={`${styles.dot} ${styles.dotChanged}`} />
 											{t("genius.refresh.changedCount", "{count} changed", {
 												count: plan.changedCount,
 											})}
-										</Badge>
-										<Badge color="green" variant="soft">
+										</span>
+										<span className={styles.stat}>
+											<span
+												className={`${styles.dot} ${styles.dotUnchanged}`}
+											/>
 											{t("genius.refresh.matchingCount", "{count} matching", {
 												count: plan.unchangedCount,
 											})}
-										</Badge>
-										<Badge color="blue" variant="soft">
+										</span>
+										<span className={styles.stat}>
+											<span className={`${styles.dot} ${styles.dotAdded}`} />
 											{t("genius.refresh.addedCount", "{count} new", {
 												count: plan.addedCount,
 											})}
-										</Badge>
-										<Badge color="red" variant="soft">
+										</span>
+										<span className={styles.stat}>
+											<span className={`${styles.dot} ${styles.dotRemoved}`} />
 											{t("genius.refresh.removedCount", "{count} removed", {
 												count: plan.removedCount,
 											})}
-										</Badge>
-									</Flex>
-									<Text size="1" color="gray">
+										</span>
+									</div>
+									<span className={styles.timingNote}>
 										{t(
-											"genius.refresh.timingNotice",
-											"Line start/end times stay fixed. Word timings are reused when the word count is unchanged.",
+											"genius.refresh.safeMatching",
+											"Only clearly matching lines are updated. Major rewrites appear as new or removed lines.",
 										)}
-									</Text>
-								</Flex>
+									</span>
+								</div>
 
 								{structuralChangeCount > 0 && (
-									<Card
-										variant="surface"
-										style={{
-											padding: "var(--space-2) var(--space-3)",
-											marginBottom: 8,
-											background: "var(--amber-2)",
-											flexShrink: 0,
-										}}
-									>
-										<Text as="label" size="2">
-											<Flex align="center" gap="2">
-												<Checkbox
-													checked={includeStructuralChanges}
-													onCheckedChange={(checked) =>
-														setIncludeStructuralChanges(checked === true)
-													}
-												/>
+									<div className={styles.structurePanel}>
+										<Checkbox
+											id="genius-refresh-structural"
+											checked={includeStructuralChanges}
+											onCheckedChange={(checked) =>
+												setIncludeStructuralChanges(checked === true)
+											}
+										/>
+										<div className={styles.structureText}>
+											<label
+												className={styles.structureTitle}
+												htmlFor="genius-refresh-structural"
+											>
 												{t(
 													"genius.refresh.includeStructural",
 													"Add/remove lines to match Genius",
 												)}
-											</Flex>
-										</Text>
-										<Text
-											size="1"
-											color="gray"
-											style={{ display: "block", marginTop: 4 }}
-										>
-											{t(
-												"genius.refresh.structuralWarning",
-												"New lines start untimed, and removed lines lose their old timing. Existing line timestamps do not move.",
-											)}
-										</Text>
-									</Card>
+											</label>
+											<span className={styles.structureHint}>
+												{t(
+													"genius.refresh.structuralWarning",
+													"New lines start untimed, and removed lines lose their old timing. Existing line timestamps do not move.",
+												)}
+											</span>
+										</div>
+									</div>
 								)}
 
 								{plan.changedCount === 0 &&
 									(!includeStructuralChanges ||
 										structuralChangeCount === 0) && (
-										<Text size="2" color="green" mb="2">
+										<div className={styles.noChanges}>
 											{t(
 												"genius.refresh.noChanges",
 												"Your lyrics already match this Genius page.",
 											)}
-										</Text>
+										</div>
 									)}
 
 								<ScrollArea
+									className={styles.scroll}
 									type="auto"
 									scrollbars="vertical"
-									style={{ flex: 1, minHeight: 0, paddingRight: 8 }}
 								>
-									<Box>{plan.entries.map(renderEntry)}</Box>
+									<div className={styles.diffList}>
+										{plan.entries.map(renderEntry)}
+									</div>
 								</ScrollArea>
 
-								<Flex justify="end" gap="2" mt="3" style={{ flexShrink: 0 }}>
-									<Dialog.Close>
-										<Button variant="soft" color="gray">
-											{t("common.cancel", "Cancel")}
+								<footer className={styles.footer}>
+									<span className={styles.footerHint}>
+										{t(
+											"genius.refresh.timingNotice",
+											"Line start/end times stay fixed. Word timings are reused when the word count is unchanged.",
+										)}
+									</span>
+									<div className={styles.footerActions}>
+										<Dialog.Close asChild>
+											<Button variant="ghost" color="gray">
+												{t("common.cancel", "Cancel")}
+											</Button>
+										</Dialog.Close>
+										<Button onClick={handleApply} disabled={!canApply}>
+											{t("genius.refresh.apply", "Apply changes")}
 										</Button>
-									</Dialog.Close>
-									<Button
-										color="orange"
-										onClick={handleApply}
-										disabled={!canApply}
-									>
-										{t("genius.refresh.apply", "Update lyrics only")}
-									</Button>
-								</Flex>
+									</div>
+								</footer>
 							</>
 						) : null}
-					</>
+					</div>
 				)}
 			</Dialog.Content>
 		</Dialog.Root>

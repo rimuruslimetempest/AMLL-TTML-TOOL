@@ -1,5 +1,6 @@
 import { Info16Regular } from "@fluentui/react-icons";
 import {
+	Badge,
 	Box,
 	Button,
 	Callout,
@@ -7,8 +8,9 @@ import {
 	Dialog,
 	Flex,
 	Text,
+	TextField,
 } from "@radix-ui/themes";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useSetImmerAtom } from "jotai-immer";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -32,6 +34,11 @@ import type {
 } from "$/modules/segmentation/types";
 import { loadHyphenator } from "$/modules/segmentation/utils/hyphen-loader.ts";
 import {
+	applyLearnedRule,
+	createLearnedRule,
+	getLearnedWordParts,
+} from "$/modules/segmentation/utils/learned-rules";
+import {
 	getHyphenationLanguage,
 	getSyllabificationEngine,
 } from "$/modules/segmentation/utils/syllabification-engines";
@@ -39,11 +46,24 @@ import {
 	recalculateWordTime,
 	segmentWord,
 } from "$/modules/segmentation/utils/segmentation.ts";
+import { can } from "$/modules/collab/permissions";
 import {
-	applyLearnedRule,
-	createLearnedRule,
-	getLearnedWordParts,
-} from "$/modules/segmentation/utils/learned-rules";
+	collabActiveAtom,
+	collabRoleAtom,
+} from "$/modules/collab/states";
+import { collabClient } from "$/modules/collab/client";
+import {
+	createSplitPattern,
+	partsForPattern,
+	patternsForWord,
+	savePatternToLibrary,
+	splitSourceLabel,
+} from "$/modules/split-library/logic";
+import {
+	splitLibraryAtom,
+	splitLibraryIndexAtom,
+} from "$/modules/split-library/states";
+import type { SavedSplitPattern } from "$/modules/split-library/types";
 import { splitWordDialogAtom } from "$/states/dialogs.ts";
 import { editingWordStateAtom, lyricLinesAtom } from "$/states/main";
 import type { LyricWord } from "$/types/ttml";
@@ -54,15 +74,28 @@ export const SplitWordDialog = memo(() => {
 	const editingState = useAtomValue(editingWordStateAtom);
 	const lyricLines = useAtomValue(lyricLinesAtom);
 	const editLyricLines = useSetImmerAtom(lyricLinesAtom);
+	const splitLibraryIndex = useAtomValue(splitLibraryIndexAtom);
+	const setSplitLibrary = useSetAtom(splitLibraryAtom);
 	const { t } = useTranslation();
 
 	const [splitIndices, setSplitIndices] = useState(new Set<number>());
 	const [targetWordText, setTargetWordText] = useState("");
+	const [activeLibraryPatternId, setActiveLibraryPatternId] = useState<
+		string | undefined
+	>();
 
 	const [applyToAll, setApplyToAll] = useAtom(splitWordApplyToAllAtom);
 	const [ignoreCase, setIgnoreCase] = useAtom(splitWordIgnoreCaseAtom);
 	const [rememberSplit, setRememberSplit] = useAtom(splitWordRememberAtom);
 	const [learnedRules, setLearnedRules] = useAtom(segmentationLearnedRulesAtom);
+	const [saveToLibrary, setSaveToLibrary] = useState(false);
+	const [shareWithRoom, setShareWithRoom] = useState(false);
+	const collabActive = useAtomValue(collabActiveAtom);
+	const collabRole = useAtomValue(collabRoleAtom);
+	const canShareWithRoom = collabActive && can(collabRole, "addRoomSplit");
+	const canEditLyrics = !collabActive || can(collabRole, "editLyrics");
+	const [libraryLabel, setLibraryLabel] = useState("");
+	const [libraryNote, setLibraryNote] = useState("");
 	const engine = useAtomValue(segmentationEngineAtom);
 
 	const splitCJK = useAtomValue(segmentationSplitCJKAtom);
@@ -133,6 +166,29 @@ export const SplitWordDialog = memo(() => {
 		activeHyphenator,
 	]);
 
+	const savedPatterns = useMemo(
+		() =>
+			targetWordText
+				? patternsForWord(splitLibraryIndex, targetWordText)
+				: [],
+		[splitLibraryIndex, targetWordText],
+	);
+
+	const activeLine = lyricLines.lyricLines[editingState.lineIndex];
+	const activeWord = activeLine?.words[editingState.wordIndex];
+	const previousWord = activeLine?.words[editingState.wordIndex - 1];
+	const nextWord = activeLine?.words[editingState.wordIndex + 1];
+	const canMergePrevious =
+		!!previousWord &&
+		!!activeWord &&
+		!activeWord.word.startsWith(" ") &&
+		previousWord.endTime <= activeWord.startTime;
+	const canMergeNext =
+		!!nextWord &&
+		!!activeWord &&
+		!nextWord.word.startsWith(" ") &&
+		nextWord.startTime >= activeWord.endTime;
+
 	useEffect(() => {
 		if (!splitWordDialog) {
 			return;
@@ -143,6 +199,11 @@ export const SplitWordDialog = memo(() => {
 
 		if (word) {
 			setTargetWordText(word.word);
+			setActiveLibraryPatternId(undefined);
+			setSaveToLibrary(false);
+			setShareWithRoom(false);
+			setLibraryLabel("");
+			setLibraryNote("");
 
 			const resultWords = segmentWord(word, segmentationConfig);
 			if (resultWords.length > 1) {
@@ -169,6 +230,7 @@ export const SplitWordDialog = memo(() => {
 	]);
 
 	const toggleSplitPoint = useCallback((index: number) => {
+		setActiveLibraryPatternId(undefined);
 		setSplitIndices((prev) => {
 			const next = new Set(prev);
 			if (next.has(index)) {
@@ -180,8 +242,20 @@ export const SplitWordDialog = memo(() => {
 		});
 	}, []);
 
+	const loadSavedPattern = useCallback(
+		(pattern: SavedSplitPattern) => {
+			const core = getLearnedWordParts(targetWordText);
+			if (!core) return;
+			setActiveLibraryPatternId(pattern.id);
+			setSplitIndices(
+				new Set(pattern.boundaries.map((boundary) => boundary + core.coreStart)),
+			);
+		},
+		[targetWordText],
+	);
+
 	const handleSplit = useCallback(() => {
-		if (!targetWordText) return;
+		if (!targetWordText || !canEditLyrics) return;
 
 		const sortedIndices = Array.from(splitIndices).sort((a, b) => a - b);
 		const buildSegments = (text: string) => {
@@ -211,7 +285,17 @@ export const SplitWordDialog = memo(() => {
 			targetWord: LyricWord,
 			segments: string[],
 		): LyricWord[] => {
-			return recalculateWordTime(targetWord, segments, segmentationConfig);
+			return recalculateWordTime(
+				targetWord,
+				segments,
+				segmentationConfig,
+			).map((word) => ({
+				...word,
+				splitSource: activeLibraryPatternId
+					? ("library" as const)
+					: ("manual" as const),
+				splitPatternId: activeLibraryPatternId,
+			}));
 		};
 
 		editLyricLines((state) => {
@@ -256,8 +340,35 @@ export const SplitWordDialog = memo(() => {
 			nextRules.set(learnedRule.key, learnedRule.boundaries);
 			setLearnedRules(nextRules);
 		}
+
+		if (saveToLibrary) {
+			const pattern = createSplitPattern(targetWordText, sortedIndices, {
+				label: libraryLabel,
+				note: libraryNote,
+				isDefault: savedPatterns.every((candidate) => !candidate.isDefault),
+			});
+			if (pattern) {
+				setSplitLibrary((library) => savePatternToLibrary(library, pattern));
+			}
+		}
+
+		if (shareWithRoom && canShareWithRoom) {
+			const shared = createSplitPattern(targetWordText, sortedIndices, {
+				label: libraryLabel,
+				note: libraryNote,
+			});
+			if (shared) {
+				collabClient.shareSplit({
+					id: shared.id,
+					wordKey: shared.wordKey,
+					displayWord: shared.displayWord,
+					boundaries: shared.boundaries,
+					label: shared.label,
+					note: shared.note,
+				});
+			}
+		}
 	}, [
-		engine,
 		targetWordText,
 		splitIndices,
 		editLyricLines,
@@ -269,13 +380,75 @@ export const SplitWordDialog = memo(() => {
 		editingState.lineIndex,
 		editingState.wordIndex,
 		segmentationConfig,
+		saveToLibrary,
+		libraryLabel,
+		libraryNote,
+		savedPatterns,
+		setSplitLibrary,
+		shareWithRoom,
+		canShareWithRoom,
+		activeLibraryPatternId,
+		canEditLyrics,
 	]);
+
+	const mergeWithNeighbour = useCallback(
+		(direction: "previous" | "next") => {
+			if (!canEditLyrics) return;
+			editLyricLines((state) => {
+				const line = state.lyricLines[editingState.lineIndex];
+				if (!line) return;
+				const index = editingState.wordIndex;
+				const current = line.words[index];
+				if (!current) return;
+				const neighbourIndex = direction === "previous" ? index - 1 : index + 1;
+				const neighbour = line.words[neighbourIndex];
+				if (!neighbour) return;
+				if (neighbour.word.startsWith(" ")) return;
+				const first = direction === "previous" ? neighbour : current;
+				const second = direction === "previous" ? current : neighbour;
+				const merged: LyricWord = {
+					...first,
+					word: first.word + second.word,
+					startTime: Math.min(first.startTime, second.startTime),
+					endTime: Math.max(first.endTime, second.endTime),
+					romanWord: "",
+					needsReview:
+						first.needsReview || second.needsReview ? true : undefined,
+					splitSource: undefined,
+					splitPatternId: undefined,
+				};
+				const startIndex =
+					direction === "previous" ? neighbourIndex : index;
+				line.words.splice(startIndex, 2, merged);
+			});
+			// The merged token has a new shape; close so the editor can show it.
+			splitWordDialogOpen(false);
+		},
+		[editLyricLines, editingState, splitWordDialogOpen, canEditLyrics],
+	);
 
 	return (
 		<Dialog.Root open={splitWordDialog} onOpenChange={splitWordDialogOpen}>
-			<Dialog.Content>
+			<Dialog.Content style={{ width: "min(96vw, 560px)" }}>
 				<Dialog.Title>{t("splitWordDialog.title", "Split Word")}</Dialog.Title>
+				{activeWord?.splitSource && (
+					<Flex mt="1">
+						<Badge color="gray" variant="soft">
+							{splitSourceLabel(activeWord.splitSource)}
+						</Badge>
+					</Flex>
+				)}
 				<Flex direction="column" gap="2">
+					{!canEditLyrics && (
+						<Callout.Root color="amber">
+							<Callout.Text>
+								{t(
+									"splitWordDialog.noPermission",
+									"Your role in this room cannot change lyrics. Ask the host for editor access.",
+								)}
+							</Callout.Text>
+						</Callout.Root>
+					)}
 					<Callout.Root color="blue">
 						<Callout.Icon>
 							<Info16Regular />
@@ -287,6 +460,45 @@ export const SplitWordDialog = memo(() => {
 							)}
 						</Callout.Text>
 					</Callout.Root>
+					<Callout.Root color="amber">
+						<Callout.Text>
+							{t(
+								"splitWordDialog.pronunciationReminder",
+								"Splits should follow how the singer pronounces the word in the recording. Check them against the audio.",
+							)}
+						</Callout.Text>
+					</Callout.Root>
+
+					{savedPatterns.length > 0 && (
+						<Flex direction="column" gap="1">
+							<Text size="1" color="gray">
+								{t(
+									"splitWordDialog.savedPatterns",
+									"Saved splits for this word (choose one to load it)",
+								)}
+							</Text>
+							<Flex gap="2" wrap="wrap">
+								{savedPatterns.slice(0, 6).map((pattern) => (
+									<Button
+										key={pattern.id}
+										size="1"
+										variant="soft"
+										onClick={() => loadSavedPattern(pattern)}
+									>
+										{partsForPattern(
+											targetWordText,
+											pattern.boundaries,
+										).join(" / ")}
+										{pattern.isDefault && (
+											<Badge size="1" color="green" variant="soft">
+												{t("splitLibrary.default", "Default")}
+											</Badge>
+										)}
+									</Button>
+								))}
+							</Flex>
+						</Flex>
+					)}
 
 					<Box my="3">
 						<ManualWordSplitter
@@ -294,7 +506,23 @@ export const SplitWordDialog = memo(() => {
 							splitIndices={splitIndices}
 							onSplitIndexToggle={toggleSplitPoint}
 						/>
-						<Flex justify="end" mt="2">
+						<Flex justify="end" mt="2" gap="2" wrap="wrap">
+							<Button
+								size="1"
+								variant="soft"
+								disabled={!canEditLyrics || !canMergePrevious}
+								onClick={() => mergeWithNeighbour("previous")}
+							>
+								{t("splitWordDialog.mergePrevious", "Merge with previous")}
+							</Button>
+							<Button
+								size="1"
+								variant="soft"
+								disabled={!canEditLyrics || !canMergeNext}
+								onClick={() => mergeWithNeighbour("next")}
+							>
+								{t("splitWordDialog.mergeNext", "Merge with next")}
+							</Button>
 							<Button
 								size="1"
 								variant="soft"
@@ -346,6 +574,59 @@ export const SplitWordDialog = memo(() => {
 						</Text>
 
 						<Text as="label" size="2">
+							<Flex gap="2" align="center">
+								<Checkbox
+									checked={saveToLibrary}
+									onCheckedChange={(c) => setSaveToLibrary(c === true)}
+								/>
+								{t(
+									"splitWordDialog.saveToLibrary",
+									"Save to my split library",
+								)}
+							</Flex>
+						</Text>
+
+						{canShareWithRoom && (
+							<Text as="label" size="2">
+								<Flex gap="2" align="center">
+									<Checkbox
+										checked={shareWithRoom}
+										onCheckedChange={(c) => setShareWithRoom(c === true)}
+									/>
+									{t(
+										"splitWordDialog.shareWithRoom",
+										"Share with room (as a suggestion)",
+									)}
+								</Flex>
+							</Text>
+						)}
+
+						{saveToLibrary && (
+							<Flex gap="2" wrap="wrap" pl="5">
+								<Box style={{ flex: "1 1 150px" }}>
+									<TextField.Root
+										placeholder={t(
+											"splitLibrary.name",
+											"Name (optional)",
+										)}
+										value={libraryLabel}
+										onChange={(event) => setLibraryLabel(event.target.value)}
+									/>
+								</Box>
+								<Box style={{ flex: "1 1 210px" }}>
+									<TextField.Root
+										placeholder={t(
+											"splitLibrary.note",
+											"Note (optional)",
+										)}
+										value={libraryNote}
+										onChange={(event) => setLibraryNote(event.target.value)}
+									/>
+								</Box>
+							</Flex>
+						)}
+
+						<Text as="label" size="2">
 							<Flex
 								gap="2"
 								align="center"
@@ -364,7 +645,7 @@ export const SplitWordDialog = memo(() => {
 
 				<Flex justify="end" mt="4">
 					<Dialog.Close>
-						<Button onClick={handleSplit}>
+						<Button onClick={handleSplit} disabled={!canEditLyrics}>
 							{t("splitWordDialog.actionButton", "Confirm")}
 						</Button>
 					</Dialog.Close>

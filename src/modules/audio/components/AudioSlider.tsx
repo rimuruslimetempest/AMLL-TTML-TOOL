@@ -202,7 +202,12 @@ const MarkerItem = memo(
 	},
 );
 
-export const AudioSlider = memo(() => {
+export interface AudioSliderProps {
+	/** Waveform height. Classic keeps the legacy 2.5em; New uses a fixed deck height. */
+	height?: string;
+}
+
+export const AudioSlider = memo(({ height = "2.5em" }: AudioSliderProps) => {
 	const { t } = useTranslation();
 	const setCurrentTime = useSetAtom(currentTimeAtom);
 	const setCurrentDuration = useSetAtom(currentDurationAtom);
@@ -633,7 +638,7 @@ export const AudioSlider = memo(() => {
 			style={{
 				alignSelf: "center",
 				width: "100%",
-				height: "2.5em",
+				height,
 				padding: "0",
 				backgroundColor: "transparent",
 			}}

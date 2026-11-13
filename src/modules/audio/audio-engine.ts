@@ -12,6 +12,7 @@ import {
 	loadedAudioAtom,
 	loadedAudioFileNameAtom,
 	loadedAudioPathAtom,
+	loadedAudioTransientAtom,
 } from "$/modules/audio/states/index.ts";
 import { AudioWorkerClient } from "$/modules/audio/workers/audio-worker-client";
 import { saveAudioToCache } from "$/modules/project/autosave/autosave";
@@ -65,6 +66,12 @@ interface PendingStart {
 	resolve: () => void;
 	reject: (error: Error) => void;
 	timer: ReturnType<typeof setTimeout>;
+}
+
+interface LoadableAudioFile extends File {
+	path?: string;
+	/** Shared/streamed audio that must stay out of the persistent audio cache. */
+	transient?: boolean;
 }
 
 const AUDIO_ERRORS = {
@@ -191,6 +198,30 @@ export class AudioEngine extends EventTarget {
 
 	public get eqEntryPoint() {
 		return this.eqNodes[0];
+	}
+
+	private recordingDestination: MediaStreamAudioDestinationNode | null = null;
+	/**
+	 * A parallel output tap for screen-recording audio. It captures what the
+	 * editor is playing, including the volume and EQ settings, without changing
+	 * the normal speakers/headphones output.
+	 */
+	public createRecordingStream(): MediaStream | null {
+		if (!this.musicLoaded) return null;
+		if (!this.recordingDestination) {
+			this.recordingDestination = this.ctx.createMediaStreamDestination();
+			this.gain.connect(this.recordingDestination);
+		}
+		return this.recordingDestination.stream;
+	}
+
+	public releaseRecordingStream(): void {
+		const destination = this.recordingDestination;
+		this.recordingDestination = null;
+		if (!destination) return;
+		try {
+			this.gain.disconnect(destination);
+		} catch {}
 	}
 	//#endregion
 
@@ -659,6 +690,7 @@ export class AudioEngine extends EventTarget {
 		globalStore.set(loadedAudioAtom, new Blob([]));
 		globalStore.set(loadedAudioFileNameAtom, null);
 		globalStore.set(loadedAudioPathAtom, null);
+		globalStore.set(loadedAudioTransientAtom, false);
 		globalStore.set(audioTaskStateAtom, null);
 		this.setEmbeddedCoverArt(null);
 		this.updateMediaSessionState();
@@ -712,6 +744,7 @@ export class AudioEngine extends EventTarget {
 		this.gainNode = null;
 		this._eqNodes = [];
 		this._analyserNode = null;
+		this.recordingDestination = null;
 		this.workletReady = null;
 		this.wasmBytes = null;
 		return this.ctx;
@@ -719,17 +752,26 @@ export class AudioEngine extends EventTarget {
 
 	async loadMusic(src: Blob): Promise<AudioBuffer> {
 		this.unloadMusic();
-		if (src instanceof File) {
-			this.currentFile = src;
-			globalStore.set(loadedAudioFileNameAtom, src.name);
-			if ((src as any).path) {
-				globalStore.set(loadedAudioPathAtom, (src as any).path);
+		// Shared/streamed files keep their real name for the decoder but must not
+		// be written to IndexedDB. A plain Blob is transient as well.
+		const localFile = src instanceof File ? (src as LoadableAudioFile) : null;
+		globalStore.set(
+			loadedAudioTransientAtom,
+			!localFile || localFile.transient === true,
+		);
+		if (localFile) {
+			this.currentFile = localFile;
+			globalStore.set(loadedAudioFileNameAtom, localFile.name);
+			if (localFile.path) {
+				globalStore.set(loadedAudioPathAtom, localFile.path);
 			}
-			void saveAudioToCache({
-				fileName: src.name,
-				path: (src as any).path || undefined,
-				blob: src,
-			}).catch(() => {});
+			if (!localFile.transient) {
+				void saveAudioToCache({
+					fileName: localFile.name,
+					path: localFile.path || undefined,
+					blob: localFile,
+				}).catch(() => {});
+			}
 		}
 		const generation = this.loadGeneration;
 		const abort = new AbortController();

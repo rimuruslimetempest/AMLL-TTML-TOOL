@@ -43,6 +43,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { ViewportList, type ViewportListRef } from "react-viewport-list";
 import { useFileOpener } from "$/hooks/useFileOpener";
+import { usePrivacyGate } from "$/modules/privacy/usePrivacyGate";
 import { audioPlayingAtom, currentTimeAtom } from "$/modules/audio/states";
 import {
 	cloudFileManagerInitialTabAtom,
@@ -61,6 +62,8 @@ import {
 	geniusHeaderDetectionDialogShownAtom,
 	wrapLyricLinesAtom,
 	keepPlayingWordInViewAtom,
+	UiLayer,
+	uiLayerAtom,
 } from "$/modules/settings/states/index.ts";
 import {
 	importLyricsChooserDialogAtom,
@@ -79,7 +82,6 @@ import {
 } from "$/states/main.ts";
 import type { LyricLine } from "$/types/ttml.ts";
 import { AI_CHECK_SCROLL_EVENT } from "$/modules/ai-check/types";
-import { SUBMISSION_CHECKLIST_SCROLL_EVENT } from "$/modules/submission-checklist/types";
 import { repairSectionIntegrity } from "../utils/section-system.ts";
 import {
 	clampScrollTop,
@@ -100,6 +102,7 @@ import {
 	timeLineEditorAtom,
 	timingCopyPlacementAtom,
 } from "./lyric-line-view-states";
+import { TimingApplyBar } from "./TimingApplyBar";
 import { LyricWordSettingsProvider } from "./lyric-word-settings-context";
 import {
 	CategorizeSelectionDialog,
@@ -124,6 +127,7 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 	const viewElRef = useRef<HTMLDivElement>(null);
 	const editLyricLines = useSetImmerAtom(lyricLinesAtom);
 	const toolMode = useAtomValue(toolModeAtom);
+	const uiLayer = useAtomValue(uiLayerAtom);
 	const setTimeLineEditor = useSetAtom(timeLineEditorAtom);
 	const wrapLyricLines = useAtomValue(wrapLyricLinesAtom);
 	const { t } = useTranslation();
@@ -138,15 +142,24 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 	const setFileManagerOpen = useSetAtom(cloudFileManagerOpenAtom);
 	const setFileManagerTab = useSetAtom(cloudFileManagerInitialTabAtom);
 	const openAccountSettings = useSetAtom(openAccountSettingsAtom);
+	const requestConsent = usePrivacyGate();
 
 	const openCloudLyrics = useCallback(() => {
-		if (user) {
-			setFileManagerTab("open");
-			setFileManagerOpen(true);
-		} else {
-			openAccountSettings();
-		}
-	}, [user, setFileManagerOpen, setFileManagerTab, openAccountSettings]);
+		requestConsent("cloud", () => {
+			if (user) {
+				setFileManagerTab("open");
+				setFileManagerOpen(true);
+			} else {
+				openAccountSettings();
+			}
+		});
+	}, [
+		user,
+		setFileManagerOpen,
+		setFileManagerTab,
+		openAccountSettings,
+		requestConsent,
+	]);
 
 	const openExistingTtml = useCallback(() => {
 		const input = document.createElement("input");
@@ -503,16 +516,8 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 			if (typeof index === "number") scrollToLineIndex(index);
 		};
 		window.addEventListener(AI_CHECK_SCROLL_EVENT, handleLineScroll);
-		window.addEventListener(
-			SUBMISSION_CHECKLIST_SCROLL_EVENT,
-			handleLineScroll,
-		);
 		return () => {
 			window.removeEventListener(AI_CHECK_SCROLL_EVENT, handleLineScroll);
-			window.removeEventListener(
-				SUBMISSION_CHECKLIST_SCROLL_EVENT,
-				handleLineScroll,
-			);
 		};
 	}, [scrollToLineIndex]);
 
@@ -751,7 +756,115 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 		[store],
 	);
 
-	if (editLyric.length === 0)
+	if (editLyric.length === 0) {
+		const emptyBackground = hasCustomBackground
+			? "transparent"
+			: "var(--editor-bg, transparent)";
+
+		if (uiLayer === UiLayer.New) {
+			return (
+				<Flex
+					data-guide-target="editor"
+					data-new-empty-mode={
+						toolMode === ToolMode.Sync ? "sync" : "edit"
+					}
+					flexGrow="1"
+					align="center"
+					justify="center"
+					direction="column"
+					height="100%"
+					ref={ref}
+					className={styles.newEmptyViewport}
+					style={{ backgroundColor: emptyBackground }}
+				>
+					<div
+						data-new-empty-state=""
+						data-empty-variant={
+							toolMode === ToolMode.Sync ? "sync" : "edit"
+						}
+					>
+						<div className="empty-icon" aria-hidden="true">
+							<DocumentBulletList24Regular
+								style={{ width: 26, height: 26 }}
+							/>
+						</div>
+						<h2>{t("app.empty.title", "No lyric lines")}</h2>
+						<p data-empty-description="">
+							{t(
+								"app.empty.newDescription",
+								"Import lyrics or add a line, then mark vocals and time it manually. Nothing is timed automatically.",
+							)}
+						</p>
+						<ol data-empty-steps="">
+							<li>
+								<span className="step-index">1</span>
+								{t("app.empty.steps.audio", "Import audio")}
+							</li>
+							<li>
+								<span className="step-index">2</span>
+								{t("app.empty.steps.lyrics", "Import lyrics")}
+							</li>
+							<li>
+								<span className="step-index">3</span>
+								{t("app.empty.steps.vocals", "Mark vocals")}
+							</li>
+							<li>
+								<span className="step-index">4</span>
+								{t("app.empty.steps.sync", "Sync manually")}
+							</li>
+							<li>
+								<span className="step-index">5</span>
+								{t("app.empty.steps.export", "Export")}
+							</li>
+						</ol>
+						<div data-empty-actions="">
+							<Button
+								size="2"
+								variant="solid"
+								onClick={() => setImportChooser(true)}
+							>
+								<ArrowDownload24Regular
+									style={{ width: 16, height: 16 }}
+								/>
+								{t("beginnerGuide.empty.import", "Import Lyrics")}
+							</Button>
+							<Button size="2" variant="soft" onClick={openExistingTtml}>
+								<FolderOpen24Regular style={{ width: 16, height: 16 }} />
+								{t("beginnerGuide.empty.open", "Open TTML")}
+							</Button>
+							<Button size="2" variant="soft" onClick={openCloudLyrics}>
+								<Cloud24Regular style={{ width: 16, height: 16 }} />
+								{t("beginnerGuide.empty.cloud", "Open from Cloud")}
+							</Button>
+							<Button
+								size="2"
+								variant="soft"
+								onClick={() => setTtmlChecklist(true)}
+							>
+								<DocumentBulletList24Regular
+									style={{ width: 16, height: 16 }}
+								/>
+								{t("ttmlChecklist.title", "TTML Checklist")}
+							</Button>
+							<Button
+								size="2"
+								variant="ghost"
+								onClick={() => {
+									setGuideWelcome(false);
+									setGuideExported(false);
+									setGuideStep(0);
+									setGuidePanel(true);
+								}}
+							>
+								<BookOpen24Regular style={{ width: 16, height: 16 }} />
+								{t("beginnerGuide.empty.start", "Start Guide")}
+							</Button>
+						</div>
+					</div>
+				</Flex>
+			);
+		}
+
 		return (
 			<Flex
 				data-guide-target="editor"
@@ -762,11 +875,7 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 				direction="column"
 				height="100%"
 				ref={ref}
-				style={{
-					backgroundColor: hasCustomBackground
-						? "transparent"
-						: "var(--editor-bg, transparent)",
-				}}
+				style={{ backgroundColor: emptyBackground }}
 			>
 				<Box
 					style={{
@@ -832,9 +941,11 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 				</Box>
 			</Flex>
 		);
+	}
 	return (
 		<Flex
 			data-guide-target="editor"
+			data-editor-mode={toolMode}
 			direction="column"
 			flexGrow="1"
 			className={styles.lyricLinesWrapper}
@@ -842,35 +953,42 @@ export const LyricLinesView: FC = forwardRef<HTMLDivElement>((_props, ref) => {
 			<SectionMetadataDialog />
 			<SectionManagerDialog />
 			<CategorizeSelectionDialog />
-			{timingCopyPlacement && (
-				<Flex
-					align="center"
-					justify="between"
-					px="3"
-					py="2"
-					style={{
-						background: "var(--accent-a3)",
-						borderBottom: "1px solid var(--accent-a6)",
-						flexShrink: 0,
-						zIndex: 5,
-					}}
-				>
-					<Text size="2" weight="medium" style={{ color: "var(--accent-11)" }}>
-						{t("lyricLineView.copyTimingsBanner", {
-							count: timingCopyPlacement.snapshots.length,
-							defaultValue: `Copying ${timingCopyPlacement.snapshots.length} line timing(s). Click "Apply timings starting here" above target line.`,
-						})}
-					</Text>
-					<Button
-						size="1"
-						variant="soft"
-						color="gray"
-						onClick={() => setTimingCopyPlacement(null)}
+			{timingCopyPlacement &&
+				(uiLayer === UiLayer.New ? (
+					<TimingApplyBar />
+				) : (
+					<Flex
+						align="center"
+						justify="between"
+						px="3"
+						py="2"
+						style={{
+							background: "var(--accent-a3)",
+							borderBottom: "1px solid var(--accent-a6)",
+							flexShrink: 0,
+							zIndex: 5,
+						}}
 					>
-						{t("common.cancel", "Cancel")} (Esc)
-					</Button>
-				</Flex>
-			)}
+						<Text
+							size="2"
+							weight="medium"
+							style={{ color: "var(--accent-11)" }}
+						>
+							{t("lyricLineView.copyTimingsBanner", {
+								count: timingCopyPlacement.snapshots.length,
+								defaultValue: `Copying ${timingCopyPlacement.snapshots.length} line timing(s). Click "Apply timings starting here" above target line.`,
+							})}
+						</Text>
+						<Button
+							size="1"
+							variant="soft"
+							color="gray"
+							onClick={() => setTimingCopyPlacement(null)}
+						>
+							{t("common.cancel", "Cancel")} (Esc)
+						</Button>
+					</Flex>
+				))}
 			<LyricWordSettingsProvider>
 				<ContextMenu.Root>
 					<ContextMenu.Trigger

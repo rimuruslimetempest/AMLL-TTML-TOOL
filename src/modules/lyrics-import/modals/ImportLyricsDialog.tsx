@@ -64,6 +64,7 @@ import type { SegmentationEngineId } from "$/modules/segmentation/types";
 import { detectSyllabificationEngineFromText } from "$/modules/segmentation/utils/detect-syllabification-engine";
 import { loadHyphenator } from "$/modules/segmentation/utils/hyphen-loader";
 import { segmentLyricLines } from "$/modules/segmentation/utils/segmentation";
+import { savedSplitsImportOfferAtom } from "$/modules/split-library/states";
 import {
 	getHyphenationLanguage,
 	SYLLABIFICATION_ENGINES,
@@ -1331,6 +1332,7 @@ export const ImportLyricsDialog = ({
 				),
 			);
 			setIsOpen(false);
+			store.set(savedSplitsImportOfferAtom, Date.now());
 		},
 		[
 			editableLyrics,

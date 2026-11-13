@@ -1,4 +1,17 @@
 import { Button, DropdownMenu } from "@radix-ui/themes";
+import {
+	ArrowAutofitWidth20Regular,
+	ArrowDownload20Regular,
+	CheckmarkCircle20Regular,
+	Clock20Regular,
+	History20Regular,
+	People20Regular,
+	Target20Regular,
+	TextAdd20Regular,
+	TextGrammarCheckmark20Regular,
+	Timer20Regular,
+	Wrench20Regular,
+} from "@fluentui/react-icons";
 import { isTauri } from "@tauri-apps/api/core";
 import { useAtom, useSetAtom } from "jotai";
 import { Toolbar } from "radix-ui";
@@ -9,8 +22,14 @@ import {
 	downloaderOpenAtom,
 } from "$/modules/downloader/states";
 import { pluginManager } from "$/modules/plugins/plugin-manager";
+import {
+	applySavedSplitsDialogAtom,
+	splitLibraryDialogAtom,
+} from "$/modules/split-library/states";
+import { songInfoDialogAtom } from "$/modules/song-info/states";
 import { lyricLinesAtom } from "$/states/main";
 import { formatKeyBindings } from "$/utils/keybindings";
+import { NewMenuIcon } from "../NewMenuIcon";
 import { useTopMenuActions } from "../useTopMenuActions";
 
 type ToolMenuProps = {
@@ -25,6 +44,9 @@ const ToolMenuItems = () => {
 	const [lyricLines, setLyricLines] = useAtom(lyricLinesAtom);
 	const openDownloader = useSetAtom(downloaderOpenAtom);
 	const setDownloaderInitialQuery = useSetAtom(downloaderInitialQueryAtom);
+	const setSplitLibraryOpen = useSetAtom(splitLibraryDialogAtom);
+	const setApplySavedSplitsOpen = useSetAtom(applySavedSplitsDialogAtom);
+	const setSongInfoOpen = useSetAtom(songInfoDialogAtom);
 
 	const getShortcut = (key: string[] | undefined) =>
 		key ? formatKeyBindings(key) : undefined;
@@ -52,35 +74,86 @@ const ToolMenuItems = () => {
 				onSelect={menu.onAutoSegment}
 				shortcut={getShortcut(menu.autoSegmentKey)}
 			>
+				<NewMenuIcon>
+					<TextAdd20Regular />
+				</NewMenuIcon>
 				{t("topBar.menu.autoSegment", "Auto Segment")}
+			</DropdownMenu.Item>
+			<DropdownMenu.Item onSelect={() => setSongInfoOpen(true)}>
+				<NewMenuIcon>
+					<TextAdd20Regular />
+				</NewMenuIcon>
+				{t("topBar.menu.songInfo", "Song Info...")}
+			</DropdownMenu.Item>
+			<DropdownMenu.Item onSelect={() => setSplitLibraryOpen(true)}>
+				<NewMenuIcon>
+					<History20Regular />
+				</NewMenuIcon>
+				{t("topBar.menu.splitLibrary", "My Split Library...")}
+			</DropdownMenu.Item>
+			<DropdownMenu.Item
+				onSelect={() => setApplySavedSplitsOpen(true)}
+				disabled={lyricLines.lyricLines.length === 0}
+			>
+				<NewMenuIcon>
+					<TextAdd20Regular />
+				</NewMenuIcon>
+				{t(
+					"topBar.menu.applySavedSplits",
+					"Apply Saved Splits to Song...",
+				)}
 			</DropdownMenu.Item>
 			<DropdownMenu.Sub>
 				<DropdownMenu.SubTrigger>
+					<NewMenuIcon>
+						<TextAdd20Regular />
+					</NewMenuIcon>
 					{t("topBar.menu.segmentationTools", "Segmentation Tools")}
 				</DropdownMenu.SubTrigger>
 				<DropdownMenu.SubContent>
 					<DropdownMenu.Item onSelect={menu.onRubySegment}>
+						<NewMenuIcon>
+							<TextAdd20Regular />
+						</NewMenuIcon>
 						{t("topBar.menu.rubySegment", "Ruby Segmentation")}
 					</DropdownMenu.Item>
 					<DropdownMenu.Item onSelect={menu.onOpenAdvancedSegmentation}>
+						<NewMenuIcon>
+							<TextGrammarCheckmark20Regular />
+						</NewMenuIcon>
 						{t("topBar.menu.advancedSegment", "Advanced Segmentation...")}
 					</DropdownMenu.Item>
 					<DropdownMenu.Item onSelect={menu.onOpenLearnedSplits}>
+						<NewMenuIcon>
+							<History20Regular />
+						</NewMenuIcon>
 						{t("topBar.menu.learnedSplits", "Learned Splits...")}
 					</DropdownMenu.Item>
 				</DropdownMenu.SubContent>
 			</DropdownMenu.Sub>
 			<DropdownMenu.Item onSelect={menu.onSyncLineTimestamps}>
+				<NewMenuIcon>
+					<Clock20Regular />
+				</NewMenuIcon>
 				{t("topBar.menu.syncLineTimestamps", "Sync Line Timestamps")}
 			</DropdownMenu.Item>
 			<DropdownMenu.Item onSelect={menu.onAutoDuetBySinger}>
+				<NewMenuIcon>
+					<People20Regular />
+				</NewMenuIcon>
 				{t("topBar.menu.autoDuetBySinger", "Auto Duet Based on Singer")}
 			</DropdownMenu.Item>
 			<DropdownMenu.Separator />
 			<DropdownMenu.Item onSelect={menu.onOpenTimeShift}>
+				<NewMenuIcon>
+					<Timer20Regular />
+				</NewMenuIcon>
 				{t("topBar.menu.timeShift", "Time Shift...")}
 			</DropdownMenu.Item>
 			<DropdownMenu.Item onSelect={menu.onOpenTimeStretch}>
+				<NewMenuIcon>
+					<ArrowAutofitWidth20Regular />
+				</NewMenuIcon>
 				{t("topBar.menu.timeStretch", "Time Stretch...")}
 			</DropdownMenu.Item>
 			<DropdownMenu.Separator />
@@ -88,30 +161,48 @@ const ToolMenuItems = () => {
 				onSelect={menu.onOpenTTMLChecklist}
 				shortcut={getShortcut(menu.ttmlChecklistKey)}
 			>
+				<NewMenuIcon>
+					<CheckmarkCircle20Regular />
+				</NewMenuIcon>
 				{t("topBar.menu.ttmlChecklist", "TTML Checklist...")}
 			</DropdownMenu.Item>
 			<DropdownMenu.Item onSelect={menu.onOpenGrammarCheck}>
+				<NewMenuIcon>
+					<TextGrammarCheckmark20Regular />
+				</NewMenuIcon>
 				{t("topBar.menu.grammarCheck", "Grammar and Spelling Check...")}
 			</DropdownMenu.Item>
 			<DropdownMenu.Item
 				onSelect={menu.onOpenGeniusLyricsRefresh}
 				disabled={lyricLines.lyricLines.length === 0}
 			>
+				<NewMenuIcon>
+					<History20Regular />
+				</NewMenuIcon>
 				{t(
 					"topBar.menu.refreshGeniusLyrics",
 					"Refresh Lyrics from Genius...",
 				)}
 			</DropdownMenu.Item>
 			<DropdownMenu.Item onSelect={menu.onOpenStatsAndProfiles}>
+				<NewMenuIcon>
+					<People20Regular />
+				</NewMenuIcon>
 				{t("topBar.menu.statsAndProfiles", "User Profiles & Stats...")}
 			</DropdownMenu.Item>
 			<DropdownMenu.Item
 				onSelect={menu.onOpenSpotMatch}
 				shortcut={getShortcut(menu.spotMatchKey)}
 			>
+				<NewMenuIcon>
+					<Target20Regular />
+				</NewMenuIcon>
 				{t("topBar.menu.spotMatch", "SpotMatch (Alternate Spotify IDs)...")}
 			</DropdownMenu.Item>
 			<DropdownMenu.Item onSelect={menu.onDownloadAudio}>
+				<NewMenuIcon>
+					<ArrowDownload20Regular />
+				</NewMenuIcon>
 				{t("topBar.menu.downloadAudio", "Download Audio...")}
 			</DropdownMenu.Item>
 			{isTauri() && (
@@ -129,10 +220,16 @@ const ToolMenuItems = () => {
 						openDownloader(true);
 					}}
 				>
+					<NewMenuIcon>
+						<Wrench20Regular />
+					</NewMenuIcon>
 					{t("topBar.menu.mediaDownloader", "Media Downloader (yt-dlp)...")}
 				</DropdownMenu.Item>
 			)}
 			<DropdownMenu.Item onSelect={menu.onOpenLatencyTest}>
+				<NewMenuIcon>
+					<Timer20Regular />
+				</NewMenuIcon>
 				{t("settingsDialog.common.latencyTest", "Latency Test...")}
 			</DropdownMenu.Item>
 
@@ -154,6 +251,9 @@ export const ToolMenu = (props: ToolMenuProps) => {
 		return (
 			<DropdownMenu.Sub>
 				<DropdownMenu.SubTrigger>
+					<NewMenuIcon>
+						<Wrench20Regular />
+					</NewMenuIcon>
 					<Trans i18nKey="topBar.menu.tool">Tools</Trans>
 				</DropdownMenu.SubTrigger>
 				<DropdownMenu.SubContent>

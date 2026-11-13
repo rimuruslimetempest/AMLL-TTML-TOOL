@@ -9,17 +9,29 @@
  * https://github.com/bobjoerules/AMLL-TTML-TOOL/blob/main/LICENSE
  */
 
-import React, {
-	forwardRef,
-	useCallback,
-	useEffect,
-	useId,
-	useLayoutEffect,
-	useMemo,
-	useRef,
-	useState,
-	type FC,
-} from "react";
+import {
+	DismissCircle20Regular,
+	DocumentAdd20Regular,
+	Info24Regular,
+	LayoutColumnThree24Regular,
+	LayoutRowThree24Regular,
+	LocalLanguage16Regular,
+	LocalLanguage24Regular,
+	MusicNote220Regular,
+	Notebook24Regular,
+	People16Regular,
+	People20Regular,
+	Play16Regular,
+	QuestionCircle16Regular,
+	Settings24Regular,
+	Sparkle16Regular,
+	Stop16Regular,
+	TextT16Regular,
+	TextT24Regular,
+	Timer24Regular,
+	Translate16Regular,
+	Warning16Regular,
+} from "@fluentui/react-icons";
 import {
 	Button,
 	Checkbox,
@@ -28,48 +40,60 @@ import {
 	IconButton,
 	Popover,
 	RadioGroup,
+	SegmentedControl,
 	Select,
 	Spinner,
 	Switch,
 	Text,
 	TextField,
+	Tooltip,
 } from "@radix-ui/themes";
-import {
-	QuestionCircle16Regular,
-	LocalLanguage24Regular,
-	Add24Regular,
-	Timer24Regular,
-	Info24Regular,
-	TextT24Regular,
-	Notebook24Regular,
-	LayoutRowThree24Regular,
-	LayoutColumnThree24Regular,
-	Settings24Regular,
-	DocumentAdd16Regular,
-	Sparkle16Regular,
-	Play16Regular,
-	Stop16Regular,
-	TextT16Regular,
-	LocalLanguage16Regular,
-	Warning16Regular,
-	MusicNote216Regular,
-	People16Regular,
-	DismissCircle16Regular,
-	Translate16Regular,
-} from "@fluentui/react-icons";
 import { atom, useAtom, useAtomValue, useSetAtom, useStore } from "jotai";
 import { useSetImmerAtom } from "jotai-immer";
+import React, {
+	type FC,
+	forwardRef,
+	useCallback,
+	useEffect,
+	useId,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-
+import { useRunAiCheck } from "$/modules/ai-check/index";
+import { currentTimeAtom } from "$/modules/audio/states/index.ts";
+import {
+	collabActiveAtom,
+	collabDialogOpenAtom,
+	collabPeersAtom,
+} from "$/modules/collab/states";
+import { newLineTextFocusAtom } from "$/modules/lyric-editor/components/lyric-line-view-states";
+import { getLineSinger } from "$/modules/lyric-editor/utils/auto-duet.ts";
+import {
+	insertNewLineAt,
+	resolveNewLineInsertionIndex,
+} from "$/modules/lyric-editor/utils/line-creation";
+import {
+	createSectionsFromSelectedLines,
+	repairSectionIntegrity,
+	sectionCategoryLabel,
+} from "$/modules/lyric-editor/utils/section-system";
+import { advancedRibbonControlsAtom } from "$/modules/onboarding/states";
 import {
 	displayRomanizationInSyncAtom,
 	LayoutMode,
 	layoutModeAtom,
+	newLineInsertionModeAtom,
 	showLineRomanizationAtom,
 	showLineTranslationAtom,
 	showWordRomanizationInputAtom,
+	UiLayer,
+	uiLayerAtom,
 } from "$/modules/settings/states/index.ts";
+import { ttmlUploaderOpenAtom } from "$/modules/ttml-uploader/states";
 import {
 	editingTimeFieldAtom,
 	lyricLinesAtom,
@@ -79,30 +103,21 @@ import {
 	showEndTimeAsDurationAtom,
 } from "$/states/main.ts";
 import {
-	type LyricLine,
-	type LyricWord,
-	type LyricSection,
-	type LyricSectionCategory,
-	newLyricLine,
-	LYRIC_SECTION_CATEGORIES,
 	formatVoiceLabel,
 	getLineVoice,
 	getVoiceColor,
+	LYRIC_SECTION_CATEGORIES,
+	type LyricLine,
+	type LyricSection,
+	type LyricSectionCategory,
+	type LyricWord,
+	newLyricLine,
 	normalizeVoice,
 } from "$/types/ttml";
-import {
-	createSectionsFromSelectedLines,
-	repairSectionIntegrity,
-	sectionCategoryLabel,
-} from "$/modules/lyric-editor/utils/section-system";
-import { getLineSinger } from "$/modules/lyric-editor/utils/auto-duet.ts";
-import { msToTimestamp, parseTimespan } from "$/utils/timestamp.ts";
 import { buildLineRomanization, getPhoneticSyllables } from "$/utils/phonetic";
+import { msToTimestamp, parseTimespan } from "$/utils/timestamp.ts";
 import { RibbonFrame, RibbonSection } from "./common";
-import { advancedRibbonControlsAtom } from "$/modules/onboarding/states";
-import { RibbonSyncProgressWidget } from "./sync-mode.tsx";
-import { useRunAiCheck } from "$/modules/ai-check/index";
-import { submissionChecklistOpenAtom } from "$/modules/submission-checklist/states";
+import { RibbonSyncProgressSection } from "./sync-mode.tsx";
 
 const MULTIPLE_VALUES = Symbol("multiple-values");
 
@@ -597,6 +612,7 @@ function ToggleButtonField<
 	isWordField,
 	fieldName,
 	activeColor,
+	iconOnly,
 }: {
 	label: React.ReactNode;
 	icon?: React.ReactNode;
@@ -613,6 +629,7 @@ function ToggleButtonField<
 		| "green"
 		| "teal"
 		| "cyan";
+	iconOnly?: boolean;
 }) {
 	const itemAtom = useMemo(
 		() => (isWordField ? selectedWordsAtom : selectedLinesAtom),
@@ -667,7 +684,7 @@ function ToggleButtonField<
 	const isIndeterminate = currentValue === MULTIPLE_VALUES;
 
 	const handleToggle = () => {
-		const targetValue = isChecked ? false : true;
+		const targetValue = !isChecked;
 		editLyricLines((state) => {
 			const selectedItems = store.get(itemAtom);
 			for (const line of state.lyricLines) {
@@ -697,6 +714,31 @@ function ToggleButtonField<
 		});
 	};
 
+	if (iconOnly) {
+		const button = (
+			<IconButton
+				size="2"
+				variant={isChecked ? "solid" : isIndeterminate ? "outline" : "soft"}
+				color={isChecked ? activeColor : "gray"}
+				disabled={isDisabled}
+				onClick={handleToggle}
+				aria-label={typeof label === "string" ? label : undefined}
+				style={{
+					cursor: isDisabled ? "not-allowed" : "pointer",
+					borderRadius: "6px",
+				}}
+			>
+				{icon}
+			</IconButton>
+		);
+
+		return (
+			<Tooltip content={typeof label === "string" ? label : ""}>
+				<span style={{ display: "inline-flex" }}>{button}</span>
+			</Tooltip>
+		);
+	}
+
 	return (
 		<Button
 			size="1"
@@ -719,19 +761,46 @@ function EditModeField({
 	advanceModeLabel = "高级模式",
 }) {
 	const [layoutMode, setLayoutMode] = useAtom(layoutModeAtom);
+	const isNew = useAtomValue(uiLayerAtom) === UiLayer.New;
+
+	if (isNew) {
+		return (
+			<SegmentedControl.Root
+				value={layoutMode}
+				onValueChange={(v) => setLayoutMode(v as LayoutMode)}
+				size="1"
+				style={{ flexShrink: 0 }}
+			>
+				<SegmentedControl.Item value={LayoutMode.Simple}>
+					{simpleModeLabel}
+				</SegmentedControl.Item>
+				<SegmentedControl.Item value={LayoutMode.Advance}>
+					{advanceModeLabel}
+				</SegmentedControl.Item>
+			</SegmentedControl.Root>
+		);
+	}
+
 	return (
 		<RadioGroup.Root
 			value={layoutMode}
 			onValueChange={(v) => setLayoutMode(v as LayoutMode)}
 			size="1"
+			style={{ flexShrink: 0, alignSelf: "flex-start" }}
 		>
 			<Flex gapY="3" direction="column">
-				<Text wrap="nowrap" size="1" style={{ color: "var(--accent-11)" }}>
+				<Text
+					size="1"
+					style={{ color: "var(--accent-11)", whiteSpace: "nowrap" }}
+				>
 					<RadioGroup.Item value={LayoutMode.Simple}>
 						{simpleModeLabel}
 					</RadioGroup.Item>
 				</Text>
-				<Text wrap="nowrap" size="1" style={{ color: "var(--accent-11)" }}>
+				<Text
+					size="1"
+					style={{ color: "var(--accent-11)", whiteSpace: "nowrap" }}
+				>
 					<RadioGroup.Item value={LayoutMode.Advance}>
 						{advanceModeLabel}
 					</RadioGroup.Item>
@@ -856,14 +925,23 @@ const AuxiliaryDisplayField: FC = () => {
 		showWordRomanizationInputAtom,
 	);
 	const { t } = useTranslation();
+	const isNew = useAtomValue(uiLayerAtom) === UiLayer.New;
 
 	const idTranslation = useId();
 	const idRomanization = useId();
 	const idPerWord = useId();
 
-	return (
-		<Grid columns="1fr auto" gapX="4" gapY="1" flexGrow="1" align="center">
-			<Text size="1" asChild style={{ color: "var(--accent-11)" }}>
+	const displayFields = (
+		<>
+			<Text
+				size="1"
+				asChild
+				style={{
+					color: "var(--accent-11)",
+					lineHeight: "18px",
+					whiteSpace: "nowrap",
+				}}
+			>
 				<label htmlFor={idTranslation}>
 					{t("ribbonBar.editMode.showTranslation", "Show Translation Line")}
 				</label>
@@ -873,7 +951,15 @@ const AuxiliaryDisplayField: FC = () => {
 				checked={showTranslation}
 				onCheckedChange={(c) => setShowTranslation(Boolean(c))}
 			/>
-			<Text size="1" asChild style={{ color: "var(--accent-11)" }}>
+			<Text
+				size="1"
+				asChild
+				style={{
+					color: "var(--accent-11)",
+					lineHeight: "18px",
+					whiteSpace: "nowrap",
+				}}
+			>
 				<label htmlFor={idRomanization}>
 					{t("ribbonBar.editMode.showRomanization", "Show Romanization Line")}
 				</label>
@@ -883,7 +969,15 @@ const AuxiliaryDisplayField: FC = () => {
 				checked={showRomanization}
 				onCheckedChange={(c) => setShowRomanization(Boolean(c))}
 			/>
-			<Text size="1" asChild style={{ color: "var(--accent-11)" }}>
+			<Text
+				size="1"
+				asChild
+				style={{
+					color: "var(--accent-11)",
+					lineHeight: "18px",
+					whiteSpace: "nowrap",
+				}}
+			>
 				<label htmlFor={idPerWord}>
 					{t(
 						"ribbonBar.editMode.showWordRomanizationInput",
@@ -896,6 +990,70 @@ const AuxiliaryDisplayField: FC = () => {
 				checked={showWordRomanizationInput}
 				onCheckedChange={(c) => setShowWordRomanizationInput(Boolean(c))}
 			/>
+		</>
+	);
+
+	if (isNew) {
+		return (
+			<Popover.Root>
+				<Popover.Trigger>
+					<Button
+						size="1"
+						variant="soft"
+						color="gray"
+						aria-label={t(
+							"ribbonBar.editMode.displayOptions",
+							"Display options",
+						)}
+						style={{
+							cursor: "pointer",
+							justifyContent: "flex-start",
+							gap: 6,
+						}}
+					>
+						<LayoutColumnThree24Regular
+							style={{ width: 14, height: 14 }}
+						/>
+						<span>
+							{t("ribbonBar.editMode.displayOptions", "Display")}
+						</span>
+					</Button>
+				</Popover.Trigger>
+				<Popover.Content
+					size="1"
+					style={{ width: 280, maxWidth: "90vw" }}
+				>
+					<Flex direction="column" gap="3">
+						<Text size="2" weight="bold">
+							{t(
+								"ribbonBar.editMode.auxiliaryLineDisplay",
+								"Auxiliary Line Display",
+							)}
+						</Text>
+						<Grid
+							columns="1fr auto"
+							gapX="2"
+							gapY="2"
+							align="center"
+						>
+							{displayFields}
+						</Grid>
+					</Flex>
+				</Popover.Content>
+			</Popover.Root>
+		);
+	}
+
+	return (
+		<Grid
+			columns="1fr auto"
+			gapX="2"
+			gapY="2"
+			flexGrow="1"
+			align="center"
+			style={{ minWidth: 0 }}
+		>
+			{displayFields}
 		</Grid>
 	);
 };
@@ -999,6 +1157,7 @@ const PhoneticSection = () => {
 
 	return (
 		<RibbonSection
+			data-edit-phonetic=""
 			label={
 				<Flex gap="1" align="center">
 					<LocalLanguage24Regular />
@@ -1359,6 +1518,7 @@ const RibbonSectionControls: FC<{ isSidebar?: boolean }> = ({ isSidebar }) => {
 
 	return (
 		<RibbonSection
+			data-edit-section=""
 			isSidebar={isSidebar}
 			label={
 				<Flex gap="1" align="center">
@@ -1427,23 +1587,26 @@ export const EditModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 	const { t } = useTranslation();
 	const [selectedLines, setSelectedLines] = useAtom(selectedLinesAtom);
 	const selectedWords = useAtomValue(selectedWordsAtom);
+	const setSelectedWords = useSetAtom(selectedWordsAtom);
+	const setNewLineTextFocus = useSetAtom(newLineTextFocusAtom);
+	const currentTime = useAtomValue(currentTimeAtom);
+	const newLineInsertionMode = useAtomValue(newLineInsertionModeAtom);
 	const [showAdvanced, setShowAdvanced] = useAtom(advancedRibbonControlsAtom);
+	const uiLayer = useAtomValue(uiLayerAtom);
+	const showDisplayControls = showAdvanced || uiLayer === UiLayer.New;
 	const { run: runAiCheck } = useRunAiCheck();
-	const setSubmissionChecklistOpen = useSetAtom(submissionChecklistOpenAtom);
+	const setTtmlUploaderOpen = useSetAtom(ttmlUploaderOpenAtom);
+	const setCollabDialogOpen = useSetAtom(collabDialogOpenAtom);
+	const collabActive = useAtomValue(collabActiveAtom);
+	const collabPeers = useAtomValue(collabPeersAtom);
 
 	return (
-		<RibbonFrame ref={ref} isSidebar={isSidebar} reserveControlRows={3}>
-			<RibbonSection
-				isSidebar={isSidebar}
-				label={
-					<Flex align="center" gap="1" style={{ display: "inline-flex" }}>
-						<Timer24Regular style={{ width: "12px", height: "12px" }} />
-						<span>{t("ribbonBar.syncMode.syncProgress", "Sync Progress")}</span>
-					</Flex>
-				}
-			>
-				<RibbonSyncProgressWidget />
-			</RibbonSection>
+		<RibbonFrame
+			ref={ref}
+			isSidebar={isSidebar}
+			reserveControlRows={uiLayer === UiLayer.New ? 0 : 3}
+		>
+			<RibbonSyncProgressSection isSidebar={isSidebar} />
 			<RibbonSection
 				isSidebar={isSidebar}
 				label={
@@ -1465,72 +1628,118 @@ export const EditModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 				label={
 					<Flex gap="1" align="center">
 						<Notebook24Regular />
-						Submission Checklist
+						TTML Upload
 					</Flex>
 				}
 			>
 				<Button
 					size="1"
 					variant="soft"
-					onClick={() => setSubmissionChecklistOpen(true)}
+					onClick={() => setTtmlUploaderOpen(true)}
 				>
 					<Flex gap="1" align="center">
 						<Notebook24Regular />
-						Open checklist
+						Open uploader
+					</Flex>
+				</Button>
+			</RibbonSection>
+			<RibbonSection
+				isSidebar={isSidebar}
+				label={
+					<Flex gap="1" align="center">
+						<People16Regular />
+						{t("ribbonBar.collab.title", "Collaborate")}
+					</Flex>
+				}
+			>
+				<Button
+					size="1"
+					variant="soft"
+					onClick={() => setCollabDialogOpen(true)}
+				>
+					<Flex gap="1" align="center">
+						<People16Regular />
+						{collabActive
+							? `${t("ribbonBar.collab.live", "Live")} · ${collabPeers.length}`
+							: t("ribbonBar.collab.host", "Host or join")}
 					</Flex>
 				</Button>
 			</RibbonSection>
 			<RibbonSection
 				label={
 					<Flex gap="1" align="center">
-						<Add24Regular />
-						{t("ribbonBar.editMode.new", "New")}
+						<Info24Regular />
+						{t("ribbonBar.editMode.lineProperties", "Line Properties")}
 					</Flex>
 				}
 				isSidebar={isSidebar}
 			>
-				<Grid columns="1" gap="1" gapY="1" flexGrow="1" align="center">
-					<Button
-						size="1"
-						variant="soft"
-						onClick={() =>
-							editLyricLines((draft) => {
-								let targetIndex = -1;
-								if (selectedLines.size > 0) {
-									for (let i = draft.lyricLines.length - 1; i >= 0; i--) {
-										if (selectedLines.has(draft.lyricLines[i].id)) {
-											targetIndex = i;
-											break;
-										}
-									}
-								}
-								const newLine = newLyricLine();
-								if (targetIndex >= 0) {
-									const prevLine = draft.lyricLines[targetIndex];
-									if (prevLine.sectionId) {
-										newLine.sectionId = prevLine.sectionId;
-									}
-									if (prevLine.geniusHeader) {
-										newLine.geniusHeader = prevLine.geniusHeader;
-									}
-									draft.lyricLines.splice(targetIndex + 1, 0, newLine);
-									repairSectionIntegrity(draft);
-								} else {
-									draft.lyricLines.push(newLine);
-								}
-								setSelectedLines(new Set([newLine.id]));
-							})
-						}
-					>
-						<Flex gap="1" align="center">
-							<DocumentAdd16Regular />
-							{t("ribbonBar.editMode.lyricLine", "Lyric Line")}
-						</Flex>
-					</Button>
-				</Grid>
+				<Flex
+					gap="1"
+					align="center"
+					justify="center"
+					direction={isSidebar ? "column" : "row"}
+					style={{ height: "100%" }}
+				>
+					<Tooltip content={t("ribbonBar.editMode.newLine", "New Line")}>
+						<span style={{ display: "inline-flex" }}>
+							<IconButton
+								size="2"
+								variant="soft"
+								onClick={() => {
+									let newLineId: string | null = null;
+									editLyricLines((draft) => {
+										const index = resolveNewLineInsertionIndex(
+											draft.lyricLines,
+											{
+												selectedLineIds: selectedLines,
+												currentTime,
+												mode: newLineInsertionMode,
+											},
+										);
+										const newLine = insertNewLineAt(
+											draft,
+											index,
+											newLyricLine(),
+										);
+										repairSectionIntegrity(draft);
+										newLineId = newLine.id;
+									});
+									if (!newLineId) return;
+									setSelectedLines(new Set([newLineId]));
+									setSelectedWords(new Set());
+									setNewLineTextFocus(newLineId);
+								}}
+								aria-label={t("ribbonBar.editMode.newLine", "New Line")}
+								style={{ cursor: "pointer", borderRadius: "6px" }}
+							>
+								<DocumentAdd20Regular />
+							</IconButton>
+						</span>
+					</Tooltip>
+					<ToggleButtonField
+						icon={<MusicNote220Regular />}
+						label={t("ribbonBar.editMode.bgLyric", "Background Vocal")}
+						fieldName="isBG"
+						iconOnly
+					/>
+					<ToggleButtonField
+						icon={<People20Regular />}
+						label={t("ribbonBar.editMode.duetLyric", "Duet Vocal")}
+						fieldName="isDuet"
+						iconOnly
+					/>
+					<ToggleButtonField
+						icon={<DismissCircle20Regular />}
+						label={t("ribbonBar.editMode.ignoreSync", "Ignore Sync")}
+						fieldName="ignoreSync"
+						iconOnly
+					/>
+				</Flex>
 			</RibbonSection>
 			{selectedLines.size > 0 && (
 				<RibbonSection
+					data-edit-line-timing=""
 					isSidebar={isSidebar}
 					label={
 						<Flex gap="1" align="center">
@@ -1572,35 +1781,6 @@ export const EditModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 				</RibbonSection>
 			)}
 			{selectedLines.size > 0 && (
-				<RibbonSection
-					isSidebar={isSidebar}
-					label={
-						<Flex gap="1" align="center">
-							<Info24Regular />
-							{t("ribbonBar.editMode.lineProperties", "Line Properties")}
-						</Flex>
-					}
-				>
-					<Grid columns="1" gap="1" gapY="1" flexGrow="1" align="center">
-						<ToggleButtonField
-							icon={<MusicNote216Regular />}
-							label={t("ribbonBar.editMode.bgLyric", "Background Vocal")}
-							fieldName="isBG"
-						/>
-						<ToggleButtonField
-							icon={<People16Regular />}
-							label={t("ribbonBar.editMode.duetLyric", "Duet Vocal")}
-							fieldName="isDuet"
-						/>
-						<ToggleButtonField
-							icon={<DismissCircle16Regular />}
-							label={t("ribbonBar.editMode.ignoreSync", "Ignore Sync")}
-							fieldName="ignoreSync"
-						/>
-					</Grid>
-				</RibbonSection>
-			)}
-			{selectedLines.size > 0 && (
 				<RibbonSectionControls isSidebar={isSidebar} />
 			)}
 			{showAdvanced && (selectedLines.size > 0 || selectedWords.size > 0) && (
@@ -1608,6 +1788,7 @@ export const EditModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 			)}
 			{selectedWords.size > 0 && (
 				<RibbonSection
+					data-edit-word-timing=""
 					isSidebar={isSidebar}
 					label={
 						<Flex gap="1" align="center">
@@ -1652,6 +1833,7 @@ export const EditModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 			)}
 			{selectedWords.size > 0 && (
 				<RibbonSection
+					data-edit-word-properties=""
 					isSidebar={isSidebar}
 					label={
 						<Flex gap="1" align="center">
@@ -1707,6 +1889,7 @@ export const EditModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 			)}
 			{showAdvanced && selectedLines.size > 0 && (
 				<RibbonSection
+					data-edit-secondary=""
 					isSidebar={isSidebar}
 					label={
 						<Flex gap="1" align="center">
@@ -1749,7 +1932,7 @@ export const EditModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 					</Grid>
 				</RibbonSection>
 			)}
-			{showAdvanced && (
+			{showDisplayControls && (
 				<RibbonSection
 					label={
 						<Flex gap="1" align="center">
@@ -1758,6 +1941,7 @@ export const EditModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 						</Flex>
 					}
 					isSidebar={isSidebar}
+					minWidth={160}
 				>
 					<EditModeField
 						simpleModeLabel={t(
@@ -1771,7 +1955,7 @@ export const EditModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 					/>
 				</RibbonSection>
 			)}
-			{showAdvanced && (
+			{showDisplayControls && (
 				<RibbonSection
 					label={
 						<Flex gap="1" align="center">
@@ -1797,7 +1981,13 @@ export const EditModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 				}
 				isSidebar={isSidebar}
 			>
-				<Switch checked={showAdvanced} onCheckedChange={setShowAdvanced} />
+				<Switch
+					checked={showAdvanced}
+					onCheckedChange={setShowAdvanced}
+					aria-label={t("ribbonBar.advanced", "Advanced")}
+					title={t("ribbonBar.advanced", "Advanced")}
+					className="ribbon-neutral-switch"
+				/>
 			</RibbonSection>
 		</RibbonFrame>
 	);

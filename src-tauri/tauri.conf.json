@@ -1,27 +1,29 @@
 {
 	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
 	"productName": "TTML Editor",
-	"version": "4.8.2",
+	"version": "4.10.0",
 	"identifier": "com.bobjoerules.amll-ttml-tool",
 	"build": {
 		"frontendDist": "../dist",
 		"devUrl": "http://localhost:5173",
 		"beforeDevCommand": "npm run dev",
-		"beforeBuildCommand": "npm run build"
+		"beforeBuildCommand": "npm run build && npm run build:collab-web"
 	},
 	"app": {
 		"windows": [
 			{
 				"title": "",
 				"label": "main",
-				"width": 800,
-				"height": 600,
+				"width": 1280,
+				"height": 800,
 				"resizable": true,
 				"devtools": true,
 				"fullscreen": false,
 				"dragDropEnabled": false,
 				"visible": false,
-				"theme": "Dark"
+				"theme": "Dark",
+				"minWidth": 960,
+				"minHeight": 600
 			}
 		],
 		"security": {
@@ -45,6 +47,9 @@
 			"icons/128x128@2x.png",
 			"icons/icon.icns",
 			"icons/icon.ico"
+		],
+		"resources": [
+			"resources/web/**/*"
 		],
 		"createUpdaterArtifacts": true
 	},

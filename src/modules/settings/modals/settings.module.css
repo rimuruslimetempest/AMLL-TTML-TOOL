@@ -210,6 +210,52 @@
 	}
 }
 
+@media (max-width: 680px) {
+	.dialogContent {
+		width: 100vw;
+		height: 100vh;
+		max-height: 100vh;
+		border-radius: 0;
+	}
+
+	.settingsLayout {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto minmax(0, 1fr);
+	}
+
+	.sidebar {
+		max-height: 38vh;
+		padding: var(--space-2);
+		border-right: none;
+		border-bottom: 1px solid var(--gray-a4);
+	}
+
+	.sidebarTitle {
+		margin: 0 var(--space-2) var(--space-2);
+	}
+
+	.searchBoxWrapper {
+		margin-bottom: var(--space-2);
+	}
+
+	.navigation {
+		flex-direction: row;
+		overflow-x: auto;
+		overflow-y: hidden;
+		padding-bottom: 2px;
+	}
+
+	.navigationItem {
+		width: auto;
+		min-width: max-content;
+		flex: 0 0 auto;
+	}
+
+	.contentPane {
+		padding: var(--space-3);
+	}
+}
+
 .searchBoxWrapper {
 	margin: 0 var(--space-2) var(--space-3);
 }

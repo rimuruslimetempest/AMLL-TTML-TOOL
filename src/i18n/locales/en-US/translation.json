@@ -67,7 +67,8 @@
 		},
 		"empty": {
 			"title": "No lyric lines",
-			"description": "Add new lyric lines in the top panel or open/import existing lyrics from the menu or cloud"
+			"description": "Add new lyric lines in the top panel or open/import existing lyrics from the menu or cloud",
+			"newDescription": "Import lyrics or add a line, then mark vocals and time it manually. Nothing is timed automatically."
 		}
 	},
 	"importChooser": {
@@ -221,7 +222,8 @@
 				"autoFetch": "Romanize"
 			},
 			"new": "New",
-			"lyricLine": "Lyric Line",
+			"newLine": "New Line",
+			"lyricLine": "New Line",
 			"lineTiming": "Line Timing",
 			"startTime": "Start Time",
 			"endTime": "End Time",
@@ -263,6 +265,8 @@
 			"fadeWidth": "Fade Width",
 			"instantFade": "Instant Fade Out",
 			"view": "View",
+			"display": "Display",
+			"advanced": "Advanced",
 			"fullscreen": "Fullscreen",
 			"showArtwork": "Album Artwork",
 			"render": "Render",
@@ -425,6 +429,37 @@
 				"empty": "No saved presets yet."
 			},
 			"theme": "Theme",
+			"interface": {
+				"title": "Interface",
+				"layer": "Interface Layer",
+				"layerDesc": "Choose the visual language used by the title bar, ribbons, dialogs, and controls.",
+				"new": "New",
+				"classic": "Classic",
+				"newDesc": "Modern rounded surfaces with the refreshed design system, responsive spacing, and accessible controls.",
+				"classicDesc": "Flat, denser chrome with square corners and solid panels. Your colors and layout choices are preserved.",
+				"classicShortcut": "Emergency switch:",
+				"newOnly": "Applies to the New interface. Classic is unchanged.",
+				"density": "Density",
+				"densityDesc": "Compact reduces vertical spacing without shrinking text or removing controls.",
+				"densityComfortable": "Comfortable",
+				"densityCompact": "Compact",
+				"contrast": "Contrast",
+				"contrastDesc": "High contrast strengthens borders and text to meet WCAG AA readability.",
+				"contrastStandard": "Standard",
+				"contrastHigh": "High",
+				"performance": "Performance Mode",
+				"performanceDesc": "Removes backdrop blur, decorative transitions, and layout motion while keeping every editing feature available.",
+				"performanceOn": "On",
+				"performanceOff": "Off",
+				"performanceAuto": "Auto",
+				"performanceNote": "Best for low-power machines, large projects, or remote desktop sessions. Colors and project data are unchanged.",
+				"performanceAutoNote": "Auto measures frame pacing after startup and suggests Performance Mode if rendering is slow. It never switches without your approval.",
+				"performanceOffNote": "All visual effects stay enabled. Choose Auto to receive a non-blocking suggestion if this device struggles.",
+				"reset": "Reset UI",
+				"resetDesc": "If the New interface is ever hard to use, switch back to Classic here. Your editor, project data, and preferences stay intact.",
+				"resetAction": "Reset UI to Classic",
+				"resetShortcut": "Shortcut: Ctrl+Shift+Alt+C"
+			},
 			"uiScale": "Interface Scale",
 			"uiScaleDesc": "Adjust the size of text, icons, and elements across the entire app. Use Cmd/Ctrl +/- to zoom anytime.",
 			"resetScale": "Reset ({scale}%)",
@@ -1282,13 +1317,16 @@
 			"structuralWarning": "New lines start untimed, and removed lines lose their old timing. Existing line timestamps do not move.",
 			"timingNotice": "Line start/end times stay fixed. Word timings are reused when the word count is unchanged.",
 			"noChanges": "Your lyrics already match this Genius page.",
-			"apply": "Update lyrics only",
+			"apply": "Apply changes",
 			"applied": "Updated {count} lyric lines from Genius. Timestamps preserved.",
 			"appliedWithStructure": "Updated {changed} lines, added {added} untimed lines, and removed {removed} lines.",
 			"untimed": "Needs timing",
 			"currentGeniusPage": "Current Genius page",
 			"searchPrompt": "Search for the song to refresh from Genius.",
-			"noResults": "No songs found. Try another search or paste a Genius link."
+			"noResults": "No songs found. Try another search or paste a Genius link.",
+			"noResultsTitle": "No matches found",
+			"chooseResult": "Choose the correct Genius page",
+			"safeMatching": "Only clearly matching lines are updated. Major rewrites appear as new or removed lines."
 		}
 	},
 	"textImportDialog": {

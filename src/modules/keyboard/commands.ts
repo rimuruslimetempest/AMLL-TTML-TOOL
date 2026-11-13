@@ -404,6 +404,41 @@ export const cmdTtmlChecklist = registerCommand(
 	"Tools",
 );
 
+export const cmdCopyLineTiming = registerCommand(
+	"copyLineTiming",
+	[CONTROL_KEY, "Alt", "KeyC"],
+	t("settingsDialog.keybindings.copyLineTiming", "Clipboard - Copy line timing"),
+	"Edit",
+);
+
+export const cmdPasteLineTiming = registerCommand(
+	"pasteLineTiming",
+	[CONTROL_KEY, "Alt", "KeyV"],
+	t("settingsDialog.keybindings.pasteLineTiming", "Clipboard - Paste line timing"),
+	"Edit",
+);
+
+export const cmdCopyLineWithTiming = registerCommand(
+	"copyLineWithTiming",
+	[CONTROL_KEY, "Alt", "KeyX"],
+	t("settingsDialog.keybindings.copyLineWithTiming", "Clipboard - Copy line with timing"),
+	"Edit",
+);
+
+export const cmdPasteAsNewLine = registerCommand(
+	"pasteAsNewLine",
+	[CONTROL_KEY, "Alt", "KeyB"],
+	t("settingsDialog.keybindings.pasteAsNewLine", "Clipboard - Paste as new line"),
+	"Edit",
+);
+
+export const cmdSongInfo = registerCommand(
+	"songInfo",
+	[CONTROL_KEY, "Alt", "KeyI"],
+	t("settingsDialog.keybindings.songInfo", "Tools - Song info"),
+	"Tools",
+);
+
 if (import.meta.env.DEV) {
 	t("settingsDialog.keybindings.category.File");
 	t("settingsDialog.keybindings.category.Edit");

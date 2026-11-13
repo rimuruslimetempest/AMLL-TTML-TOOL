@@ -24,6 +24,8 @@ export interface FindReplaceState {
 	useRegex: boolean;
 	scope: "all" | "lyrics" | "translations" | "romanizations";
 	activeMatchIndex: number;
+	/** Restrict results and replacement to the selected lyric lines. */
+	selectionOnly?: boolean;
 	focusTarget?: "find" | "replace";
 	focusTrigger?: number;
 }

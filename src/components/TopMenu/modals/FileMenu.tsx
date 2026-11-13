@@ -1,13 +1,23 @@
 import { Button, DropdownMenu, Flex } from "@radix-ui/themes";
 import {
+	Clipboard20Regular,
+	ClipboardPaste20Regular,
 	CloudArrowDown20Regular,
 	CloudArrowUp20Regular,
+	DocumentAdd20Regular,
+	DocumentText20Regular,
+	FolderOpen20Regular,
+	History20Regular,
+	Save20Regular,
+	Tag20Regular,
+	WindowNew20Regular,
 } from "@fluentui/react-icons";
 import { Toolbar } from "radix-ui";
 import type { CSSProperties } from "react";
 import { Trans } from "react-i18next";
 import { ImportExportLyric } from "$/modules/project/modals/ImportExportLyric";
 import { formatKeyBindings } from "$/utils/keybindings";
+import { NewMenuIcon } from "../NewMenuIcon";
 import { useTopMenuActions } from "../useTopMenuActions";
 
 type FileMenuProps = {
@@ -27,21 +37,33 @@ const FileMenuItems = () => {
 				onSelect={menu.onNewFile}
 				shortcut={getShortcut(menu.newFileKey)}
 			>
+				<NewMenuIcon>
+					<DocumentAdd20Regular />
+				</NewMenuIcon>
 				<Trans i18nKey="topBar.menu.newLyric">New lyrics</Trans>
 			</DropdownMenu.Item>
 			<DropdownMenu.Item
 				onSelect={menu.onNewWindow}
 				shortcut={getShortcut(menu.newWindowKey)}
 			>
+				<NewMenuIcon>
+					<WindowNew20Regular />
+				</NewMenuIcon>
 				<Trans i18nKey="topBar.menu.newWindow">New window</Trans>
 			</DropdownMenu.Item>
 			<DropdownMenu.Item
 				onSelect={menu.onOpenFile}
 				shortcut={getShortcut(menu.openFileKey)}
 			>
+				<NewMenuIcon>
+					<FolderOpen20Regular />
+				</NewMenuIcon>
 				<Trans i18nKey="topBar.menu.openLyric">Open lyrics</Trans>
 			</DropdownMenu.Item>
 			<DropdownMenu.Item onSelect={menu.onOpenFileFromClipboard}>
+				<NewMenuIcon>
+					<ClipboardPaste20Regular />
+				</NewMenuIcon>
 				<Trans i18nKey="topBar.menu.openFromClipboard">
 					Open TTML from clipboard
 				</Trans>
@@ -50,6 +72,9 @@ const FileMenuItems = () => {
 				onSelect={menu.onSaveFile}
 				shortcut={getShortcut(menu.saveFileKey)}
 			>
+				<NewMenuIcon>
+					<Save20Regular />
+				</NewMenuIcon>
 				<Trans i18nKey="topBar.menu.saveLyric">Save lyrics</Trans>
 			</DropdownMenu.Item>
 			<DropdownMenu.Separator />
@@ -71,18 +96,27 @@ const FileMenuItems = () => {
 			</DropdownMenu.Item>
 			<DropdownMenu.Separator />
 			<DropdownMenu.Item onSelect={menu.onOpenHistoryRestore}>
+				<NewMenuIcon>
+					<History20Regular />
+				</NewMenuIcon>
 				<Trans i18nKey="topBar.menu.restoreFromHistory">
 					Auto-Saves…
 				</Trans>
 			</DropdownMenu.Item>
 			<DropdownMenu.Separator />
 			<DropdownMenu.Item onSelect={menu.onSaveFileToClipboard}>
+				<NewMenuIcon>
+					<Clipboard20Regular />
+				</NewMenuIcon>
 				<Trans i18nKey="topBar.menu.saveLyricToClipboard">
 					Save TTML to clipboard
 				</Trans>
 			</DropdownMenu.Item>
 			<DropdownMenu.Separator />
 			<DropdownMenu.Item onSelect={menu.onOpenMetadataEditor}>
+				<NewMenuIcon>
+					<Tag20Regular />
+				</NewMenuIcon>
 				<Trans i18nKey="metadataDialog.title">Metadata Editor</Trans>
 			</DropdownMenu.Item>
 			<DropdownMenu.Separator />
@@ -96,6 +130,9 @@ export const FileMenu = (props: FileMenuProps) => {
 		return (
 			<DropdownMenu.Sub>
 				<DropdownMenu.SubTrigger>
+					<NewMenuIcon>
+						<DocumentText20Regular />
+					</NewMenuIcon>
 					<Trans i18nKey="topBar.menu.file">File</Trans>
 				</DropdownMenu.SubTrigger>
 				<DropdownMenu.SubContent>

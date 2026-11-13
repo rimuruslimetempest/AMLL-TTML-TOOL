@@ -857,3 +857,26 @@
 		background-color: var(--accent-a9);
 	}
 }
+
+/* New and duplicated lines stay visibly unsynced until the user timestamps them. */
+.lyricLine.unsyncedLine {
+	border-left: 3px solid var(--amber-a8, #f5a623);
+}
+
+.newEmptyViewport {
+	min-height: 100%;
+	padding: 24px;
+}
+
+.unsyncedMarker {
+	display: inline-block;
+	margin-top: 2px;
+	padding: 1px 3px;
+	border-radius: 3px;
+	background: var(--amber-a3, rgb(245 166 35 / 0.18));
+	color: var(--amber-a11, #f5a623);
+	font-size: 8px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	line-height: 1.2;
+}

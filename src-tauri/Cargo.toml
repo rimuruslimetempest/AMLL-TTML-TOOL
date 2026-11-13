@@ -1,6 +1,6 @@
 [package]
 name = "amll-ttml-tool"
-version = "4.8.2"
+version = "4.10.0"
 description = "A brand-new syllable lyric editor for Apple Music-like lyrics"
 license = "AGPL-3.0"
 repository = "https://github.com/bobjoerules/AMLL-TTML-TOOL"
@@ -31,6 +31,12 @@ tauri-plugin-process = "2.3.1"
 tauri-plugin-dialog = "~2"
 tauri-plugin-fs = "~2.4.5"
 reqwest = { version = "0.13.4", features = ["json"] }
+axum = { version = "0.8", features = ["ws"] }
+futures-util = "0.3"
+tokio = { version = "1", features = ["fs", "macros", "net", "sync", "time"] }
+tokio-util = { version = "0.7", features = ["io"] }
+tower-http = { version = "0.6", features = ["fs", "set-header"] }
+uuid = { version = "1", features = ["v4"] }
 
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 tauri-plugin-updater = "2.9.0"
@@ -45,6 +51,9 @@ windows-sys = { version = "0.61", features = [
     "Win32_System_JobObjects",
     "Win32_System_Threading",
 ] }
+
+[dev-dependencies]
+tokio-tungstenite = "0.29"
 
 [lints.clippy]
 pedantic = { level = "warn", priority = -1 }

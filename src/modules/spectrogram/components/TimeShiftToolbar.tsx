@@ -166,7 +166,6 @@ export const TimeShiftToolbar: FC = () => {
 					return newLine;
 				});
 				draft.lyricLines.push(...newLines);
-				draft.lyricLines.sort((a, b) => a.startTime - b.startTime);
 			} else {
 				targetLineIndices.forEach((index) => {
 					const line = lines[index];

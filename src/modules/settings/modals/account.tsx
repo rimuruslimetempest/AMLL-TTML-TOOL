@@ -65,6 +65,9 @@ import {
 	getStoredCompletedRecords,
 } from "$/modules/project/timer/project-timer";
 import { averageTTMLTimeSecondsAtom } from "$/modules/project/timer/states";
+import { hasFeatureConsent } from "$/modules/privacy/consent";
+import { privacyConsentAtom } from "$/modules/privacy/states";
+import { PrivacyRequiredCard } from "$/modules/privacy/PrivacyDialogs";
 import { autoLoadCloudAudioAtom } from "$/modules/settings/states";
 import { extractArtistTokens } from "$/modules/ttml-checklist/logic";
 import { openExternal } from "$/utils/openExternal";
@@ -81,6 +84,8 @@ export const SettingsAccountTab = memo(() => {
 	const [autoLoadCloudAudio, setAutoLoadCloudAudio] = useAtom(
 		autoLoadCloudAudioAtom,
 	);
+	const consent = useAtomValue(privacyConsentAtom);
+	const cloudConsentAccepted = hasFeatureConsent(consent, "cloud");
 
 	const [isSignUp, setIsSignUp] = useState<boolean>(false);
 	const [email, setEmail] = useState<string>("");
@@ -98,10 +103,10 @@ export const SettingsAccountTab = memo(() => {
 	const isConfigured = isFirebaseConfigured();
 
 	useEffect(() => {
-		if (user) {
+		if (user && cloudConsentAccepted) {
 			fetchUserTTMLList().catch(console.error);
 		}
-	}, [user]);
+	}, [user, cloudConsentAccepted]);
 
 	const authUser = useMemo(() => {
 		if (!user) return null;
@@ -267,7 +272,6 @@ export const SettingsAccountTab = memo(() => {
 				toast.success(t("cloud.loginSuccess", "Successfully signed in!"));
 			}
 		} catch (err: unknown) {
-			console.error(err);
 			const msg = (err as Error)?.message || "Authentication failed";
 			if (
 				msg.includes("user-not-found") ||
@@ -302,6 +306,16 @@ export const SettingsAccountTab = memo(() => {
 		setFileManagerTab(tab);
 		setFileManagerOpen(true);
 	};
+
+	if (!cloudConsentAccepted) {
+		return (
+			<PrivacyRequiredCard
+				feature="cloud"
+				title="Cloud features need consent"
+				description="Sign-in, profile data, cloud saves, cloud audio, avatars, and the cloud library stay offline until you accept the current privacy policy."
+			/>
+		);
+	}
 
 	if (!user) {
 		return (

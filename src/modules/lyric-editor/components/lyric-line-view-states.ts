@@ -16,6 +16,9 @@ export const timingCopyPlacementAtom = atom<{
 	snapshots: LineTimingSnapshot[];
 } | null>(null);
 
+/** Requests focus of the inline text editor for a newly created line. */
+export const newLineTextFocusAtom = atom<string | null>(null);
+
 /** The line currently open in the Time page's inline text editor. */
 export interface TimeLineEditorState {
 	lineId: string;

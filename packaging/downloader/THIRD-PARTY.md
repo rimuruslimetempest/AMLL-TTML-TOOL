@@ -11,6 +11,10 @@ These tools run as separate executables. They are not linked into the editor.
   FFmpeg source: https://github.com/FFmpeg/FFmpeg/tree/946fcce07b
 - Deno 2.9.8: https://github.com/denoland/deno/tree/v2.9.8
   MIT license; see `deno-LICENSE.md` and the notices in that repository
+- Cloudflare cloudflared 2026.10.7:
+  https://github.com/cloudflare/cloudflared/tree/2026.10.7
+  Apache-2.0 license; see `cloudflared-LICENSE`. Used only for optional
+  Cloudflare Quick Tunnel collaboration links
 
 The preparation script is intended for private local builds. Before distributing
 an installer, provide the complete corresponding source and build material for

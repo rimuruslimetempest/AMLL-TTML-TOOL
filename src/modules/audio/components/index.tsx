@@ -21,18 +21,17 @@ import {
 import {
 	Box,
 	Button,
-	Card,
 	Flex,
 	Grid,
 	HoverCard,
 	IconButton,
-	Inset,
 	Separator,
 	Slider,
 	Switch,
 	Text,
 	Tooltip,
 } from "@radix-ui/themes";
+import { isTauri } from "@tauri-apps/api/core";
 import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai";
 import { type FC, memo, useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -46,6 +45,7 @@ import { useFileOpener } from "$/hooks/useFileOpener";
 import { audioEngine } from "$/modules/audio/audio-engine";
 import { AudioSlider } from "$/modules/audio/components/AudioSlider";
 import { AudioUrlDialog } from "$/modules/audio/components/AudioUrlDialog";
+import { screenRecorderDialogOpenAtom } from "$/modules/recorder/states";
 import {
 	audioPlayingAtom,
 	currentDurationAtom,
@@ -117,6 +117,7 @@ const CurrentTimeLabel: FC = () => {
 	return (
 		<Text
 			size="2"
+			className="audioTime"
 			style={{
 				minWidth: "5.5em",
 				textAlign: "left",
@@ -144,6 +145,7 @@ export const AudioControls: FC = memo(() => {
 	);
 	const setSettingsOpen = useSetAtom(settingsDialogAtom);
 	const setSettingsTab = useSetAtom(settingsTabAtom);
+	const setRecorderOpen = useSetAtom(screenRecorderDialogOpenAtom);
 	const { openFile } = useFileOpener();
 	const { t } = useTranslation();
 
@@ -218,6 +220,7 @@ export const AudioControls: FC = memo(() => {
 	return (
 		<Box
 			data-guide-target="audio"
+			data-ui-chrome="audiobar"
 			m="0"
 			style={{
 				backgroundColor:
@@ -246,6 +249,10 @@ export const AudioControls: FC = memo(() => {
 								variant="soft"
 								onClick={onLoadMusic}
 								title={t("audioPanel.openAudioFile", "Open Local Audio File")}
+								aria-label={t(
+									"audioPanel.openAudioFile",
+									"Open Local Audio File",
+								)}
 							>
 								<MusicNote2Filled />
 							</IconButton>
@@ -359,6 +366,7 @@ export const AudioControls: FC = memo(() => {
 							variant="soft"
 							disabled={!audioLoaded}
 							onClick={onTogglePlay}
+							aria-label={t("audioPanel.playPause", "Play / Pause Music")}
 						>
 							{audioPlaying ? <PauseFilled /> : <PlayFilled />}
 						</IconButton>
@@ -367,6 +375,7 @@ export const AudioControls: FC = memo(() => {
 					<AudioSlider />
 					<Text
 						size="2"
+						className="audioTime"
 						style={{
 							minWidth: "5.5em",
 							color: "var(--audio-bar-text, inherit)",
@@ -374,6 +383,27 @@ export const AudioControls: FC = memo(() => {
 					>
 						{msToTimestamp(currentDuration)}
 					</Text>
+					{isTauri() && (
+						<Tooltip content="Record screen">
+							<IconButton
+								my="2"
+								ml="0"
+								variant="soft"
+								onClick={() => setRecorderOpen(true)}
+								aria-label="Record screen"
+							>
+								<span
+									style={{
+										color: "#e5484d",
+										fontSize: 14,
+										lineHeight: 1,
+									}}
+								>
+									●
+								</span>
+							</IconButton>
+						</Tooltip>
+					)}
 					<Tooltip
 						content={t(
 							"audioPanel.expandSpectrogram",
@@ -385,6 +415,10 @@ export const AudioControls: FC = memo(() => {
 							ml="0"
 							variant="soft"
 							onClick={() => setSpectrogramVisible(!spectrogramVisible)}
+							aria-label={t(
+								"audioPanel.expandSpectrogram",
+								"Expand / Collapse Spectrogram",
+							)}
 						>
 							{spectrogramVisible ? <ChevronDownFilled /> : <ChevronUpFilled />}
 						</IconButton>

@@ -12,6 +12,7 @@ import { useSetImmerAtom } from "jotai-immer";
 import { type FC, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import WindowControls from "$/components/WindowControls";
+import { NewTitleBarCluster } from "$/components/AppShell/NewShellChrome";
 import { loadedAudioFileNameAtom } from "$/modules/audio/states/index.ts";
 import {
 	formatTimerClock,
@@ -202,6 +203,7 @@ export const TitleBar: FC = () => {
 			}
 			endChildren={
 				<Flex align="center" gap="2" mr="2">
+					<NewTitleBarCluster />
 					<Tooltip
 						content={
 							<div style={{ textAlign: "left" }}>
@@ -229,6 +231,7 @@ export const TitleBar: FC = () => {
 						}
 					>
 						<div
+							className={styles.timerBadge}
 							style={{
 								display: "inline-flex",
 								alignItems: "center",
@@ -260,6 +263,7 @@ export const TitleBar: FC = () => {
 							}
 						>
 							<Button
+								className={styles.previewToggle}
 								size="2"
 								variant={showPreviewPanel ? "solid" : "soft"}
 								color={showPreviewPanel ? undefined : "gray"}
@@ -301,6 +305,7 @@ export const TitleBar: FC = () => {
 						}
 					>
 						<span
+							className={styles.geniusToggle}
 							style={{
 								display: "inline-flex",
 								cursor: isSongLoaded ? undefined : "not-allowed",

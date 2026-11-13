@@ -45,6 +45,7 @@ import { FileMenu } from "./modals/FileMenu";
 import { HelpMenu } from "./modals/HelpMenu";
 import { HomeMenu } from "./modals/HomeMenu";
 import { ToolMenu } from "./modals/ToolMenu";
+import styles from "./index.module.css";
 import { useTopMenuActions } from "./useTopMenuActions";
 
 // top menu actions are used inside individual menu components
@@ -70,10 +71,10 @@ const useWindowSize = () => {
 	return windowSize;
 };
 
-export const TopMenu: FC = () => {
+export const TopMenu: FC<{ compactAt?: number }> = ({ compactAt = 800 }) => {
 	const store = useStore();
 	const { width } = useWindowSize();
-	const showHomeButton = width < 800;
+	const showHomeButton = width < compactAt;
 	const menu = useTopMenuActions();
 	const menuRef = useRef(menu);
 	menuRef.current = menu;
@@ -328,7 +329,9 @@ export const TopMenu: FC = () => {
 					height: "100%",
 				}}
 			>
-				<HeaderFileInfo />
+				<Box className={styles.fileInfoSlot}>
+					<HeaderFileInfo />
+				</Box>
 				<CloudStatusButton />
 			</Flex>
 		);
@@ -360,7 +363,10 @@ export const TopMenu: FC = () => {
 					<HelpMenu variant="toolbar" />
 				</Toolbar.Root>
 			)}
-			<Box style={{ marginLeft: "16px", minWidth: 0, flexShrink: 1 }}>
+			<Box
+				className={styles.fileInfoSlot}
+				style={{ marginLeft: "16px", minWidth: 0, flexShrink: 1 }}
+			>
 				<HeaderFileInfo />
 			</Box>
 			<CloudStatusButton />

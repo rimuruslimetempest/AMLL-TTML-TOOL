@@ -1,4 +1,4 @@
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import {
 	type FC,
 	memo,
@@ -78,6 +78,15 @@ export const LyricTimelineOverlay: FC<LyricTimelineOverlayProps> = memo(
 		const activeProcessedLines = useMemo(() => {
 			return processedLines.filter((line) => !isLineIgnored(line));
 		}, [processedLines, isLineIgnored]);
+		// Keep the drag effect mounted while a remote update replaces the processed
+		// array. Refs let the gesture continue without restarting or clearing its
+		// local preview (the cause of the old snap-back).
+		const processedLinesRef = useRef(processedLines);
+		const activeProcessedLinesRef = useRef(activeProcessedLines);
+		useEffect(() => {
+			processedLinesRef.current = processedLines;
+			activeProcessedLinesRef.current = activeProcessedLines;
+		}, [processedLines, activeProcessedLines]);
 
 		const spectrogramOnlyShowSyncLine = useAtomValue(
 			spectrogramOnlyShowSyncLineAtom,
@@ -102,7 +111,7 @@ export const LyricTimelineOverlay: FC<LyricTimelineOverlayProps> = memo(
 					case "divider": {
 						const { startX, lineId, segmentIndex, isGapCreation, zoom } =
 							timelineDrag;
-						const lineBeingDragged = processedLines.find(
+						const lineBeingDragged = processedLinesRef.current.find(
 							(l) => l.id === lineId,
 						);
 						if (!lineBeingDragged) return;
@@ -145,7 +154,9 @@ export const LyricTimelineOverlay: FC<LyricTimelineOverlayProps> = memo(
 					case "word-pan": {
 						const { lineId, wordId, initialMouseTimeMS, initialWordStartMS } =
 							timelineDrag;
-						const processedLine = processedLines.find((l) => l.id === lineId);
+						const processedLine = processedLinesRef.current.find(
+							(l) => l.id === lineId,
+						);
 						if (!processedLine) return;
 
 						const scrollContainer = scrollContainerRef.current;
@@ -169,7 +180,9 @@ export const LyricTimelineOverlay: FC<LyricTimelineOverlayProps> = memo(
 					case "line-pan": {
 						const { lineId, initialMouseTimeMS, initialLineStartMS } =
 							timelineDrag;
-						const processedLine = processedLines.find((l) => l.id === lineId);
+						const processedLine = processedLinesRef.current.find(
+							(l) => l.id === lineId,
+						);
 						if (!processedLine) return;
 
 						const scrollContainer = scrollContainerRef.current;
@@ -207,7 +220,7 @@ export const LyricTimelineOverlay: FC<LyricTimelineOverlayProps> = memo(
 				const lineId = (timelineDrag as TimelineDragOperation).lineId;
 				const targets: number[] = [globalStore.get(currentTimeAtom)];
 				const { segmentIndex } = timelineDrag;
-				const lineBeingDragged = processedLines.find(
+				const lineBeingDragged = processedLinesRef.current.find(
 					(l) => l.id === timelineDrag.lineId,
 				);
 				const isBoundary =
@@ -216,7 +229,7 @@ export const LyricTimelineOverlay: FC<LyricTimelineOverlayProps> = memo(
 						segmentIndex === lineBeingDragged.segments.length - 1);
 
 				if (isBoundary) {
-					const otherLineBoundaries = activeProcessedLines
+					const otherLineBoundaries = activeProcessedLinesRef.current
 						.filter((line) => line.id !== lineId)
 						.flatMap((line) => [line.startTime, line.endTime]);
 					targets.push(...otherLineBoundaries);
@@ -242,8 +255,6 @@ export const LyricTimelineOverlay: FC<LyricTimelineOverlayProps> = memo(
 			zoom,
 			scrollLeft,
 			scrollContainerRef,
-			processedLines,
-			activeProcessedLines,
 		]);
 
 		const bufferPx = 500;

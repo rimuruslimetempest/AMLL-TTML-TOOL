@@ -67,6 +67,40 @@ export const SETTINGS_SEARCH_ITEMS: SettingSearchItem[] = [
 		tabName: "Account & Cloud",
 		keywords: ["stats", "statistics", "contribution", "profile", "lyrics count", "amll db"],
 	},
+	{
+		id: "privacy-consent",
+		title: "Privacy Consent",
+		description: "Review consent for live rooms and cloud accounts, or withdraw it",
+		tab: "privacy",
+		tabName: "Privacy",
+		keywords: ["privacy", "consent", "agree", "withdraw", "policy", "terms", "live room"],
+	},
+	{
+		id: "privacy-diagnostics",
+		title: "Crash Reports",
+		description:
+			"Review crash reporting, view or copy the local payload, and opt in or out; off by default",
+		tab: "privacy",
+		tabName: "Privacy",
+		keywords: [
+			"diagnostics",
+			"sentry",
+			"crash",
+			"error",
+			"report",
+			"telemetry",
+			"opt in",
+			"local copy",
+		],
+	},
+	{
+		id: "privacy-data",
+		title: "Delete Local or Cloud Data",
+		description: "Clear local projects and caches or find cloud deletion instructions",
+		tab: "privacy",
+		tabName: "Privacy",
+		keywords: ["delete", "clear", "data", "privacy", "local", "cloud", "account", "cache"],
+	},
 
 	// Editor & Sync
 	{
@@ -410,6 +444,100 @@ export const SETTINGS_SEARCH_ITEMS: SettingSearchItem[] = [
 		tab: "appearance",
 		tabName: "Appearance",
 		keywords: ["dark mode", "light mode", "theme mode", "auto", "system theme", "legacy dark"],
+	},
+	{
+		id: "appearance-ui-layer",
+		title: "Classic / New Interface",
+		description:
+			"Switch between the modern glass interface and the flatter, denser classic chrome",
+		tab: "appearance",
+		tabName: "Appearance",
+		keywords: [
+			"classic",
+			"new",
+			"ui",
+			"interface",
+			"layer",
+			"skin",
+			"density",
+			"glass",
+			"flat",
+		],
+	},
+	{
+		id: "appearance-density",
+		title: "Interface Density",
+		description:
+			"Choose Comfortable or Compact spacing for the New interface without shrinking text",
+		tab: "appearance",
+		tabName: "Appearance",
+		keywords: ["density", "compact", "comfortable", "spacing", "padding"],
+	},
+	{
+		id: "appearance-contrast",
+		title: "High Contrast",
+		description:
+			"Increase text and border contrast for easier reading in the New interface",
+		tab: "appearance",
+		tabName: "Appearance",
+		keywords: [
+			"contrast",
+			"accessibility",
+			"wcag",
+			"readability",
+			"high contrast",
+		],
+	},
+	{
+		id: "appearance-performance-mode",
+		title: "Performance Mode",
+		description:
+			"Reduce blur, decorative transitions, and layout motion on low-power devices",
+		tab: "appearance",
+		tabName: "Appearance",
+		keywords: [
+			"performance",
+			"fast",
+			"low power",
+			"blur",
+			"motion",
+			"animation",
+			"reduce effects",
+		],
+	},
+	{
+		id: "appearance-matching-words",
+		title: "Ask Before Editing Matching Words",
+		description:
+			"Offer to change other occurrences after a word rename, with case and whole-word choices",
+		tab: "appearance",
+		tabName: "Appearance",
+		keywords: ["matching words", "rename", "word edit", "apply all", "review each", "prompt"],
+	},
+	{
+		id: "appearance-reset-ui",
+		title: "Reset UI to Classic",
+		description:
+			"Use the Classic interface if the New interface is hard to use; project data and preferences stay intact",
+		tab: "appearance",
+		tabName: "Appearance",
+		keywords: ["reset ui", "classic", "fallback", "emergency", "switch interface"],
+	},
+	{
+		id: "appearance-new-accent",
+		title: "New Interface Accent Color",
+		description:
+			"Set the accent used by the New interface only; Classic keeps its existing colors",
+		tab: "appearance",
+		tabName: "Appearance",
+		keywords: [
+			"new accent",
+			"accent color",
+			"indigo",
+			"violet",
+			"new interface",
+			"theme tint",
+		],
 	},
 	{
 		id: "appearance-accent",

@@ -55,6 +55,7 @@ import {
 	keepPlayingWordInViewAtom,
 	LayoutMode,
 	layoutModeAtom,
+	newLineInsertionModeAtom,
 	normalizeApostrophesOnImportAtom,
 	normalizeCyrillicEsOnImportAtom,
 	openSpotMatchAfterSaveAtom,
@@ -104,6 +105,9 @@ export const SettingsCommonTab = ({
 	const setLatencyDialogOpen = useSetAtom(latencyTestDialogAtom);
 	const languageOptions: readonly string[] = Object.keys(resources);
 	const [layoutMode, setLayoutMode] = useAtom(layoutModeAtom);
+	const [newLineInsertionMode, setNewLineInsertionMode] = useAtom(
+		newLineInsertionModeAtom,
+	);
 	const [syncJudgeMode, setSyncJudgeMode] = useAtom(syncJudgeModeAtom);
 	const [keyBindingTriggerMode, setKeyBindingTriggerMode] = useAtom(
 		keyBindingTriggerModeAtom,
@@ -381,6 +385,56 @@ export const SettingsCommonTab = ({
 					)}
 
 					{shouldShow("general-scale") && <UIScaleSetting />}
+
+					{shouldShow("general-new-line-insertion") && (
+						<Card>
+							<Flex gap="3" align="center">
+								<ContentView24Regular />
+								<Box flexGrow="1">
+									<Flex align="center" justify="between" gap="4">
+										<Flex direction="column" gap="1">
+											<Text>
+												{t(
+													"settings.common.newLineInsertion",
+													"Insert new lines",
+												)}
+											</Text>
+											<Text size="1" color="gray">
+												{t(
+													"settings.common.newLineInsertionDesc",
+													"After the selected line, or at the end of the song.",
+												)}
+											</Text>
+										</Flex>
+										<Select.Root
+											value={newLineInsertionMode}
+											onValueChange={(value) =>
+												setNewLineInsertionMode(
+													value as "afterSelected" | "end",
+												)
+											}
+										>
+											<Select.Trigger />
+											<Select.Content>
+												<Select.Item value="afterSelected">
+													{t(
+														"settings.common.newLineInsertionAfterSelected",
+														"After selected line",
+													)}
+												</Select.Item>
+												<Select.Item value="end">
+													{t(
+														"settings.common.newLineInsertionEnd",
+														"At the end",
+													)}
+												</Select.Item>
+											</Select.Content>
+										</Select.Root>
+									</Flex>
+								</Box>
+							</Flex>
+						</Card>
+					)}
 
 					{shouldShow("editor-compact-bg") && (
 						<Card>
