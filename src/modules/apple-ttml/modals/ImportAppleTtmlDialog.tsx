@@ -36,6 +36,7 @@ import { parseLyric as parseTTML } from "$/modules/project/logic/ttml-parser";
 import {
 	autoLoadCloudAudioAtom,
 	downloadAudioOnLyricImportAtom,
+	geniusApiKeyAtom,
 	jooxApiTokenAtom,
 	jooxAudioQualityAtom,
 	lyricImportAudioSourceAtom,
@@ -44,6 +45,7 @@ import {
 	normalizeApostrophesOnImportAtom,
 	normalizeCyrillicEsOnImportAtom,
 } from "$/modules/settings/states";
+import { fetchGeniusSongwritersByQuery } from "$/modules/genius/utils/fetchSongwriters";
 import { isTauri } from "@tauri-apps/api/core";
 import {
 	downloaderInitialFormatAtom,
@@ -104,13 +106,19 @@ export const ImportAppleTtmlDialog = () => {
 		lyricImportYtDlpFormatAtom,
 	);
 	const isDesktop = isTauri();
-	const effectiveAudioSource = isDesktop ? lyricImportAudioSource : "builtin";
+	const effectiveAudioSource: LyricImportAudioSource =
+		!isDesktop && lyricImportAudioSource === "ytdlp"
+			? "dm"
+			: lyricImportAudioSource;
+	const displayAudioSource: LyricImportAudioSource =
+		effectiveAudioSource === "builtin" ? "all" : effectiveAudioSource;
 	const setDownloaderOpen = useSetAtom(downloaderOpenAtom);
 	const setDownloaderInitialQuery = useSetAtom(downloaderInitialQueryAtom);
 	const setDownloaderInitialFormat = useSetAtom(downloaderInitialFormatAtom);
 	const [jooxToken] = useAtom(jooxApiTokenAtom);
 	const [audioQuality] = useAtom(jooxAudioQualityAtom);
 	const setJooxAudioSearch = useSetAtom(jooxAudioSearchDialogAtom);
+	const geniusApiKey = useAtomValue(geniusApiKeyAtom);
 
 	const normalizeApostrophesOnImport = useAtomValue(
 		normalizeApostrophesOnImportAtom,
@@ -341,6 +349,31 @@ export const ImportAppleTtmlDialog = () => {
 			const safeArtist = song.artist || "Unknown Artist";
 			setSaveFileName(`${safeArtist} - ${safeTitle}.ttml`);
 
+			// Fetch songwriters if not already present in the TTML metadata
+			const hasSongwriter = meta.some(
+				(m) => m.key === "songwriter" && m.value.some((v) => v.trim()),
+			);
+			if (!hasSongwriter && song.name) {
+				const query = [song.artist, song.name].filter(Boolean).join(" ");
+				void fetchGeniusSongwritersByQuery(query, {
+					geniusApiKey,
+					findRealNames: true,
+				}).then((writers) => {
+					if (writers && writers.length > 0) {
+						setNewLyricLines((prev) => {
+							const existing = prev.metadata.find(
+								(m) => m.key === "songwriter",
+							);
+							if (existing) {
+								existing.value = writers;
+							} else {
+								prev.metadata.push({ key: "songwriter", value: writers });
+							}
+						});
+					}
+				});
+			}
+
 			// Update artwork if provided
 			if (song.artwork) {
 				setAudioCoverArt(song.artwork);
@@ -411,6 +444,7 @@ export const ImportAppleTtmlDialog = () => {
 								safeArtist,
 								jooxToken,
 								audioQuality,
+								effectiveAudioSource,
 							);
 							if (result?.audioBlob) {
 								const audioFile = new File(
@@ -809,9 +843,9 @@ export const ImportAppleTtmlDialog = () => {
 								{downloadAudio && (
 									<Select.Root
 										size="1"
-										value={effectiveAudioSource}
+										value={displayAudioSource}
 										onValueChange={(val: LyricImportAudioSource) => {
-											if (isDesktop) {
+											if (isDesktop || val !== "ytdlp") {
 												setLyricImportAudioSource(val);
 											}
 										}}
@@ -826,15 +860,33 @@ export const ImportAppleTtmlDialog = () => {
 												fontSize: 11,
 												padding: "0 8px",
 												borderRadius: "var(--radius-1)",
-												minWidth: 125,
+												minWidth: 150,
 											}}
 										/>
 										<Select.Content position="popper">
-											<Select.Item value="builtin">
+											<Select.Item value="dm">
 												{t(
-													"joox.builtinDownloader",
-													"Built-in (JOOX)",
+													"joox.dmDownloader",
+													"Deezer (DM Revival)",
 												)}
+											</Select.Item>
+											<Select.Item value="all">
+												{t(
+													"joox.allSourcesDownloader",
+													"All Sources (Auto)",
+												)}
+											</Select.Item>
+											<Select.Item value="kuwo">
+												{t(
+													"joox.kuwoDownloader",
+													"Kuwo Music",
+												)}
+											</Select.Item>
+											<Select.Item value="joox">
+												{t("joox.jooxDownloader", "JOOX")}
+											</Select.Item>
+											<Select.Item value="qq">
+												{t("joox.qqDownloader", "QQ Music")}
 											</Select.Item>
 											<Select.Item value="ytdlp" disabled={!isDesktop}>
 												{t("joox.ytdlpDownloader", "yt-dlp")}
@@ -846,7 +898,7 @@ export const ImportAppleTtmlDialog = () => {
 									</Select.Root>
 								)}
 								{downloadAudio &&
-									effectiveAudioSource === "builtin" && (
+									effectiveAudioSource !== "ytdlp" && (
 										<Select.Root
 											size="1"
 											value={audioQuality}

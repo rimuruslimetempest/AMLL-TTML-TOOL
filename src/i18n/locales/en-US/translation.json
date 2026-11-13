@@ -49,8 +49,8 @@
 		"desktopOnlyShort": "Desktop only",
 		"loadIntoEditor": "Load into Editor",
 		"loadedIntoEditor": "Loaded \"{title}\" into editor",
-		"loadFailed": "Download saved, but it could not be loaded into the editor.",
-		"openedForTrack": "Opening Media Downloader for \"{title}\"..."
+		"openedForTrack": "Opening Media Downloader for \"{title}\"...",
+		"loadFailed": "Download saved, but it could not be loaded into the editor."
 	},
 	"app": {
 		"error": {
@@ -265,13 +265,13 @@
 			"fadeWidth": "Fade Width",
 			"instantFade": "Instant Fade Out",
 			"view": "View",
-			"display": "Display",
-			"advanced": "Advanced",
 			"fullscreen": "Fullscreen",
 			"showArtwork": "Album Artwork",
 			"render": "Render",
 			"dev": "Dev",
-			"showFps": "Show FPS"
+			"showFps": "Show FPS",
+			"display": "Display",
+			"advanced": "Advanced"
 		},
 		"syncMode": {
 			"syncAdjustment": "Timing Adjustment",
@@ -332,8 +332,6 @@
 			"wrapLyricLinesDesc": "Wrap lyrics to the next line when they exceed the editor width instead of scrolling horizontally.",
 			"keepPlayingWordInView": "Always Keep Playing Word in View",
 			"keepPlayingWordInViewDesc": "Automatically scrolls the lyric editor during playback to keep the active line and playing word visible.",
-			"seekAudioToSelectedLine": "Seek audio to selected line",
-			"seekAudioToSelectedLineDesc": "Move the playhead to the line's start time when you select it. Off by default.",
 			"allowConsecutiveBackgroundLines": "Allow consecutive and standalone background vocals",
 			"allowConsecutiveBackgroundLinesDesc": "Export consecutive background vocals together and preserve standalone background vocals for Spicy Lyrics compatibility. Other players may not support this structure.",
 			"openSpotMatchAfterSave": "Open SpotMatch after saving",
@@ -394,7 +392,9 @@
 			"customBackgroundBlur": "Blur Radius",
 			"customBackgroundBrightness": "Brightness",
 			"customBackgroundEnabled": "Background set",
-			"customBackgroundManage": "Settings"
+			"customBackgroundManage": "Settings",
+			"seekAudioToSelectedLine": "Seek audio to selected line",
+			"seekAudioToSelectedLineDesc": "Move the playhead to the line's start time when you select it. Off by default."
 		},
 		"about": {
 			"update": "Update",
@@ -429,37 +429,6 @@
 				"empty": "No saved presets yet."
 			},
 			"theme": "Theme",
-			"interface": {
-				"title": "Interface",
-				"layer": "Interface Layer",
-				"layerDesc": "Choose the visual language used by the title bar, ribbons, dialogs, and controls.",
-				"new": "New",
-				"classic": "Classic",
-				"newDesc": "Modern rounded surfaces with the refreshed design system, responsive spacing, and accessible controls.",
-				"classicDesc": "Flat, denser chrome with square corners and solid panels. Your colors and layout choices are preserved.",
-				"classicShortcut": "Emergency switch:",
-				"newOnly": "Applies to the New interface. Classic is unchanged.",
-				"density": "Density",
-				"densityDesc": "Compact reduces vertical spacing without shrinking text or removing controls.",
-				"densityComfortable": "Comfortable",
-				"densityCompact": "Compact",
-				"contrast": "Contrast",
-				"contrastDesc": "High contrast strengthens borders and text to meet WCAG AA readability.",
-				"contrastStandard": "Standard",
-				"contrastHigh": "High",
-				"performance": "Performance Mode",
-				"performanceDesc": "Removes backdrop blur, decorative transitions, and layout motion while keeping every editing feature available.",
-				"performanceOn": "On",
-				"performanceOff": "Off",
-				"performanceAuto": "Auto",
-				"performanceNote": "Best for low-power machines, large projects, or remote desktop sessions. Colors and project data are unchanged.",
-				"performanceAutoNote": "Auto measures frame pacing after startup and suggests Performance Mode if rendering is slow. It never switches without your approval.",
-				"performanceOffNote": "All visual effects stay enabled. Choose Auto to receive a non-blocking suggestion if this device struggles.",
-				"reset": "Reset UI",
-				"resetDesc": "If the New interface is ever hard to use, switch back to Classic here. Your editor, project data, and preferences stay intact.",
-				"resetAction": "Reset UI to Classic",
-				"resetShortcut": "Shortcut: Ctrl+Shift+Alt+C"
-			},
 			"uiScale": "Interface Scale",
 			"uiScaleDesc": "Adjust the size of text, icons, and elements across the entire app. Use Cmd/Ctrl +/- to zoom anytime.",
 			"resetScale": "Reset ({scale}%)",
@@ -556,7 +525,38 @@
 			"customFontActive": "LOCAL CUSTOM FONT",
 			"defaultFonts": "Standard Stacks",
 			"systemFonts": "System Fonts",
-			"googleFonts": "Google Fonts Library"
+			"googleFonts": "Google Fonts Library",
+			"interface": {
+				"title": "Interface",
+				"layer": "Interface Layer",
+				"layerDesc": "Choose the visual language used by the title bar, ribbons, dialogs, and controls.",
+				"new": "New",
+				"classic": "Classic",
+				"newDesc": "Modern rounded surfaces with the refreshed design system, responsive spacing, and accessible controls.",
+				"classicDesc": "Flat, denser chrome with square corners and solid panels. Your colors and layout choices are preserved.",
+				"classicShortcut": "Emergency switch:",
+				"newOnly": "Applies to the New interface. Classic is unchanged.",
+				"density": "Density",
+				"densityDesc": "Compact reduces vertical spacing without shrinking text or removing controls.",
+				"densityComfortable": "Comfortable",
+				"densityCompact": "Compact",
+				"contrast": "Contrast",
+				"contrastDesc": "High contrast strengthens borders and text to meet WCAG AA readability.",
+				"contrastStandard": "Standard",
+				"contrastHigh": "High",
+				"performance": "Performance Mode",
+				"performanceDesc": "Removes backdrop blur, decorative transitions, and layout motion while keeping every editing feature available.",
+				"performanceOn": "On",
+				"performanceOff": "Off",
+				"performanceAuto": "Auto",
+				"performanceNote": "Best for low-power machines, large projects, or remote desktop sessions. Colors and project data are unchanged.",
+				"performanceAutoNote": "Auto measures frame pacing after startup and suggests Performance Mode if rendering is slow. It never switches without your approval.",
+				"performanceOffNote": "All visual effects stay enabled. Choose Auto to receive a non-blocking suggestion if this device struggles.",
+				"reset": "Reset UI",
+				"resetDesc": "If the New interface is ever hard to use, switch back to Classic here. Your editor, project data, and preferences stay intact.",
+				"resetAction": "Reset UI to Classic",
+				"resetShortcut": "Shortcut: Ctrl+Shift+Alt+C"
+			}
 		},
 		"group": {
 			"assistant": "Assistant",
@@ -761,7 +761,6 @@
 			"autoDuetNotEnoughSingers": "At least two distinct singers/vocalists are required to auto-duet.",
 			"ttmlChecklist": "TTML Checklist",
 			"grammarCheck": "Grammar and Spelling Check...",
-			"refreshGeniusLyrics": "Refresh Lyrics from Genius...",
 			"statsAndProfiles": "User Profiles & Stats...",
 			"spotMatch": "SpotMatch (Alternate Spotify IDs)...",
 			"downloadAudio": "Download Audio...",
@@ -792,7 +791,8 @@
 				"toYRC": "Export to YRC",
 				"toLrcfySylb": "Export to Lyricify Syllable",
 				"toASS": "Export to ASS subtitles"
-			}
+			},
+			"refreshGeniusLyrics": "Refresh Lyrics from Genius..."
 		}
 	},
 	"header": {
@@ -811,7 +811,8 @@
 		"snapSelectedLinesToPlayhead": "Snap selected lines to playhead",
 		"insertLineBefore": "Insert new line before",
 		"insertLineAfter": "Insert new line after",
-		"copyLine": "Duplicate {count} line(s)",
+		"copyLine": "Copy {count} line(s)",
+		"pasteLineBelow": "Paste line below",
 		"duplicateTo": "Duplicate to...",
 		"combineLine": "Combine lines",
 		"deleteLine": "Delete {count} line(s)",
@@ -862,6 +863,8 @@
 			"autoSegment": "Tools - Auto Segment",
 			"toggleBackground": "Edit/Timing - Toggle background lyric",
 			"toggleDuet": "Edit/Timing - Toggle duet lyric",
+			"copy": "Edit - Copy line(s)",
+			"paste": "Edit - Paste line(s) below",
 			"switchEditMode": "Mode Switch - Switch to Edit Mode",
 			"switchSyncMode": "Mode Switch - Switch to Timing Mode",
 			"switchPreviewMode": "Mode Switch - Switch to Preview Mode",
@@ -879,7 +882,6 @@
 			"syncEnd": "Timing - Mark end",
 			"toggleTimeLineEdit": "Timing - Toggle line edit mode",
 			"toggleWordHighlight": "Timing - Toggle active word highlight",
-			"addCueAtPlayhead": "Timing - Add cue at playhead",
 			"urbanDictionary": "Edit - Look up in Urban Dictionary",
 			"urbanDictionarySync": "Timing - Look up in Urban Dictionary",
 			"moveFirstWordAndPlay": "Timing - Move to first word and play",
@@ -902,14 +904,26 @@
 				"File": "File",
 				"Edit": "Edit",
 				"View": "View",
-				"Sync": "Sync",
+				"Sync": "Timing",
 				"Audio": "Audio",
 				"Spectrogram": "Spectrogram",
-				"Tools": "Tools"
+				"Tools": "Tools",
+				"Help": "Help",
+				"Preview": "Preview"
 			},
 			"autoSegmentOptions": "Auto Segment",
 			"autoSegmentDoublePress": "Require double press",
-			"autoSegmentDoublePressDesc": "Run Auto Segment only after pressing its shortcut twice quickly."
+			"autoSegmentDoublePressDesc": "Run Auto Segment only after pressing its shortcut twice quickly.",
+			"resetDefault": "Reset to default",
+			"clear": "Clear",
+			"unbound": "Not set",
+			"recording": "Press a shortcut (Esc to cancel)",
+			"conflict": "Also assigned to {commands} in the same mode. Remap or clear one of these shortcuts.",
+			"showAll": "Show actions without a key",
+			"cancelTimelineEditing": "Spectrogram - Cancel timeline editing",
+			"autoSegmentDialog": "Auto segment…",
+			"redoAlternate": "Redo (alternate shortcut)",
+			"addCueAtPlayhead": "Timing - Add cue at playhead"
 		},
 		"tab": {
 			"common": "General",
@@ -938,8 +952,6 @@
 		"markerLabel": "Label (e.g. Verse 1 Start)",
 		"markerDescription": "Description...",
 		"deleteMarker": "Delete Marker",
-		"cueAdded": "Cue added at {time}",
-		"cueRemoved": "Cue removed at {time}",
 		"waveform": "Audio Waveform",
 		"spectrogramBarHint": "Left click to seek playhead. Right click to move spectrogram area.",
 		"spectrogramBarTrackingHint": "Left click to seek playhead. Right click to move spectrogram area.",
@@ -951,7 +963,9 @@
 		"error": {
 			"workerError": "Error processing audio"
 		},
-		"autoReloaded": "Automatically loaded audio \"{name}\" from computer"
+		"autoReloaded": "Automatically loaded audio \"{name}\" from computer",
+		"cueAdded": "Cue added at {time}",
+		"cueRemoved": "Cue removed at {time}"
 	},
 	"audioPanel": {
 		"volume": "Volume",
@@ -1021,7 +1035,10 @@
 			"ttmlAuthorGithub": "Lyrics Author GitHub ID",
 			"ttmlAuthorGithubInvalidMsg": "GitHub ID should be numeric",
 			"ttmlAuthorGithubLogin": "Lyrics Author GitHub Username",
-			"ttmlAuthorGithubLoginInvalidMsg": "GitHub username should be alphanumeric or hyphens, up to 39 characters"
+			"ttmlAuthorGithubLoginInvalidMsg": "GitHub username should be alphanumeric or hyphens, up to 39 characters",
+			"geniusSongId": "Genius Song ID",
+			"geniusSongIdInvalidMsg": "Genius Song ID should be numeric",
+			"geniusUrl": "Genius Song URL"
 		},
 		"title": "Metadata Editor",
 		"editMetadata": "Edit metadata",
@@ -1031,7 +1048,9 @@
 		"album": "Album",
 		"coverImageUrl": "Cover image URL",
 		"findSongwriters": "Find songwriters",
+		"openGeniusPage": "Open Genius page",
 		"songwritersGuide": "Open the songwriters guide",
+		"doubleClickToEdit": "Double-click to edit {{name}}",
 		"otherFields": "Other fields",
 		"clearAll": "Clear all...",
 		"done": "Done",
@@ -1063,7 +1082,12 @@
 		"searching": "Searching JOOX music library…",
 		"downloadAudio": "Download audio into app",
 		"openDownloaderOnImport": "Open Media Downloader on import",
-		"builtinDownloader": "Built-in (JOOX)",
+		"builtinDownloader": "All Sources (Auto)",
+		"dmDownloader": "Deezer (DM Revival)",
+		"allSourcesDownloader": "All Sources (Auto)",
+		"kuwoDownloader": "Kuwo Music",
+		"jooxDownloader": "JOOX",
+		"qqDownloader": "QQ Music",
 		"ytdlpDownloader": "yt-dlp",
 		"downloadingAudio": "[Beta] Downloading audio for \"{title}\"...",
 		"downloadingAudioProgress": "[Beta] Downloading audio for \"{title}\"… {percent}%",
@@ -1091,6 +1115,8 @@
 	},
 	"lyricEditor": {
 		"locate": "Locate",
+		"copiedLines": "Copied {count} line(s)",
+		"pastedLines": "Pasted {count} line(s)",
 		"lineSpectrogram": {
 			"title": "Line Spectrogram Alignment",
 			"desc": "Adjust the start and end points of this line using the spectrogram. The line duration will be split proportionally into its words based on character count.",
@@ -1817,5 +1843,41 @@
 		"textFileDescription": "Text Files",
 		"includeOriginalId": "Include original ID",
 		"includeOriginalIdTooltip": "Prepend the searched original track ID to copied or exported IDs"
+	},
+	"keyboardView": {
+		"title": "Keyboard",
+		"search": "Search actions",
+		"searchResults": "{count, plural, =0 {No actions match} one {# action matches} other {# actions match}}",
+		"layout": "Keyboard layout",
+		"layoutAuto": "Automatic",
+		"layoutDetected": "Detected: {layout}",
+		"layoutUnavailable": "Can't detect the layout here, so QWERTY is shown",
+		"layerHint": "Click a modifier key, such as Shift, to see the shortcuts that use it.",
+		"category": {
+			"sync": "Sync",
+			"edit": "Edit",
+			"playback": "Playback",
+			"navigation": "Navigation"
+		},
+		"free": "Free",
+		"keyFree": "{key}: free",
+		"keyActions": "{key}: {actions}",
+		"modifierLayer": "Show shortcuts with {key}",
+		"freeKey": "Nothing uses {key} yet.",
+		"assignLabel": "Action",
+		"assignPlaceholder": "Choose an action...",
+		"assign": "Add to {key}",
+		"changeKey": "Change key",
+		"addKey": "Add second key",
+		"removeKey": "Remove {key}",
+		"duplicateKey": "That key is already set for this action.",
+		"doublePress": "Press twice to run",
+		"doublePressDesc": "Runs only when you press its key twice quickly.",
+		"otherLayers": "Also on this key",
+		"closePanel": "Close"
+	},
+	"spectrogramFollow": {
+		"toggle": "Follow playhead",
+		"shortcut": "Spectrogram - Follow playhead on/off"
 	}
 }

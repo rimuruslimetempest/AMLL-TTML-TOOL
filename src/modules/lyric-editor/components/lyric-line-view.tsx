@@ -267,19 +267,25 @@ const SubLineEdit = memo(
 		const lastTapRef = useRef<number>(0);
 		const { t } = useTranslation();
 
-		const handleStartEditing = useCallback((evt: SyntheticEvent) => {
-			evt.stopPropagation();
-			setEditing(true);
-		}, []);
-
-		const handleTouchEnd = useCallback((evt: React.TouchEvent) => {
-			const now = Date.now();
-			if (now - lastTapRef.current < 350) {
+		const handleStartEditing = useCallback(
+			(evt: SyntheticEvent) => {
 				evt.stopPropagation();
 				setEditing(true);
-			}
-			lastTapRef.current = now;
-		}, []);
+			},
+			[],
+		);
+
+		const handleTouchEnd = useCallback(
+			(evt: React.TouchEvent) => {
+				const now = Date.now();
+				if (now - lastTapRef.current < 350) {
+					evt.stopPropagation();
+					setEditing(true);
+				}
+				lastTapRef.current = now;
+			},
+			[],
+		);
 
 		const onEnter = useCallback(
 			(evt: SyntheticEvent<HTMLInputElement>) => {

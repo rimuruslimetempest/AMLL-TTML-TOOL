@@ -44,6 +44,7 @@ import {
 	getSpotMatchTxtFileName,
 	type SpotMatchPreset,
 } from "./engine";
+import styles from "./SpotMatchDialog.module.css";
 import {
 	spotMatchCandidatesAtom,
 	spotMatchDialogAtom,
@@ -300,18 +301,7 @@ export function SpotMatchDialog() {
 
 	return (
 		<Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
-			<Dialog.Content
-				style={{
-					maxWidth: 1000,
-					width: "min(1000px, 96vw)",
-					height: "640px",
-					maxHeight: "88vh",
-					display: "flex",
-					flexDirection: "column",
-					padding: "24px",
-					borderRadius: "16px",
-				}}
-			>
+			<Dialog.Content className={styles.dialogContent}>
 				{/* Header */}
 				<Flex justify="between" align="start" mb="3">
 					<Box>
@@ -401,14 +391,7 @@ export function SpotMatchDialog() {
 				</Flex>
 
 				{/* Options & Filters Row */}
-				<Card
-					variant="surface"
-					style={{
-						padding: "10px 14px",
-						marginBottom: "12px",
-						borderRadius: "10px",
-					}}
-				>
+				<Card variant="surface" className={styles.filtersCard}>
 					<Flex justify="between" align="center" wrap="wrap" gap="3">
 						{/* Preset Selector */}
 						<Flex align="center" gap="2">
@@ -507,16 +490,7 @@ export function SpotMatchDialog() {
 
 				{/* Source Track Card */}
 				{sourceTrack && (
-					<Card
-						variant="ghost"
-						style={{
-							padding: "10px 14px",
-							marginBottom: "12px",
-							backgroundColor: "var(--accent-a2)",
-							borderRadius: "10px",
-							border: "1px solid var(--accent-a4)",
-						}}
-					>
+					<Card variant="ghost" className={styles.sourceCard}>
 						<Flex align="center" justify="between">
 							<Flex align="center" gap="3">
 								<ExternalCoverImage
@@ -643,18 +617,7 @@ export function SpotMatchDialog() {
 											onClick={() =>
 												toggleCandidateSelection(candidate.trackId)
 											}
-											style={{
-												padding: "10px 12px",
-												cursor: "pointer",
-												borderRadius: "10px",
-												borderColor: isSelected
-													? "var(--accent-9)"
-													: "transparent",
-												backgroundColor: isSelected
-													? "var(--accent-a3)"
-													: undefined,
-												transition: "all 0.15s ease",
-											}}
+											className={`${styles.candidateCard} ${isSelected ? styles.candidateCardSelected : ""}`}
 										>
 											<Flex align="center" justify="between" gap="3">
 												<Flex
@@ -791,13 +754,9 @@ export function SpotMatchDialog() {
 				<Flex
 					justify="between"
 					align="center"
-					pt="3"
-					mt="2"
 					wrap="wrap"
 					gap="3"
-					style={{
-						borderTop: "1px solid var(--gray-a4)",
-					}}
+					className={styles.footer}
 				>
 					<Flex align="center" gap="4" wrap="wrap">
 						<Text size="2" color="gray">

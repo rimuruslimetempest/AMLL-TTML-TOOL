@@ -6,6 +6,7 @@ import type { WritableAtom } from "jotai";
 import {
 	cmdAddCueAtPlayhead,
 	cmdAutoSegment,
+	cmdCopy,
 	cmdDeleteSelection,
 	cmdFind,
 	cmdMoveFirstWordAndPlay,
@@ -20,6 +21,7 @@ import {
 	cmdNewWindow,
 	cmdNextTab,
 	cmdOpenFile,
+	cmdPaste,
 	cmdPlaybackRateDown,
 	cmdPlaybackRateReset,
 	cmdPlaybackRateUp,
@@ -80,6 +82,8 @@ export const keyDeleteSelectionAtom = cmdDeleteSelection.atom;
 export const keyAutoSegmentAtom = cmdAutoSegment.atom;
 export const keyToggleBackgroundAtom = cmdToggleBackground.atom;
 export const keyToggleDuetAtom = cmdToggleDuet.atom;
+export const keyCopyAtom = cmdCopy.atom;
+export const keyPasteAtom = cmdPaste.atom;
 
 export const keySwitchEditModeAtom = cmdSwitchEditMode.atom;
 export const keySwitchSyncModeAtom = cmdSwitchSyncMode.atom;

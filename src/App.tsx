@@ -29,6 +29,7 @@ import { platform, version } from "@tauri-apps/plugin-os";
 import { MotionConfig, motion } from "framer-motion";
 import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai";
 import {
+	type FC,
 	Suspense,
 	memo,
 	useCallback,
@@ -130,6 +131,7 @@ import { CueKeyBinding } from "$/modules/audio/components/CueKeyBinding";
 import { SyncKeyBinding } from "./modules/lyric-editor/components/sync-keybinding.tsx";
 import { UrbanDictionaryKeybinding } from "./modules/lyric-editor/components/urban-dictionary-keybinding.tsx";
 import { LinePropertiesKeybinding } from "./modules/lyric-editor/components/line-properties-keybinding.tsx";
+import { LineClipboardKeybinding } from "./modules/lyric-editor/components/line-clipboard-keybinding.tsx";
 import { AutosaveManager } from "./modules/project/autosave/AutosaveManager.tsx";
 import { ProjectTimerManager } from "./modules/project/timer/ProjectTimerManager.tsx";
 import exportTTMLText from "./modules/project/logic/ttml-writer.ts";
@@ -177,7 +179,11 @@ import {
 	ToolMode,
 	toolModeAtom,
 } from "./states/main.ts";
-import { generateGradient, generateRadixScale } from "./utils/colorScale.ts";
+import {
+	generateGradient,
+	generateRadixScale,
+	getThemeTintedBackgrounds,
+} from "./utils/colorScale.ts";
 import { useAppUpdate } from "./utils/useAppUpdate.ts";
 import { DiscordPresence } from "./modules/discord-presence/DiscordPresence";
 import { BeginnerGuide } from "./modules/onboarding/BeginnerGuide";
@@ -745,19 +751,23 @@ function App() {
 				? secondaryLum === null || secondaryLum > 0.35
 				: secondaryLum === null || secondaryLum < 0.55);
 
-		const shouldApplyEditorBg =
+		const isCustomEditorBg =
 			!!vEditorBg &&
+			vEditorBg !== "#121212" &&
 			(vEditorBg === "transparent" ||
 				(isDarkTheme
 					? editorBgLum === null || editorBgLum < 0.65
 					: editorBgLum === null || editorBgLum > 0.4));
+		const shouldApplyEditorBg = isCustomEditorBg;
 
-		const shouldApplyTitlebarBg =
+		const isCustomTitlebarBg =
 			!!vTitlebarBg &&
+			vTitlebarBg !== "#1f1f1f" &&
 			(vTitlebarBg === "transparent" ||
 				(isDarkTheme
 					? titlebarBgLum === null || titlebarBgLum < 0.65
 					: titlebarBgLum === null || titlebarBgLum > 0.4));
+		const shouldApplyTitlebarBg = isCustomTitlebarBg;
 
 		const shouldApplySidebarBg =
 			!!vSidebarBg &&
@@ -779,11 +789,33 @@ function App() {
 					? audioBarBgLum === null || audioBarBgLum < 0.65
 					: audioBarBgLum === null || audioBarBgLum > 0.4));
 
+		const isClearMode =
+			vEditorBg === "transparent" ||
+			vTitlebarBg === "transparent" ||
+			vSidebarBg === "transparent";
+
+		const clearDialogBg = isDarkTheme
+			? "rgba(20, 20, 26, 0.72)"
+			: "rgba(255, 255, 255, 0.75)";
+
+		const { rootBg: defaultRootBg, dialogBg: defaultDialogBg } =
+			getThemeTintedBackgrounds({
+				accentColor,
+				customAccentColor,
+				useCustomAccent,
+				vTitlebarBg: shouldApplyTitlebarBg ? vTitlebarBg : undefined,
+				isDark: isDarkTheme,
+			});
+
 		const rootBg = shouldApplyEditorBg
 			? vEditorBg
-			: isDarkTheme
-				? "#0b0b0d"
-				: "#fafafa";
+			: defaultRootBg;
+
+		const dialogBg = shouldApplyDialogBg
+			? vDialogBg
+			: isClearMode
+				? clearDialogBg
+				: defaultDialogBg;
 
 		return `
 		${customFontFace}
@@ -818,33 +850,33 @@ function App() {
 			${shouldApplySecondaryText ? `--gray-11: ${advSecondaryText} !important;` : ""}
 			${advWaveformColor ? `--adv-waveform-color: ${advWaveformColor} !important;` : ""}
 			${advWaveformProgress ? `--adv-waveform-progress: ${advWaveformProgress} !important;` : ""}
-			
+
 			${shouldApplyTitlebarBg ? `--titlebar-bg: ${vTitlebarBg} !important;` : ""}
 			${vTitlebarBg === "transparent" ? `--titlebar-backdrop-filter: none !important;` : ""}
 			${shouldApplySidebarBg ? `--sidebar-bg: ${vSidebarBg} !important;` : ""}
 			${vSidebarActive ? `--sidebar-active: ${vSidebarActive} !important;` : ""}
 			${vMenuHover ? `--menu-hover: ${vMenuHover} !important;` : ""}
-			${hasCustomBackground && !shouldApplyEditorBg ? `--editor-bg: transparent !important;` : shouldApplyEditorBg ? `--editor-bg: ${vEditorBg} !important;` : ""}
+			${hasCustomBackground && !shouldApplyEditorBg ? `--editor-bg: transparent !important;` : shouldApplyEditorBg ? `--editor-bg: ${vEditorBg} !important;` : `--editor-bg: ${rootBg} !important;`}
 			${vActiveLine ? `--active-line-bg: ${vActiveLine} !important;` : ""}
 			${vLineHover ? `--line-hover-bg: ${vLineHover} !important;` : ""}
 			${vSelection ? `--selection-color: ${vSelection} !important;` : ""}
-			
+
 			--chip-radius: ${vChipRadius}px !important;
 			--chip-gap: ${vChipGap}px !important;
 			--chip-padding-v: ${vChipPaddingV}px !important;
 			--chip-padding-h: ${vChipPaddingH}px !important;
-			
+
 			${vRomanColor ? `--romanization-color: ${vRomanColor} !important;` : ""}
 			${vTransColor ? `--translation-color: ${vTransColor} !important;` : ""}
-			
+
 			${shouldApplyAudioBarBg ? `--audio-bar-bg: ${vAudioBarBg} !important;` : ""}
 			${vAudioBarBg === "transparent" || (!vAudioBarBg && vTitlebarBg === "transparent") ? `--audio-bar-backdrop-filter: none !important;` : ""}
 			${vAudioBarText ? `--audio-bar-text: ${vAudioBarText} !important;` : ""}
-			
+
 			${vScrollbar ? `--scrollbar-thumb-color: ${vScrollbar} !important;` : ""}
-			${shouldApplyDialogBg ? `--dialog-bg: ${vDialogBg} !important;` : ""}
+			${shouldApplyDialogBg ? `--dialog-bg: ${vDialogBg} !important;` : `--dialog-bg: ${dialogBg} !important;`}
 			${vDialogBorder ? `--dialog-border: ${vDialogBorder} !important;` : ""}
-			
+
 			--global-radius: ${vGlobalRadius}px !important;
 			--global-border-width: ${vGlobalBorderWidth}px !important;
 			--shadow-intensity: ${vShadow} !important;
@@ -853,11 +885,40 @@ function App() {
 			--radius-factor: ${vGlobalRadius / 12} !important;
 
 			/* Comprehensive Overrides */
-			${shouldApplyTitlebarBg && vTitlebarBg !== "transparent" && (isDarkTheme || titlebarBgLum === null || titlebarBgLum > 0.4) ? `--color-panel-translucent: ${vTitlebarBg} !important;` : ""}
-			${shouldApplyEditorBg ? `--color-background: ${vEditorBg} !important;` : ""}
+			${shouldApplyTitlebarBg && vTitlebarBg !== "transparent" && vTitlebarBg.startsWith("rgba") && (isDarkTheme || titlebarBgLum === null || titlebarBgLum > 0.4) ? `--color-panel-translucent: ${vTitlebarBg} !important;` : ""}
+			${shouldApplyEditorBg ? `--color-background: ${vEditorBg} !important;` : `--color-background: ${rootBg} !important;`}
 			${vSelection ? `--accent-a5: ${vSelection} !important;` : ""}
-			${shouldApplyDialogBg ? `--color-panel-solid: ${vDialogBg} !important;` : ""}
-			
+			${shouldApplyDialogBg ? `--color-panel-solid: ${vDialogBg} !important;` : `--color-panel-solid: ${dialogBg} !important;`}
+
+			/* Clear Mode Dialogs & Popups frosted glass */
+			${
+				isClearMode
+					? `
+			--color-panel-translucent: ${isDarkTheme ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.05)"} !important;
+
+			:is(.rt-BaseDialogContent) {
+				background-color: ${shouldApplyDialogBg ? vDialogBg : clearDialogBg} !important;
+				backdrop-filter: blur(var(--glass-blur, 20px)) saturate(180%) !important;
+				-webkit-backdrop-filter: blur(var(--glass-blur, 20px)) saturate(180%) !important;
+				border: var(--global-border-width, 1px) solid ${isDarkTheme ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.08)"} !important;
+			}
+			:is(
+				.rt-DropdownMenuContent,
+				.rt-DropdownMenuSubContent,
+				.rt-ContextMenuContent,
+				.rt-SelectContent,
+				.rt-PopoverContent
+			) {
+				background-color: ${isDarkTheme ? "rgba(22, 22, 28, 0.76)" : "rgba(255, 255, 255, 0.82)"} !important;
+				backdrop-filter: blur(28px) saturate(190%) !important;
+				-webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+				border: 1px solid ${isDarkTheme ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.08)"} !important;
+				box-shadow: 0 16px 36px -4px rgba(0, 0, 0, ${isDarkTheme ? "0.5" : "0.15"}) !important;
+			}
+			`
+					: ""
+			}
+
 			/* Shadow Scaling */
 			--shadow-intensity: ${vShadow};
 			--rt-shadow-color: ${isDarkTheme ? `rgba(0, 0, 0, calc(0.1 * var(--shadow-intensity)))` : `rgba(0, 0, 0, calc(0.06 * var(--shadow-intensity)))`};
@@ -947,6 +1008,9 @@ function App() {
 		customPreviewFontData,
 		customPreviewFontName,
 		newAccentColor,
+		accentColor,
+		useCustomAccent,
+		customAccentColor,
 	]);
 
 	useLayoutEffect(() => {
@@ -1554,6 +1618,7 @@ function App() {
 					<CueKeyBinding />
 					<UrbanDictionaryKeybinding />
 					<LinePropertiesKeybinding />
+					<LineClipboardKeybinding />
 					<DarkThemeDetector />
 					<Flex direction="column" height="100vh">
 						{!isPreviewFullscreen &&

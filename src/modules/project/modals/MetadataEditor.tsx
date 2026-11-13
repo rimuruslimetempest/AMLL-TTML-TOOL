@@ -2,6 +2,7 @@ import {
 	Add16Regular,
 	ArrowLeft12Regular,
 	ArrowRight12Regular,
+	ArrowUpRight16Regular,
 	ChevronRight16Regular,
 	Delete16Regular,
 	Dismiss12Regular,
@@ -24,16 +25,20 @@ import {
 	Text,
 	TextField,
 } from "@radix-ui/themes";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useImmerAtom } from "jotai-immer";
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { resolveGeniusDirectTargetUrl } from "$/components/TitleBar/genius-shortcut";
+import { loadedAudioFileNameAtom } from "$/modules/audio/states/index.ts";
 import { getBetterGeniusCoverArt } from "$/modules/genius/utils/image";
+import { geniusApiKeyAtom } from "$/modules/settings/states/index.ts";
 import {
 	geniusSearchDialogAtom,
 	metadataEditorDialogAtom,
 } from "$/states/dialogs.ts";
-import { lyricLinesAtom } from "$/states/main.ts";
+import { lyricLinesAtom, saveFileNameAtom } from "$/states/main.ts";
+import { openExternal } from "$/utils/openExternal";
 import styles from "./MetadataEditor.module.css";
 import {
 	AppleMusicIcon,
@@ -99,20 +104,33 @@ export const MetadataEditor = () => {
 	const [customKey, setCustomKey] = useState("");
 	const [dragOverSongwriters, setDragOverSongwriters] = useState(false);
 	const [dragOverArtists, setDragOverArtists] = useState(false);
-	const [editingSongwriterIndex, setEditingSongwriterIndex] = useState<
-		number | null
-	>(null);
+	const [editingSongwriterIndex, setEditingSongwriterIndex] = useState<number | null>(null);
 	const [editingSongwriterValue, setEditingSongwriterValue] = useState("");
-	const [draggedSongwriterIndex, setDraggedSongwriterIndex] = useState<
-		number | null
-	>(null);
-	const [dragOverSongwriterIndex, setDragOverSongwriterIndex] = useState<
-		number | null
-	>(null);
+	const [draggedSongwriterIndex, setDraggedSongwriterIndex] = useState<number | null>(null);
+	const [dragOverSongwriterIndex, setDragOverSongwriterIndex] = useState<number | null>(null);
 
 	const songwriterInputRef = useRef<HTMLInputElement | null>(null);
 	const editingSongwriterInputRef = useRef<HTMLInputElement | null>(null);
 	const artistInputRef = useRef<HTMLInputElement | null>(null);
+
+	const loadedAudioFileName = useAtomValue(loadedAudioFileNameAtom);
+	const saveFileName = useAtomValue(saveFileNameAtom);
+	const geniusApiKey = useAtomValue(geniusApiKeyAtom);
+
+	const handleOpenGenius = useCallback(async () => {
+		try {
+			const targetUrl = await resolveGeniusDirectTargetUrl({
+				metadata: lyricLines.metadata,
+				loadedAudioFileName,
+				saveFileName,
+				apiKey: geniusApiKey,
+			});
+			void openExternal(targetUrl);
+		} catch (err) {
+			console.error("Failed to open Genius page:", err);
+			void openExternal("https://genius.com");
+		}
+	}, [lyricLines.metadata, loadedAudioFileName, saveFileName, geniusApiKey]);
 
 	// Built-in other field definitions
 	const otherFieldOptions: SelectOption[] = useMemo(() => {
@@ -134,6 +152,10 @@ export const MetadataEditor = () => {
 					return `https://github.com/${value}`;
 				case "isrc":
 					return `https://isrcsearch.ifpi.org/?tab=%22code%22&isrcCode=%22${value}%22`;
+				case "geniusSongId":
+					return `https://genius.com/songs/${value}`;
+				case "geniusUrl":
+					return value.startsWith("http") ? value : `https://${value}`;
 				default:
 					return null;
 			}
@@ -258,6 +280,66 @@ export const MetadataEditor = () => {
 					),
 					severe: true,
 				},
+			},
+			{
+				label: t("metadataDialog.builtinOptions.geniusSongId", "Genius Song ID"),
+				value: "geniusSongId",
+				icon: (
+					<span
+						style={{
+							display: "inline-flex",
+							alignItems: "center",
+							justifyContent: "center",
+							width: "16px",
+							height: "16px",
+							borderRadius: "3px",
+							backgroundColor: "#ffff64",
+							color: "#000000",
+							fontWeight: 900,
+							fontSize: "11px",
+							fontFamily: "system-ui, sans-serif",
+							lineHeight: 1,
+						}}
+					>
+						G
+					</span>
+				),
+				isLinkable: true,
+				urlFormatter: (val) => getPlatformUrl("geniusSongId", val),
+				validation: {
+					verifier: numeric,
+					message: t(
+						"metadataDialog.builtinOptions.geniusSongIdInvalidMsg",
+						"Genius Song ID should be numeric",
+					),
+					severe: true,
+				},
+			},
+			{
+				label: t("metadataDialog.builtinOptions.geniusUrl", "Genius Song URL"),
+				value: "geniusUrl",
+				icon: (
+					<span
+						style={{
+							display: "inline-flex",
+							alignItems: "center",
+							justifyContent: "center",
+							width: "16px",
+							height: "16px",
+							borderRadius: "3px",
+							backgroundColor: "#ffff64",
+							color: "#000000",
+							fontWeight: 900,
+							fontSize: "11px",
+							fontFamily: "system-ui, sans-serif",
+							lineHeight: 1,
+						}}
+					>
+						G
+					</span>
+				),
+				isLinkable: true,
+				urlFormatter: (val) => getPlatformUrl("geniusUrl", val),
 			},
 		];
 	}, [t]);
@@ -450,15 +532,55 @@ export const MetadataEditor = () => {
 					<Dialog.Title className={styles.dialogTitle}>
 						{t("metadataDialog.editMetadata", "Edit metadata")}
 					</Dialog.Title>
-					<Dialog.Close>
-						<button
+					<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+						<Button
 							type="button"
-							className={styles.closeButton}
-							aria-label={t("common.close", "Close")}
+							size="2"
+							variant="soft"
+							color="gray"
+							onClick={handleOpenGenius}
+							title={t("topBar.openInGenius", "Open on Genius")}
+							style={{
+								cursor: "pointer",
+								display: "inline-flex",
+								alignItems: "center",
+								gap: "6px",
+								fontWeight: 500,
+							}}
 						>
-							<DismissRegular style={{ width: 16, height: 16 }} />
-						</button>
-					</Dialog.Close>
+							<span
+								style={{
+									display: "inline-flex",
+									alignItems: "center",
+									justifyContent: "center",
+									width: "16px",
+									height: "16px",
+									borderRadius: "4px",
+									backgroundColor: "#ffff64",
+									color: "#000000",
+									fontWeight: 900,
+									fontSize: "11px",
+									fontFamily: "system-ui, sans-serif",
+									lineHeight: 1,
+								}}
+							>
+								G
+							</span>
+							<span>Genius</span>
+							<ArrowUpRight16Regular
+								style={{ width: "12px", height: "12px", opacity: 0.7 }}
+							/>
+						</Button>
+						<Dialog.Close>
+							<button
+								type="button"
+								className={styles.closeButton}
+								aria-label={t("common.close", "Close")}
+							>
+								<DismissRegular style={{ width: 16, height: 16 }} />
+							</button>
+						</Dialog.Close>
+					</div>
 				</div>
 
 				{/* Dialog Body */}
@@ -506,7 +628,7 @@ export const MetadataEditor = () => {
 								if (isEditing) {
 									return (
 										<span
-											key={`sw-edit-${name}`}
+											key={`sw-edit-${i}`}
 											className={`${styles.tagPill} ${styles.tagPillEditing}`}
 											onClick={(e) => e.stopPropagation()}
 										>
@@ -536,7 +658,7 @@ export const MetadataEditor = () => {
 
 								return (
 									<span
-										key={`sw-${name}`}
+										key={`sw-${name}-${i}`}
 										className={`${styles.tagPill} ${styles.tagPillDraggable} ${
 											isDragging ? styles.tagPillDragging : ""
 										} ${isDragOver ? styles.tagPillDragOver : ""}`}
@@ -581,6 +703,10 @@ export const MetadataEditor = () => {
 										onClick={(e) => {
 											e.stopPropagation();
 										}}
+										onDoubleClick={(e) => {
+											e.stopPropagation();
+											startEditingSongwriter(i, name);
+										}}
 									>
 										<span
 											className={styles.tagReorderHandle}
@@ -594,11 +720,11 @@ export const MetadataEditor = () => {
 										<span
 											className={styles.tagText}
 											title={t(
-												"metadataDialog.clickToEdit",
-												"Click to edit {{name}}",
+												"metadataDialog.doubleClickToEdit",
+												"Double-click to edit {{name}}",
 												{ name },
 											)}
-											onClick={(e) => {
+											onDoubleClick={(e) => {
 												e.stopPropagation();
 												startEditingSongwriter(i, name);
 											}}
@@ -632,24 +758,6 @@ export const MetadataEditor = () => {
 												aria-label={t("metadataDialog.moveRight", "Move right")}
 											>
 												<ArrowRight12Regular />
-											</button>
-											<button
-												type="button"
-												className={styles.tagActionBtn}
-												onClick={(e) => {
-													e.stopPropagation();
-													startEditingSongwriter(i, name);
-												}}
-												title={t(
-													"metadataDialog.editSongwriter",
-													"Edit songwriter",
-												)}
-												aria-label={t(
-													"metadataDialog.editSongwriter",
-													"Edit songwriter",
-												)}
-											>
-												<Edit12Regular />
 											</button>
 											<button
 												type="button"

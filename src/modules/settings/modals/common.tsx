@@ -137,7 +137,12 @@ export const SettingsCommonTab = ({
 		lyricImportAudioSourceAtom,
 	);
 	const isDesktop = isTauri();
-	const effectiveAudioSource = isDesktop ? lyricImportAudioSource : "builtin";
+	const effectiveAudioSource: LyricImportAudioSource =
+		!isDesktop && lyricImportAudioSource === "ytdlp"
+			? "dm"
+			: lyricImportAudioSource;
+	const displayAudioSource: LyricImportAudioSource =
+		effectiveAudioSource === "builtin" ? "all" : effectiveAudioSource;
 	const [enableUpcomingWordHighlight, setEnableUpcomingWordHighlight] = useAtom(
 		enableUpcomingWordHighlightAtom,
 	);
@@ -1681,9 +1686,9 @@ export const SettingsCommonTab = ({
 													</Text>
 													<Select.Root
 														size="1"
-														value={effectiveAudioSource}
+														value={displayAudioSource}
 														onValueChange={(val: LyricImportAudioSource) => {
-															if (isDesktop) {
+															if (isDesktop || val !== "ytdlp") {
 																setLyricImportAudioSource(val);
 															}
 														}}
@@ -1694,15 +1699,33 @@ export const SettingsCommonTab = ({
 																fontSize: 11,
 																padding: "0 8px",
 																borderRadius: "var(--radius-1)",
-																minWidth: 125,
+																minWidth: 155,
 															}}
 														/>
 														<Select.Content position="popper">
-															<Select.Item value="builtin">
+															<Select.Item value="dm">
 																{t(
-																	"joox.builtinDownloader",
-																	"Built-in (JOOX)",
+																	"joox.dmDownloader",
+																	"Deezer (DM Revival)",
 																)}
+															</Select.Item>
+															<Select.Item value="all">
+																{t(
+																	"joox.allSourcesDownloader",
+																	"All Sources (Auto)",
+																)}
+															</Select.Item>
+															<Select.Item value="kuwo">
+																{t(
+																	"joox.kuwoDownloader",
+																	"Kuwo Music",
+																)}
+															</Select.Item>
+															<Select.Item value="joox">
+																{t("joox.jooxDownloader", "JOOX")}
+															</Select.Item>
+															<Select.Item value="qq">
+																{t("joox.qqDownloader", "QQ Music")}
 															</Select.Item>
 															<Select.Item value="ytdlp" disabled={!isDesktop}>
 																{t(
