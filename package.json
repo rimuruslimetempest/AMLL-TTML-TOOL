@@ -10,6 +10,7 @@
 		"build:collab-web": "node scripts/build-collab-web.mjs",
 		"tauri:build": "tauri build --no-bundle && for app in \"src-tauri/target/release/bundle/macos/\"*.app; do [ -d \"$app\" ] || continue; cp -f src-tauri/target/release/amll-ttml-tool \"$app/Contents/MacOS/amll-ttml-tool\"; [ -d src-tauri/downloader-tools ] && mkdir -p \"$app/Contents/Resources/downloader-tools\" && cp -RP src-tauri/downloader-tools/* \"$app/Contents/Resources/downloader-tools/\"; touch \"$app\"; done",
 		"version:bump": "node scripts/bump-version.mjs",
+		"version:set": "node scripts/set-version.mjs",
 		"test:versioning": "node --test scripts/version-utils.test.mjs",
 		"lint": "biome lint",
 		"fmt": "biome format --write ./src",

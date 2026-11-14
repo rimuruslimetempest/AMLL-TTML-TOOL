@@ -1,0 +1,121 @@
+name: Sync upstream and publish feature build
+
+# The fork's updater feed points at this repository's latest release. This job
+# keeps that feed feature-complete: it merges the newest upstream tag into the
+# fork's main branch before building. A conflict stops the run and opens an
+# issue; it never publishes a stock upstream binary over the feature build.
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  sync:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+      - run: pnpm install --frozen-lockfile
+
+      - name: Find the newest upstream release
+        id: upstream
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag=$(gh api repos/bobjoerules/TTML-Editor/releases/latest --jq .tag_name)
+          version="${tag#v}"
+          current=$(node -p "require('./package.json').version")
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if node -e '
+            const semver = require("semver");
+            process.exit(semver.gte(process.argv[1], process.argv[2]) ? 0 : 1);
+          ' "$version" "$current"; then
+            echo "up_to_date=true" >> "$GITHUB_OUTPUT"
+            echo "Upstream $version is not newer than this build ($current)."
+          else
+            echo "up_to_date=false" >> "$GITHUB_OUTPUT"
+            echo "Upstream $version is newer than this build ($current)."
+          fi
+
+      - name: Merge upstream into the feature tree
+        if: steps.upstream.outputs.up_to_date == 'false'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPSTREAM_TAG: ${{ steps.upstream.outputs.tag }}
+          UPSTREAM_VERSION: ${{ steps.upstream.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "Codebuff"
+          git config user.email "noreply@codebuff.com"
+          git remote add upstream https://github.com/bobjoerules/TTML-Editor.git 2>/dev/null || \
+            git remote set-url upstream https://github.com/bobjoerules/TTML-Editor.git
+          git fetch upstream --tags
+          if ! git merge --no-ff "refs/tags/$UPSTREAM_TAG" --no-edit \
+            -m "Merge upstream $UPSTREAM_TAG into feature build"; then
+            git merge --abort || true
+            body=$(printf 'The automatic upstream merge for **%s** conflicted.\n\nResolve it locally, push the resolution to `main`, then re-run this workflow. No release was published.\n\nConflict files:\n```\n%s\n```' "$UPSTREAM_TAG" "$(git status --short)")
+            if gh issue list --search "Upstream $UPSTREAM_TAG needs merge" --json number --jq '.[0].number' | grep -q .; then
+              gh issue comment "$(gh issue list --search "Upstream $UPSTREAM_TAG needs merge" --json number --jq '.[0].number')" --body "$body"
+            else
+              gh issue create --title "Upstream $UPSTREAM_TAG needs merge" --body "$body"
+            fi
+            exit 1
+          fi
+          node scripts/set-version.mjs "$UPSTREAM_VERSION"
+          git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+          if ! git diff --cached --quiet; then
+            git commit -m "release: feature build $UPSTREAM_VERSION"
+          fi
+          pnpm install --frozen-lockfile
+
+      - name: Check for an existing feature release
+        if: steps.upstream.outputs.up_to_date == 'false'
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPSTREAM_VERSION: ${{ steps.upstream.outputs.version }}
+        run: |
+          set -euo pipefail
+          if gh release view "feature-v$UPSTREAM_VERSION" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Feature release feature-v$UPSTREAM_VERSION already exists."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and publish signed feature release
+        if: steps.upstream.outputs.up_to_date == 'false' && steps.release.outputs.exists == 'false'
+        uses: tauri-apps/tauri-action@v0
+        with:
+          tagName: feature-v${{ steps.upstream.outputs.version }}
+          releaseName: TTML Editor ${{ steps.upstream.outputs.version }} (feature build)
+          releaseBody: |
+            Feature-preserving desktop build merged with upstream TTML Editor ${{ steps.upstream.outputs.tag }}.
+
+            This release includes the local fork features and is used by the in-app feature update channel.
+          includeUpdaterJson: true
+          retryAttempts: 3
+          args: ""
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}

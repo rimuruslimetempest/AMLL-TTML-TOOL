@@ -3,8 +3,8 @@
  * "https://github.com/OWNER/REPO/releases". While empty, every Releases link
  * is hidden.
  */
-// TODO: set the GitHub releases URL.
-export const RELEASES_URL = "";
+export const RELEASES_URL =
+	"https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/releases";
 
 export const REPORT_EMAIL = "lemonsqueezy.enhance895@passinbox.com";
 

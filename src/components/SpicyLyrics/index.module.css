@@ -312,7 +312,14 @@
 		scale 0.2s cubic-bezier(0.37, 0, 0.63, 1);
 	text-shadow: 0 0 var(--blur) rgba(255, 255, 255, 0.5);
 	cursor: pointer;
-	will-change: transform, opacity;
+}
+
+/* Off-screen lines are kept in the DOM, but the browser can skip their
+   layout/paint work until they approach the viewport. Visible lines, including
+   every word and letter of the active line, are unchanged. */
+.line:not(.dotLine):not([data-state="active"]) {
+	content-visibility: auto;
+	contain-intrinsic-size: auto 1.18em;
 }
 
 .line[data-state="not-sung"] {
@@ -508,7 +515,6 @@
 	);
 	text-shadow: 0 0 var(--text-shadow-blur-radius, var(--shadow-blur, 4px))
 		rgba(255, 255, 255, var(--text-shadow-opacity, var(--shadow-alpha, 0)));
-	will-change: transform, background-position, text-shadow;
 }
 
 .line[data-state="active"] .word,
@@ -525,6 +531,67 @@
 .line[data-state="not-sung"] .word,
 .line[data-state="not-sung"] .letter {
 	--gradient-position: -20% !important;
+}
+
+/* Inactive lines rest at their final animation pose. The full word/letter DOM
+   stays intact, but only the active line needs per-frame animation writes. */
+.line[data-state="sung"] :is(.word, .letterGroup) {
+	transform: none !important;
+	scale: 1 !important;
+}
+.line[data-state="sung"] .letter {
+	transform: none !important;
+	scale: 1 !important;
+}
+.line[data-state="not-sung"] :is(.word, .letterGroup) {
+	transform: translateY(0.01em) !important;
+	scale: 0.95 !important;
+}
+.line[data-state="not-sung"] .letter {
+	transform: translateY(0.02em) !important;
+	scale: 0.95 !important;
+}
+.line[data-state="sung"] .dot {
+	transform: none !important;
+	scale: 1 !important;
+	opacity: 1 !important;
+}
+.line[data-state="not-sung"] .dot {
+	transform: none !important;
+	scale: 0.75 !important;
+	opacity: 0.35 !important;
+}
+.line[data-state="sung"] :is(.word, .letter, .letterGroup, .dot),
+.line[data-state="not-sung"] :is(.word, .letter, .letterGroup, .dot) {
+	--shadow-blur: 4px !important;
+	--text-shadow-blur-radius: 4px !important;
+	--shadow-alpha: 0 !important;
+	--text-shadow-opacity: 0% !important;
+}
+.simple .line[data-state="sung"] :is(.word, .letter, .letterGroup) {
+	--gradient-position: 100% !important;
+}
+.simple .line[data-state="not-sung"] :is(.word, .letter, .letterGroup) {
+	--gradient-position: -50% !important;
+}
+.simple .line[data-state="not-sung"] :is(.word, .letterGroup) {
+	scale: 1 !important;
+}
+.simple .line[data-state="not-sung"] .letter {
+	scale: 0.95 !important;
+}
+.simple .line[data-state="not-sung"] .dot {
+	transform: none !important;
+	scale: 1 !important;
+	opacity: 0.27 !important;
+}
+
+.line[data-state="sung"] :is(.word, .letter, .letterGroup, .dot),
+.line[data-state="not-sung"] :is(.word, .letter, .letterGroup, .dot) {
+	transition:
+		transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+		scale 160ms cubic-bezier(0.22, 1, 0.36, 1),
+		opacity 160ms linear;
 }
 
 .word[dir="rtl"],

@@ -3,6 +3,7 @@ import { check } from "@tauri-apps/plugin-updater";
 import { useAtom, useStore } from "jotai";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { valid } from "semver";
 import {
 	updateDownloadedBytesAtom,
 	updateErrorAtom,
@@ -10,7 +11,16 @@ import {
 	updateProgressAtom,
 	updateStatusAtom,
 	updateTotalBytesAtom,
+	upstreamReleaseAtom,
 } from "$/states/update";
+
+const UPSTREAM_RELEASE_API =
+	"https://api.github.com/repos/bobjoerules/TTML-Editor/releases/latest";
+
+function isMissingFeatureChannel(error: unknown) {
+	const message = error instanceof Error ? error.message : String(error);
+	return /404|not found|valid release json|latest\.json/i.test(message);
+}
 
 export function useAppUpdate() {
 	const [status, setStatus] = useAtom(updateStatusAtom);
@@ -21,9 +31,38 @@ export function useAppUpdate() {
 	);
 	const [totalBytes, setTotalBytes] = useAtom(updateTotalBytesAtom);
 	const [errorMsg, setErrorMsg] = useAtom(updateErrorAtom);
+	const [upstreamRelease, setUpstreamRelease] = useAtom(upstreamReleaseAtom);
 	const store = useStore();
 
 	const { t } = useTranslation();
+
+	const checkUpstream = useCallback(async () => {
+		if (!import.meta.env.TAURI_ENV_PLATFORM) return;
+
+		try {
+			const response = await fetch(UPSTREAM_RELEASE_API, {
+				headers: { Accept: "application/vnd.github+json" },
+			});
+			if (!response.ok) return;
+
+			const release = (await response.json()) as {
+				tag_name?: string;
+				html_url?: string;
+			};
+			const version = String(release.tag_name ?? "").replace(/^v/, "");
+			if (!valid(version)) return;
+
+			setUpstreamRelease({
+				version,
+				url:
+					release.html_url ??
+					"https://github.com/bobjoerules/TTML-Editor/releases/latest",
+			});
+		} catch {
+			// The upstream check is informational; the feature update channel is
+			// independent and still works when GitHub's API is unavailable.
+		}
+	}, [setUpstreamRelease]);
 
 	const checkUpdate = useCallback(
 		async (silent = false) => {
@@ -44,14 +83,22 @@ export function useAppUpdate() {
 					setStatus("up-to-date");
 				}
 			} catch (e) {
-				if (!silent) {
-					console.error("Failed to check for updates", e);
+				if (isMissingFeatureChannel(e)) {
+					setUpdate(null);
+					setStatus("channel-unavailable");
+					setErrorMsg("");
+				} else {
+					if (!silent) {
+						console.error("Failed to check for updates", e);
+					}
+					setStatus("error");
+					setErrorMsg(e instanceof Error ? e.message : String(e));
 				}
-				setStatus("error");
-				setErrorMsg(e instanceof Error ? e.message : String(e));
 			}
+
+			void checkUpstream();
 		},
-		[setStatus, setUpdate, setErrorMsg, store.get],
+		[setStatus, setUpdate, setErrorMsg, checkUpstream, store],
 	);
 
 	const relaunchApp = useCallback(async () => {
@@ -152,6 +199,7 @@ export function useAppUpdate() {
 		downloadedBytes,
 		totalBytes,
 		errorMsg,
+		upstreamRelease,
 		checkUpdate,
 		installUpdate,
 		relaunchApp,

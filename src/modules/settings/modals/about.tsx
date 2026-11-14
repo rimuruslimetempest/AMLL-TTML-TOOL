@@ -31,6 +31,7 @@ import { APP_VERSION } from "$/modules/changelog/data";
 import { whatsNewAutoOpenAtom } from "$/modules/changelog/states";
 import { buildReportProblemUrl, RELEASES_URL } from "$/config/links";
 import { whatsNewDialogAtom } from "$/states/dialogs";
+import { gt as semverGt } from "semver";
 import { useTranslation } from "react-i18next";
 import { PrivacyLinksCard } from "$/modules/privacy/PrivacyDialogs";
 import { openExternal } from "$/utils/openExternal";
@@ -49,7 +50,11 @@ export const SettingsAboutTab = () => {
 		installUpdate,
 		checkUpdate,
 		relaunchApp,
+		upstreamRelease,
 	} = useAppUpdate();
+	const upstreamIsNewer = upstreamRelease
+		? semverGt(upstreamRelease.version, APP_VERSION)
+		: false;
 	const [autoWhatsNew, setAutoWhatsNew] = useAtom(whatsNewAutoOpenAtom);
 	const [, setWhatsNewOpen] = useAtom(whatsNewDialogAtom);
 	const [cacheConfirmationOpen, setCacheConfirmationOpen] = useState(false);
@@ -129,6 +134,25 @@ export const SettingsAboutTab = () => {
 								<Heading size="3" style={{ margin: 0 }}>
 									{t("settings.about.update", "Software Update")}
 								</Heading>
+								{status === "channel-unavailable" && (
+									<Badge
+										color="amber"
+										size="1"
+										variant="soft"
+										radius="full"
+										style={{
+											display: "inline-flex",
+											alignItems: "center",
+											padding: "2px 8px",
+											fontWeight: 500,
+										}}
+									>
+										{t(
+											"settings.about.featureChannelEmpty",
+											"Feature channel empty",
+										)}
+									</Badge>
+								)}
 								{status === "available" && (
 									<Badge
 										color="ruby"
@@ -204,7 +228,12 @@ export const SettingsAboutTab = () => {
 										{t("settings.about.restart", "Restart Application")}
 									</Button>
 								)}
-								{["idle", "up-to-date", "error"].includes(status) && (
+								{[
+									"idle",
+									"up-to-date",
+									"error",
+									"channel-unavailable",
+								].includes(status) && (
 									<Button variant="soft" onClick={() => checkUpdate(false)}>
 										<CloudArrowDown24Regular />
 										{status === "error"
@@ -297,6 +326,63 @@ export const SettingsAboutTab = () => {
 								<Text size="2" color="gray">
 									{t("settings.about.checking", "Checking for updates...")}
 								</Text>
+							)}
+
+							{status === "channel-unavailable" && (
+								<Text size="2" color="gray">
+									{t(
+										"settings.about.featureChannelEmptyDescription",
+										"No feature-preserving build is published yet. Official releases are intentionally not installed here because they would replace your local features.",
+									)}
+								</Text>
+							)}
+
+							{upstreamRelease && (
+								<Box
+									p="3"
+									style={{
+										background: upstreamIsNewer
+											? "var(--amber-3)"
+											: "var(--gray-3)",
+										borderRadius: "var(--radius-3)",
+									}}
+								>
+									<Flex direction="column" gap="2">
+										<Text size="2" weight="bold">
+											{t(
+												"settings.about.originalProject",
+												"Original TTML Editor",
+											)} v{upstreamRelease.version}
+										</Text>
+										<Text
+											size="1"
+											color={upstreamIsNewer ? "amber" : "gray"}
+										>
+											{upstreamIsNewer
+												? t(
+														"settings.about.upstreamNewer",
+														"The original project has a newer version. It will not be installed automatically because that would remove your local features; publish a feature-preserving build to update.",
+													)
+												: t(
+														"settings.about.upstreamCurrent",
+														"The original project is at the same version as this feature build.",
+													)}
+										</Text>
+										<Flex>
+											<Button
+												variant="soft"
+												size="1"
+												onClick={() => openExternal(upstreamRelease.url)}
+											>
+												<Open16Regular />
+												{t(
+													"settings.about.viewOriginalRelease",
+													"View original release",
+												)}
+											</Button>
+										</Flex>
+									</Flex>
+								</Box>
 							)}
 						</Box>
 					</Flex>

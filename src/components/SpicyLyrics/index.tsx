@@ -426,9 +426,10 @@ export const SpicyLyrics = memo(
 		const lineGlowSprings = useRef(new Map<string, Spring>());
 		const slmAnimations = useRef(new Map<string, SlmAnimation>());
 		const scrollPauseUntil = useRef(0);
+		const scrollFollowUntil = useRef(0);
 		const lastLine = useRef<string | null>(null);
 		const lastTime = useRef(performance.now());
-		const [fps, setFps] = useState(0);
+		const fpsLabelRef = useRef<HTMLDivElement>(null);
 		const fpsRef = useRef({ frames: 0, lastTime: performance.now() });
 		const showFpsRef = useRef(showFps);
 		useKawarpBackground(backgroundRef, backgroundImage, backgroundMode);
@@ -436,7 +437,7 @@ export const SpicyLyrics = memo(
 		useEffect(() => {
 			showFpsRef.current = showFps;
 			fpsRef.current = { frames: 0, lastTime: performance.now() };
-			setFps(0);
+			if (fpsLabelRef.current) fpsLabelRef.current.textContent = "FPS: 0";
 		}, [showFps]);
 
 		useEffect(() => {
@@ -467,16 +468,19 @@ export const SpicyLyrics = memo(
 		useEffect(() => {
 			let raf = 0;
 			let previousPosition = -Infinity;
+			// Keep correcting the active line while content-visibility settles the
+			// off-screen layout after a lyric change or a seek.
+			scrollFollowUntil.current = performance.now() + 1200;
 			const animate = (now: number) => {
 				if (showFpsRef.current) {
 					fpsRef.current.frames++;
 					if (now - fpsRef.current.lastTime >= 1000) {
-						setFps(
-							Math.round(
-								(fpsRef.current.frames * 1000) /
-									(now - fpsRef.current.lastTime),
-							),
+						const nextFps = Math.round(
+							(fpsRef.current.frames * 1000) /
+								(now - fpsRef.current.lastTime),
 						);
+						if (fpsLabelRef.current)
+							fpsLabelRef.current.textContent = `FPS: ${nextFps}`;
 						fpsRef.current.frames = 0;
 						fpsRef.current.lastTime = now;
 					}
@@ -502,6 +506,8 @@ export const SpicyLyrics = memo(
 						lastActive - firstActive <= 1 ? firstActive : lastActive;
 				}
 				const active = activeIndex >= 0 ? lines[activeIndex] : undefined;
+				if (active && lastLine.current !== active.id)
+					scrollFollowUntil.current = now + 900;
 				for (let i = 0; i < lines.length; i++) {
 					const line = lines[i];
 					const status = stateAt(time, line.startTime, line.endTime);
@@ -554,10 +560,14 @@ export const SpicyLyrics = memo(
 						}
 					}
 				}
-				for (const line of lines)
+				for (const line of lines) {
+					// Only the line being sung needs per-frame word/letter animation.
+					// Every other line keeps its full token DOM and rests in the exact
+					// final pose supplied by its line state in CSS above.
 					if (line.isLineSynced && !line.isDotLine) continue;
-					else
-						for (let wi = 0; wi < line.words.length; wi++) {
+					if (stateAt(time, line.startTime, line.endTime) !== "active")
+						continue;
+					for (let wi = 0; wi < line.words.length; wi++) {
 							const word = line.words[wi];
 							const rootKey = keyFor(line, word, wi);
 							// Spicy's TimeSetter cascades the line state to every child when
@@ -951,8 +961,8 @@ export const SpicyLyrics = memo(
 										`${Math.min(100, Math.round(currentGlow * 185))}%`,
 									);
 								}
-							};
-							if (line.isDotLine)
+							}
+						if (line.isDotLine)
 								animateNode(
 									rootKey,
 									wordNodes.current.get(rootKey),
@@ -966,9 +976,10 @@ export const SpicyLyrics = memo(
 									progress,
 								);
 								animateHeldLetters(word, rootKey, wordState);
-							} else
-								animateNode(rootKey, wordNodes.current.get(rootKey), progress);
+															} else
+									animateNode(rootKey, wordNodes.current.get(rootKey), progress);
 						}
+					}
 				const allSung = lines.every(
 					(line) => stateAt(time, line.startTime, line.endTime) === "sung",
 				);
@@ -991,11 +1002,17 @@ export const SpicyLyrics = memo(
 							viewport.getBoundingClientRect().top,
 						) >=
 						5;
+				const followOffscreen =
+					!!scrollTarget &&
+					now < scrollFollowUntil.current &&
+					now > scrollPauseUntil.current &&
+					(!visible || lastLine.current !== scrollTarget.id);
 				if (
 					scrollTarget &&
 					scrollNode &&
 					viewport &&
 					(shouldForce ||
+						followOffscreen ||
 						(now > scrollPauseUntil.current &&
 							visible &&
 							lastLine.current !== scrollTarget.id))
@@ -1240,7 +1257,11 @@ export const SpicyLyrics = memo(
 					<div className={styles.staticFallback} />
 				) : null}
 				<div className={styles.overlay} />
-				{showFps ? <div className={styles.fpsCounter}>FPS: {fps}</div> : null}
+				{showFps ? (
+					<div ref={fpsLabelRef} className={styles.fpsCounter}>
+						FPS: 0
+					</div>
+				) : null}
 
 				<div className={styles.contentOverlay}>
 					{!isPanel && showArtwork ? (

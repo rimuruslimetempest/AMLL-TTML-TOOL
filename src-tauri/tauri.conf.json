@@ -55,10 +55,9 @@
 	},
 	"plugins": {
 		"updater": {
-			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlFQ0JEM0UwQzBBREQyN0MKUldSODBxM0E0TlBMbnM5c3BWTDlkQzF6QkJ2UlhKSHduSldZeE8vOFVvWk8yaXAyWDR4cWVxb20K",
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc4MTVGNjc5N0I4MDQzMzUKUldRMVE0QjdlZllWZUdqakZ5ZG9TMDEwWUhUUXUzYjR1R3Y0aXBMeng2bHVTUzE1eDhhYVI5NHoK",
 			"endpoints": [
-				"https://github.com/bobjoerules/TTML-Editor/releases/latest/download/latest.json",
-				"https://github.com/bobjoerules/AMLL-TTML-TOOL/releases/latest/download/latest.json"
+				"https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/releases/latest/download/latest.json"
 			]
 		}
 	}

@@ -97,6 +97,21 @@ You can also use the Tauri desktop version built via GitHub Actions; see the [La
 - **Global Localization** — Full i18n support with community-driven translations.
 - **Community Plugin Store** — Browse and install community-made WASM importers and exporters.
 
+## Feature-Preserving Updates
+
+The desktop updater is intentionally pointed at this fork's releases, not the original project's releases. Installing an original-project binary would remove the features listed above.
+
+When the original project publishes a newer release, the `Sync upstream and publish feature build` workflow merges that release into this fork, builds a signed Windows installer, and publishes it as a fork release. The app checks that feature channel at launch and every six hours. The About tab also shows the latest original-project version; if it is newer than the feature build, the app reports it but does not install it.
+
+The workflow stops and opens an issue if the upstream merge conflicts. No release is published in that case.
+
+One-time setup for this repository:
+
+1. Enable GitHub Actions on the fork.
+2. Add `TAURI_SIGNING_PRIVATE_KEY` as a repository secret using the contents of `.tauri/ttml-feature-updater.key` (the file is gitignored; keep it private).
+3. Push this branch to the fork's `main` branch.
+4. The daily workflow will publish future feature builds automatically; run it manually the first time if needed.
+
 ## Contribution
 
 All active code and translation contributions are welcome! We also welcome bug reports and suggestions! See [CONTRIBUTING.md](./CONTRIBUTING.md).

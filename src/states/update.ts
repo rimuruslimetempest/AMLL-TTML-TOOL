@@ -8,7 +8,13 @@ export type UpdateStatus =
 	| "available"
 	| "downloading"
 	| "ready"
+	| "channel-unavailable"
 	| "error";
+
+export interface UpstreamReleaseInfo {
+	version: string;
+	url: string;
+}
 
 export const updateStatusAtom = atom<UpdateStatus>("idle");
 export const updateInfoAtom = atom<Update | null>(null);
@@ -16,3 +22,4 @@ export const updateProgressAtom = atom<number>(0);
 export const updateDownloadedBytesAtom = atom<number>(0);
 export const updateTotalBytesAtom = atom<number>(0);
 export const updateErrorAtom = atom<string>("");
+export const upstreamReleaseAtom = atom<UpstreamReleaseInfo | null>(null);

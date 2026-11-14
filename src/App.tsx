@@ -1049,9 +1049,14 @@ function App() {
 	}, [initCustomBackgroundImage]);
 
 	useEffect(() => {
-		if (import.meta.env.TAURI_ENV_PLATFORM) {
-			checkUpdate(true);
-		}
+		if (!import.meta.env.TAURI_ENV_PLATFORM) return;
+
+		void checkUpdate(true);
+		const interval = window.setInterval(
+			() => void checkUpdate(true),
+			6 * 60 * 60 * 1000,
+		);
+		return () => window.clearInterval(interval);
 	}, [checkUpdate]);
 
 	useEffect(() => {
