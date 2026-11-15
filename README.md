@@ -2,7 +2,7 @@
 
 <img src="./public/logo.svg" align="center" width="256">
 
-# Bobjoerules's Apple Music-like Lyrics TTML Tool Fork
+# rimurulover's Apple Music-like Lyrics TTML Tool Fork
 
 A fork of the word-by-word lyrics editor designed specifically for the [Spicy Lyrics ecosystem](https://spicylyrics.org/).
 
@@ -58,7 +58,6 @@ A fork of the word-by-word lyrics editor designed specifically for the [Spicy Ly
 > [!WARNING]
 > This tool is not recommended for mobile phones or small screens, as the operation can be very cumbersome.
 
-You can use the online version of this tool by visiting [https://ttmleditor.com/](https://ttmleditor.com/).
 
 You can also use the Tauri desktop version built via GitHub Actions; see the [Latest Release](https://github.com/bobjoerules/AMLL-TTML-TOOL/releases/latest) for details.
 
