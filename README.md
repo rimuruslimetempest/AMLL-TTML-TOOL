@@ -1,13 +1,13 @@
 <div align=center>
 
-<img src="./public/logo.svg" align="center" width="256">
+<img src="https://cdn.discordapp.com/attachments/1524604094134878311/1572368706833490131/ttml_icon.jpeg?ex=6afe1df8&is=6afccc78&hm=7f4fa3a97f8fb196490a8fcb26935eaf52c52ed8b5ab6ab4bc81ca073f2cd2c4&" align="center" width="256">
 
 # rimurulover's Apple Music-like Lyrics TTML Tool Fork
 
 A fork of the word-by-word lyrics editor designed specifically for the [Spicy Lyrics ecosystem](https://spicylyrics.org/).
 
 <p align="center">
-  <img src="https://cdn.discordapp.com/attachments/1524604094134878311/1572368706833490131/ttml_icon.jpeg?ex=6afe1df8&is=6afccc78&hm=7f4fa3a97f8fb196490a8fcb26935eaf52c52ed8b5ab6ab4bc81ca073f2cd2c4&" alt="AMLL TTML Tool - Apple Music Live Preview" width="100%">
+  <img src="" alt="AMLL TTML Tool - Apple Music Live Preview" width="100%">
 </p>
 
 </div>
