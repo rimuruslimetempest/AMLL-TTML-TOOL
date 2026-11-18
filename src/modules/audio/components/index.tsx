@@ -42,7 +42,6 @@ import {
 	timeShiftPreviewActiveAtom,
 } from "$/states/dialogs.ts";
 import { useFileOpener } from "$/hooks/useFileOpener";
-import { performanceModeAtom } from "$/modules/settings/states";
 import { audioEngine } from "$/modules/audio/audio-engine";
 import { AudioSlider } from "$/modules/audio/components/AudioSlider";
 import { AudioUrlDialog } from "$/modules/audio/components/AudioUrlDialog";
@@ -71,7 +70,6 @@ import {
 import { openFileWithDialog } from "$/utils/fileDialog.ts";
 import { useKeyBindingAtom } from "$/utils/keybindings.ts";
 import { msToTimestamp } from "$/utils/timestamp.ts";
-import { ToolMode, toolModeAtom } from "$/states/main.ts";
 import { TimelineRuler } from "./TimelineRuler";
 
 const AudioPlaybackKeyBinding = memo(() => {
@@ -140,7 +138,6 @@ export const AudioControls: FC = memo(() => {
 	const [spectrogramVisible, setSpectrogramVisible] = useAtom(
 		spectrogramVisibleAtom,
 	);
-	const performanceMode = useAtomValue(performanceModeAtom);
 	const currentDuration = useAtomValue(currentDurationAtom);
 	const [audioPlaying, setAudioPlaying] = useAtom(audioPlayingAtom);
 	const [volume, setVolume] = useAtom(volumeAtom);
@@ -152,8 +149,6 @@ export const AudioControls: FC = memo(() => {
 	const setRecorderOpen = useSetAtom(screenRecorderDialogOpenAtom);
 	const { openFile } = useFileOpener();
 	const { t } = useTranslation();
-	const toolMode = useAtomValue(toolModeAtom);
-	const compactWaveform = toolMode === ToolMode.Preview;
 
 	const onLoadMusic = useCallback(async () => {
 		const file = await openFileWithDialog({
@@ -244,24 +239,15 @@ export const AudioControls: FC = memo(() => {
 			<AudioPlaybackKeyBinding />
 			<AuditionKeyBinding />
 			<Flex direction="column">
-				<div
-					style={{
-						display:
-							spectrogramVisible && !performanceMode ? "flex" : "none",
-					}}
-				>
+				<div style={{ display: spectrogramVisible ? "flex" : "none" }}>
 					<AudioSpectrogram />
 				</div>
 				<div style={{ padding: "2px 0 0" }}>
 					<TimelineRuler />
 					<div
-						style={{
-							height: compactWaveform ? 34 : 42,
-							margin: "0 9px",
-							marginTop: -3,
-						}}
+						style={{ height: 42, margin: "0 9px", marginTop: -3 }}
 					>
-						<AudioSlider height={compactWaveform ? "34px" : "42px"} />
+						<AudioSlider height="42px" />
 					</div>
 				</div>
 				<Flex align="center" px="2" gapX="2">
@@ -437,15 +423,6 @@ export const AudioControls: FC = memo(() => {
 							my="2"
 							ml="0"
 							variant="soft"
-							disabled={performanceMode}
-							title={
-								performanceMode
-									? t(
-											"audioPanel.spectrogramDisabledPerformance",
-											"Spectrogram is disabled in Performance mode",
-										)
-									: undefined
-							}
 							onClick={() => setSpectrogramVisible(!spectrogramVisible)}
 							aria-label={t(
 								"audioPanel.expandSpectrogram",

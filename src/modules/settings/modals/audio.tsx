@@ -33,7 +33,6 @@ import {
 	Mp3ConversionMode,
 	mp3ConversionModeAtom,
 } from "$/modules/settings/states";
-import { waveformQualityAtom } from "$/modules/settings/states/preview";
 import {
 	CUE_SOUNDS,
 	CUE_SOURCES,
@@ -91,7 +90,6 @@ export const AudioSettingsTab = () => {
 	const [cueSources, setCueSources] = useAtom(cueSourcesAtom);
 	const [cueInPreview, setCueInPreview] = useAtom(cueInPreviewAtom);
 	const [cueMinGap, setCueMinGap] = useAtom(cueMinGapMsAtom);
-	const [waveformQuality, setWaveformQuality] = useAtom(waveformQualityAtom);
 
 	const toggleCueSource = useCallback(
 		(source: CueSource, checked: boolean) => {
@@ -171,41 +169,6 @@ export const AudioSettingsTab = () => {
 
 	return (
 		<Flex direction="column" gap="4">
-			<Box>
-				<Text weight="bold" size="3">
-					{t("settings.audio.waveform", "Waveform")}
-				</Text>
-				<Text size="2" color="gray" mt="1" style={{ display: "block" }}>
-					{t(
-						"settings.audio.waveformQualityHint",
-						"Controls the resolution of the static waveform. Higher quality scans more peaks once per audio file; it never redraws during playback.",
-					)}
-				</Text>
-				<Flex align="center" gap="3" mt="3">
-					<Text size="2">
-						{t("settings.audio.waveformQuality", "Waveform quality")}
-					</Text>
-					<Select.Root
-						value={waveformQuality}
-						onValueChange={(value) =>
-							setWaveformQuality(value as "low" | "medium" | "high")
-						}
-					>
-						<Select.Trigger />
-						<Select.Content>
-							<Select.Item value="low">
-								{t("settings.audio.waveformQuality.low", "Low")}
-							</Select.Item>
-							<Select.Item value="medium">
-								{t("settings.audio.waveformQuality.medium", "Medium")}
-							</Select.Item>
-							<Select.Item value="high">
-								{t("settings.audio.waveformQuality.high", "High")}
-							</Select.Item>
-						</Select.Content>
-					</Select.Root>
-				</Flex>
-			</Box>
 			<Box>
 				<Flex align="center" gap="4" mb="2">
 					<Text weight="bold" size="3">

@@ -7,24 +7,9 @@ What's New window reads this file.
 
 ### Fixed
 
-- Preview artwork backgrounds are prepared once as a small, blurred, dimmed
-  image instead of running a full-screen CSS filter or scaling the original
-  artwork during playback. Lyrics stay readable over the darker background.
-- Preview line positions are measured only when the lyric data or window size
-  changes. The track is no longer measured on every line change, so active
-  lines no longer cause a synchronous layout spike.
-- Lyric spacing is reserved consistently, inactive words no longer shrink, the
-  active line no longer grows, and the bottom of the lyric area now has enough
-  padding and fade space for the last line. The FPS badge moved out of the
-  lyrics to the top-right corner.
-- The FPS overlay now records slow frames over 33 ms with loop-section timings,
-  long-task observations, and heap deltas. Copy frame report copies the last
-  50 slow frames for diagnosis.
-- The blue waveform and timeline ruler are visible above the transport controls
-  again. A static canvas fallback keeps the waveform visible even when the
-  WaveSurfer canvas does not paint, and the playhead follows the shared Preview
-  clock without another animation loop. A Waveform quality setting and a
-  low-resolution Performance mode waveform were added.
+- The Preview lyrics display and scrolling were restored to the earlier stable
+  version, and the later Preview-only rendering experiments were removed. The
+  timeline ruler and blue waveform remain above the transport controls.
 
 ## [1.0.0] - 2026-11-17
 
@@ -38,7 +23,7 @@ What's New window reads this file.
   chat, comments, review marks, history, and restore points.
 - Import and export for common lyric and subtitle formats, with previews,
   warnings, and a needs-review flag for imported timing.
-- A first-run setup wizard and a smoother Preview with a shared playback clock.
+- A first-run setup wizard and a live Preview that follows the manual timing.
 
 ### New
 
@@ -66,19 +51,16 @@ What's New window reads this file.
   and a copy-ready metadata block.
 - Preview options for Simple lyrics, Show Translation, Show Romanization,
   BG Follows Duet, Album Artwork, Fullscreen, Mask Obscene Words, and Show FPS.
-- Preview quality and frame-rate cap settings, plus Performance mode.
+- Preview FPS overlay and Performance mode.
 - Portable settings and project backup, Discord Rich Presence, and an optional
   yt-dlp/FFmpeg media downloader.
 
 ### Improved
 
-- The Preview uses one shared smoothed playback clock and one animation loop.
-  The lyric block scrolls with a transform, the active line is tracked with a
-  moving pointer, and finished lines are left in a static state instead of being
-  restyled every frame.
-- The Preview keeps working with translation, romanization, duet lines,
-  background vocals, fullscreen, album artwork, and playback speeds below and
-  above 1×.
+- The Preview follows playback with word and line highlighting and uses a
+  transform for lyric scrolling. It keeps working with translation,
+  romanization, duet lines, background vocals, fullscreen, album artwork, and
+  playback speeds below and above 1×.
 - Imported lines are marked "needs review" and a banner reminds the editor to
   check imported timing against the audio. No imported timing is retimed or
   merged.
@@ -99,8 +81,10 @@ What's New window reads this file.
 - Malformed timestamps and unsupported dialogue lines are reported in the
   import preview instead of aborting the import.
 - Exporting to a non-TTML format no longer modifies the open project.
-- Pausing, seeking, and switching modes no longer leave the Preview clock or
-  animation loop running in the background.
+- Pausing, seeking, and switching modes no longer leave the Preview animation
+  loop running in the background.
+- Preview lyrics were restored to the earlier stable display. The later
+  Preview-only rendering experiments were removed.
 
 ### Credits
 

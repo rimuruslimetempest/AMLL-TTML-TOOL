@@ -11,6 +11,7 @@ export enum PreviewModeType {
 }
 
 export const previewModeTypeAtom = atom<PreviewModeType>(PreviewModeType.Spicy);
+
 export const showTranslationLinesAtom = atomWithStorage(
 	"showTranslationLines",
 	false,
@@ -23,21 +24,6 @@ export const lyricWordFadeWidthAtom = atomWithStorage(
 );
 export const vsyncAtom = atomWithStorage("vsync", false);
 export const showFpsCounterAtom = atomWithStorage("showFpsCounter", false);
-export type PreviewFrameRateCap = "auto" | 30 | 60 | 120 | "unlimited";
-export const previewFrameRateCapAtom = atomWithStorage<PreviewFrameRateCap>(
-	"previewFrameRateCap",
-	"auto",
-);
-export type PreviewQuality = "high" | "balanced" | "low";
-export const previewQualityAtom = atomWithStorage<PreviewQuality>(
-	"previewQuality",
-	"high",
-);
-export type WaveformQuality = "low" | "medium" | "high";
-export const waveformQualityAtom = atomWithStorage<WaveformQuality>(
-	"waveformQuality",
-	"medium",
-);
 export const instantHighlightFadeAtom = atomWithStorage(
 	"instantHighlightFade",
 	true,

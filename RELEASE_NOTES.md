@@ -31,10 +31,10 @@ the AppImage install updates itself; use your package manager for `.deb` and
 - **Saved splits and text tools.** A reusable split library with previews and
   notes, syllable splitting, word replacement, line merging, and duplicate
   cleanup.
-- **A smoother Preview.** One shared playback clock, one animation loop, a
-  transform-based lyric scroller, and less per-frame work on the lyric text.
-  Preview options include Simple lyrics, Translation, Romanization, BG Follows
-  Duet, Album Artwork, Fullscreen, Mask Obscene Words, and Show FPS.
+- **A stable Preview.** Word and line highlighting, a transform-based lyric
+  scroller, duet and background-vocal layout, and options for Simple lyrics,
+  Translation, Romanization, BG Follows Duet, Album Artwork, Fullscreen, Mask
+  Obscene Words, and Show FPS.
 - **More formats.** Import TTML, LRC, enhanced LRC, SRT, ASS/SSA, WebVTT, and
   plain text. Export TTML, LRC, enhanced LRC, SRT, and plain text. Every import
   has a preview with line counts and problems, and imported timing is marked for
@@ -61,17 +61,17 @@ the AppImage install updates itself; use your package manager for `.deb` and
 - Saved split library with previews, proportional timing, and notes.
 - TTML Checklist, song-info metadata, portable backup, Discord Rich Presence,
   and the optional media downloader.
-- Preview quality, frame-rate cap, Performance mode, and an FPS overlay with
-  frame-time and React-render diagnostics.
+- Preview FPS overlay and Performance mode.
 
 ## Improved
 
 - Imported files are converted, not retimed. The editor is warned to check the
   result against the audio.
-- The Preview uses one shared clock and animation loop, so only the active line
-  and word update each frame.
-- Pausing, seeking, and hiding the window stop the Preview loop instead of
-  leaving it running.
+- The Preview follows playback with word and line highlighting and keeps
+  translation, romanization, duet lines, background vocals, fullscreen, and
+  album artwork working.
+- Pausing, seeking, and hiding the window stop the Preview animation loop
+  instead of leaving it running.
 - Update checks stay silent when offline, and all update preferences persist
   across restarts.
 - Metadata, installer naming, the update endpoint, and every project link point
@@ -86,8 +86,9 @@ the AppImage install updates itself; use your package manager for `.deb` and
 - Bad timestamps and unsupported ASS/SSA dialogue lines are reported in the
   preview instead of aborting the import.
 - Non-TTML exports never modify the open project.
-- The Preview no longer rebuilds every line's blur and shadow styles on every
-  animation frame.
+- Preview lyrics were restored to the earlier stable display and scrolling
+  behavior, and the later Preview-only diagnostics and rendering controls were
+  removed.
 
 ## Credits
 

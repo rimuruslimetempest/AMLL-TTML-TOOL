@@ -31,12 +31,6 @@ import {
 	UiLayer,
 	uiLayerAtom,
 } from "$/modules/settings/states";
-import {
-	previewFrameRateCapAtom,
-	type PreviewFrameRateCap,
-	previewQualityAtom,
-	type PreviewQuality,
-} from "$/modules/settings/states/preview";
 
 const settingTextStyle: CSSProperties = {
 	flex: "1 1 240px",
@@ -53,10 +47,6 @@ export const PresentationSettings = memo(() => {
 		performanceModePreferenceAtom,
 	);
 	const performanceMode = useAtomValue(performanceModeAtom);
-	const [previewQuality, setPreviewQuality] = useAtom(previewQualityAtom);
-	const [previewFrameCap, setPreviewFrameCap] = useAtom(
-		previewFrameRateCapAtom,
-	);
 	const [density, setDensity] = useAtom(densityAtom);
 	const [contrast, setContrast] = useAtom(contrastAtom);
 	const setFallbackNotice = useSetAtom(uiFallbackNoticeAtom);
@@ -366,101 +356,6 @@ export const PresentationSettings = memo(() => {
 											"settings.appearance.interface.performanceOffNote",
 											"All visual effects stay enabled. Choose Auto to receive a non-blocking suggestion if this device struggles.",
 										)}
-						</Text>
-					</Box>
-				</Flex>
-			</Card>
-
-			<Card id="appearance-preview-rendering">
-				<Flex gap="3" align="start">
-					<TopSpeed24Regular />
-					<Box flexGrow="1">
-						<Text weight="bold" as="div">
-							{t(
-								"settings.appearance.previewRendering.title",
-								"Preview rendering",
-							)}
-						</Text>
-						<Text size="1" color="gray" as="div" style={{ marginTop: 4 }}>
-							{t(
-								"settings.appearance.previewRendering.desc",
-								"Controls lyric motion and effects. Frame rate cap only affects lyric painting; the display still refreshes normally.",
-							)}
-						</Text>
-						<Flex
-							align="center"
-							justify="between"
-							gap="3"
-							wrap="wrap"
-							style={{ marginTop: 12 }}
-						>
-							<Text size="2">
-								{t("settings.appearance.previewRendering.quality", "Quality")}
-							</Text>
-							<SegmentedControl.Root
-								value={previewQuality}
-								onValueChange={(value) =>
-									setPreviewQuality(value as PreviewQuality)
-								}
-								size="1"
-							>
-								<SegmentedControl.Item value="high">
-									{t("settings.appearance.previewRendering.qualityHigh", "High")}
-								</SegmentedControl.Item>
-								<SegmentedControl.Item value="balanced">
-									{t(
-										"settings.appearance.previewRendering.qualityBalanced",
-										"Balanced",
-									)}
-								</SegmentedControl.Item>
-								<SegmentedControl.Item value="low">
-									{t("settings.appearance.previewRendering.qualityLow", "Low")}
-								</SegmentedControl.Item>
-							</SegmentedControl.Root>
-						</Flex>
-						<Flex
-							align="center"
-							justify="between"
-							gap="3"
-							wrap="wrap"
-							style={{ marginTop: 8 }}
-						>
-							<Text size="2">
-								{t(
-									"settings.appearance.previewRendering.frameCap",
-									"Frame rate cap",
-								)}
-							</Text>
-							<SegmentedControl.Root
-								value={String(previewFrameCap)}
-								onValueChange={(value) =>
-									setPreviewFrameCap(
-										(value === "auto" || value === "unlimited"
-											? value
-											: (Number(value) as PreviewFrameRateCap)),
-									)
-								}
-								size="1"
-							>
-								<SegmentedControl.Item value="auto">
-									{t("settings.appearance.previewRendering.capAuto", "Auto")}
-								</SegmentedControl.Item>
-								<SegmentedControl.Item value="30">30</SegmentedControl.Item>
-								<SegmentedControl.Item value="60">60</SegmentedControl.Item>
-								<SegmentedControl.Item value="120">120</SegmentedControl.Item>
-								<SegmentedControl.Item value="unlimited">
-									{t(
-										"settings.appearance.previewRendering.capUnlimited",
-										"Unlimited",
-									)}
-								</SegmentedControl.Item>
-							</SegmentedControl.Root>
-						</Flex>
-						<Text size="1" color="gray" as="div" style={{ marginTop: 8 }}>
-							{t(
-								"settings.appearance.previewRendering.note",
-								"Balanced removes lyric glow and background motion. Low also removes the moving blur. Performance Mode always uses Low here.",
-							)}
 						</Text>
 					</Box>
 				</Flex>

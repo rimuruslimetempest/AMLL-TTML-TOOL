@@ -2,8 +2,6 @@
  * Adapted from the Spicy Lyrics renderer (AGPL-3.0-or-later).
  * Original project: https://github.com/Spikerko/Spicy-Lyrics
  */
-
-import { MusicNote224Regular } from "@fluentui/react-icons";
 import classNames from "classnames";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
@@ -15,7 +13,6 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { PreviewProgressBar } from "$/components/PreviewProgressBar";
 import { audioEngine } from "$/modules/audio/audio-engine";
 import {
 	audioCoverArtAtom,
@@ -27,13 +24,9 @@ import { customBackgroundImageAtom } from "$/modules/settings/modals/customBackg
 import {
 	backgroundModeAtom,
 	customAccentColorAtom,
-	performanceModeAtom,
 	useCustomAccentAtom,
 } from "$/modules/settings/states";
 import {
-	bgFollowsDuetAtom,
-	previewFrameRateCapAtom,
-	previewQualityAtom,
 	previewShowAlbumArtworkAtom,
 	showFpsCounterAtom,
 	showRomanLinesAtom,
@@ -41,15 +34,15 @@ import {
 	spicyBackgroundModeAtom,
 	spicyForceLineSyncedAtom,
 	spicySimpleLyricsModeAtom,
+	bgFollowsDuetAtom,
 } from "$/modules/settings/states/preview";
 import { lyricLinesAtom, projectIdentityAtom } from "$/states/main";
 import {
-	type PreviewFrame,
-	requestPreviewFrame,
-	subscribePreviewClock,
-} from "./clock";
+	MusicNote224Regular,
+} from "@fluentui/react-icons";
 import styles from "./index.module.css";
-import { progressAt, stateAt } from "./math";
+import { PreviewProgressBar } from "$/components/PreviewProgressBar";
+import { CubicSpline, progressAt, Spring, stateAt } from "./math";
 import {
 	buildSpicyLines,
 	groupSpicyTokens,
@@ -68,105 +61,87 @@ type KawarpInstance = {
 		transitionDuration?: number;
 	}): void;
 };
+type SpringSet = { scale: Spring; y: Spring; glow: Spring; opacity: Spring };
 type CoverPalette = { base: string; highlight: string };
+type SlmAnimation = {
+	animation?: Animation;
+	phase: "idle" | "pre" | "fill" | "sung";
+};
+
+const scaleSpline = new CubicSpline([
+	[0, 0.95],
+	[0.7, 1.0505],
+	[1, 1],
+]);
+const letterScaleSpline = new CubicSpline([
+	[0, 0.95],
+	[0.7, 1.175],
+	[1, 1],
+]);
+const ySpline = new CubicSpline([
+	[0, 0.01],
+	[0.9, -1 / 60],
+	[1, 0],
+]);
+const letterYSpline = new CubicSpline([
+	[0, 0.01],
+	[0.9, -1 / 56],
+	[1, 0],
+]);
+const simpleYSpline = new CubicSpline([
+	[0, 0.01],
+	[1, -0.033],
+]);
+const simpleLetterScaleSpline = new CubicSpline([
+	[0, 0.95],
+	[0.7, 1.07],
+	[1, 1],
+]);
+const simpleLetterYSpline = new CubicSpline([
+	[0, 0.01],
+	[0.9, -1 / 62],
+	[1, 0],
+]);
+const glowSpline = new CubicSpline([
+	[0, 0],
+	[0.15, 1],
+	[0.6, 1],
+	[1, 0],
+]);
+const lineGlowSpline = new CubicSpline([
+	[0, 0],
+	[0.5, 1],
+	[1, 0],
+]);
+const dotScaleSpline = new CubicSpline([
+	[0, 0.75],
+	[0.7, 1.05],
+	[1, 1],
+]);
+const dotYSpline = new CubicSpline([
+	[0, 0],
+	[0.9, -0.12],
+	[1, 0],
+]);
+const dotGlowSpline = new CubicSpline([
+	[0, 0],
+	[0.6, 1],
+	[1, 1],
+]);
+const dotOpacitySpline = new CubicSpline([
+	[0, 0.35],
+	[0.6, 1],
+	[1, 1],
+]);
+const simpleDotOpacitySpline = new CubicSpline([
+	[0, 0.27],
+	[0.6, 1],
+	[1, 1],
+]);
+const easeSinOut = (progress: number) => Math.sin((Math.PI * progress) / 2);
 
 const keyFor = (line: SpicyLine, word: SpicyToken, index: number) =>
 	`${line.id}:${word.id}:${index}`;
-
-type SlowFrameReport = {
-	frameMs: number;
-	jsMs: number;
-	time: number;
-	line: string | null;
-	lineStatesMs: number;
-	wordsMs: number;
-	scrollMs: number;
-	heapDeltaMb: number | null;
-	longTasks: Array<{ type: string; duration: number; start: number }>;
-};
-
-const MAX_SLOW_FRAMES = 50;
-
-async function copyText(text: string) {
-	try {
-		if (navigator.clipboard) {
-			await navigator.clipboard.writeText(text);
-			return true;
-		}
-	} catch {
-		// Fall through to the WebView2-compatible copy path.
-	}
-	try {
-		const area = document.createElement("textarea");
-		area.value = text;
-		area.style.position = "fixed";
-		area.style.opacity = "0";
-		document.body.appendChild(area);
-		area.select();
-		const copied = document.execCommand("copy");
-		area.remove();
-		return copied;
-	} catch {
-		return false;
-	}
-}
-
-const BLURRED_ARTWORK_CACHE = new Map<string, string>();
-
-function useBlurredArtwork(source: string | null, enabled: boolean) {
-	const [blurred, setBlurred] = useState<string | null>(null);
-	useEffect(() => {
-		if (!source || !enabled) {
-			setBlurred(null);
-			return;
-		}
-		const cached = BLURRED_ARTWORK_CACHE.get(source);
-		if (cached) {
-			setBlurred(cached);
-			return;
-		}
-		let cancelled = false;
-		const image = new Image();
-		image.crossOrigin = "anonymous";
-		image.decoding = "async";
-		image.src = source;
-		void image
-			.decode()
-			.then(() => {
-				if (cancelled) return;
-				const size = 112;
-				const canvas = document.createElement("canvas");
-				canvas.width = size;
-				canvas.height = size;
-				const context = canvas.getContext("2d");
-				if (!context) return;
-				const scale = Math.max(size / image.naturalWidth, size / image.naturalHeight);
-				const width = image.naturalWidth * scale;
-				const height = image.naturalHeight * scale;
-				context.filter = "blur(11px) brightness(0.5) saturate(1.25)";
-				context.drawImage(
-					image,
-					(size - width) / 2,
-					(size - height) / 2,
-					width,
-					height,
-				);
-				context.filter = "none";
-				context.fillStyle = "rgba(7, 8, 12, 0.42)";
-				context.fillRect(0, 0, size, size);
-				const result = canvas.toDataURL("image/jpeg", 0.72);
-				BLURRED_ARTWORK_CACHE.set(source, result);
-				if (!cancelled) setBlurred(result);
-			})
-			.catch(() => {
-				if (!cancelled) setBlurred(null);
-			});
-		return () => {
-			cancelled = true;
-		};
-	}, [source, enabled]);
-	return blurred;
-}
 
 const colorToHex = (red: number, green: number, blue: number) =>
 	`#${[red, green, blue]
@@ -199,7 +174,7 @@ function useCoverPalette(imageSource: string | null) {
 					canvas.width,
 					canvas.height,
 				);
-				const base = { red: 0, green: 0, blue: 0, weight: 0 };
+				let base = { red: 0, green: 0, blue: 0, weight: 0 };
 				let highlight = { red: 0, green: 0, blue: 0, saturation: -1 };
 				for (let index = 0; index < data.length; index += 4) {
 					const red = data[index];
@@ -289,10 +264,9 @@ function useKawarpBackground(
 	container: RefObject<HTMLDivElement | null>,
 	image: string | null,
 	mode: "animated" | "color" | "static",
-	animate: boolean,
 ) {
 	useEffect(() => {
-		if (!animate || mode !== "animated" || !image || !container.current) return;
+		if (mode !== "animated" || !image || !container.current) return;
 		let disposed = false;
 		let instance: KawarpInstance | null = null;
 		let frame = 0;
@@ -335,7 +309,7 @@ function useKawarpBackground(
 			cancelAnimationFrame(frame);
 			instance?.dispose();
 		};
-	}, [container, image, mode, animate]);
+	}, [container, image, mode]);
 }
 
 export const SpicyLyrics = memo(
@@ -356,12 +330,6 @@ export const SpicyLyrics = memo(
 		const setCurrentTime = useSetAtom(currentTimeAtom);
 		const currentDuration = useAtomValue(currentDurationAtom);
 		const isPlaying = useAtomValue(audioPlayingAtom);
-		const previewQuality = useAtomValue(previewQualityAtom);
-		const previewFrameRateCap = useAtomValue(previewFrameRateCapAtom);
-		const performanceMode = useAtomValue(performanceModeAtom);
-		const effectiveQuality = performanceMode ? "low" : previewQuality;
-		const renderCountRef = useRef(0);
-		renderCountRef.current++;
 
 		const showArtwork = useAtomValue(previewShowAlbumArtworkAtom);
 
@@ -446,469 +414,633 @@ export const SpicyLyrics = memo(
 		}, [lyrics.metadata]);
 		const appBackgroundMode = useAtomValue(backgroundModeAtom);
 		const songCoverArt = embeddedCoverArt || coverArtImage || null;
-		const rawBackgroundImage =
-			songCoverArt ||
-			(appBackgroundMode === "image" ? customBackgroundImage : null);
-		const blurredArtwork = useBlurredArtwork(songCoverArt, showArtwork);
-		const displayBackgroundImage = showArtwork && songCoverArt
-			? blurredArtwork
-			: appBackgroundMode === "image"
-				? customBackgroundImage
-				: null;
-		// The artwork background is deliberately static. Kawarp is retained only
-		// for a custom background, never for a cover image, so starting playback
-		// cannot swap a heavy WebGL layer in or out.
-		const animateBackground =
-			!isPlaying &&
-			effectiveQuality === "high" &&
-			!performanceMode &&
-			!songCoverArt &&
-			!showArtwork;
-		const coverPalette = useCoverPalette(rawBackgroundImage);
+		const backgroundImage =
+			songCoverArt || (appBackgroundMode === "image" ? customBackgroundImage : null);
+		const coverPalette = useCoverPalette(backgroundImage);
 		const viewportRef = useRef<HTMLDivElement>(null);
 		const backgroundRef = useRef<HTMLDivElement>(null);
 		const lineNodes = useRef(new Map<string, HTMLDivElement>());
 		const wordNodes = useRef(new Map<string, HTMLElement>());
-		const trackRef = useRef<HTMLDivElement>(null);
-		const lineStateRef = useRef(new Map<string, string>());
-		const lineOffsetsRef = useRef<Array<{ top: number; height: number }>>([]);
-		const scrollOffsetRef = useRef(0);
-		const scrollTargetRef = useRef(0);
+		const springs = useRef(new Map<string, SpringSet>());
+		const lineGlowSprings = useRef(new Map<string, Spring>());
+		const slmAnimations = useRef(new Map<string, SlmAnimation>());
 		const scrollPauseUntil = useRef(0);
+		const scrollFollowUntil = useRef(0);
 		const lastLine = useRef<string | null>(null);
+		const lastTime = useRef(performance.now());
 		const fpsLabelRef = useRef<HTMLDivElement>(null);
-		const slowFramesRef = useRef<SlowFrameReport[]>([]);
-		const longTasksRef = useRef<
-			Array<{ type: string; duration: number; start: number }>
-		>([]);
-		const [reportCopied, setReportCopied] = useState(false);
-		const firstFrameRef = useRef(true);
-		useKawarpBackground(
-			backgroundRef,
-			rawBackgroundImage,
-			backgroundMode,
-			animateBackground,
-		);
+		const fpsRef = useRef({ frames: 0, lastTime: performance.now() });
+		const showFpsRef = useRef(showFps);
+		useKawarpBackground(backgroundRef, backgroundImage, backgroundMode);
+
+		useEffect(() => {
+			showFpsRef.current = showFps;
+			fpsRef.current = { frames: 0, lastTime: performance.now() };
+			if (fpsLabelRef.current) fpsLabelRef.current.textContent = "FPS: 0";
+		}, [showFps]);
+
+		useEffect(() => {
+			if (simple) return;
+			for (const [key, animation] of slmAnimations.current) {
+				animation.animation?.cancel();
+				wordNodes.current
+					.get(key)
+					?.style.removeProperty("--spicy-slm-gradient-position");
+			}
+			slmAnimations.current.clear();
+		}, [simple]);
 
 		useEffect(() => {
 			const viewport = viewportRef.current;
-			const track = trackRef.current;
-			if (!viewport || !track) return;
+			if (!viewport) return;
+			const onUserScroll = () => {
+				scrollPauseUntil.current = performance.now() + 750;
+			};
+			viewport.addEventListener("wheel", onUserScroll, { passive: true });
+			viewport.addEventListener("touchmove", onUserScroll, { passive: true });
+			return () => {
+				viewport.removeEventListener("wheel", onUserScroll);
+				viewport.removeEventListener("touchmove", onUserScroll);
+			};
+		}, []);
 
-			const reducedMotion = window.matchMedia(
-				"(prefers-reduced-motion: reduce)",
-			).matches;
-			let disposed = false;
-			let lastRenderedTime = 0;
-			let previousRenderedTime = 0;
-			let lastFrameAt = performance.now();
-			let lastDebugAt = lastFrameAt;
-			let debugFrames = 0;
-			let debugFrameMs = 0;
-			let debugWorstMs = 0;
-			let debugRenderBase = renderCountRef.current;
-			let lastHeapUsed = 0;
-			let activeIndex = -1;
-			let forceState = true;
-			let lastCapAt = 0;
-			let viewportHeight = 0;
-			let maxScroll = 0;
-			const slowFrames = slowFramesRef.current;
-			const longTasks = longTasksRef.current;
-			slowFrames.length = 0;
-			longTasks.length = 0;
-			const performanceObservers: PerformanceObserver[] = [];
-			if (showFps && typeof PerformanceObserver !== "undefined") {
-				const onLongEntry = (list: PerformanceObserverEntryList) => {
-					for (const entry of list.getEntries()) {
-						if (entry.duration < 20) continue;
-						longTasks.push({
-							type: entry.entryType,
-							duration: Math.round(entry.duration * 10) / 10,
-							start: Math.round(entry.startTime),
-						});
-						if (longTasks.length > 60) longTasks.shift();
-					}
-				};
-				// Observe separately: an unsupported entry type must not disable
-				// the other one.
-				for (const entryType of ["longtask", "long-animation-frame"]) {
-					try {
-						const observer = new PerformanceObserver(onLongEntry);
-						observer.observe({ entryTypes: [entryType] });
-						performanceObservers.push(observer);
-					} catch {
-						// WebView2 may expose PerformanceObserver without every type.
+		useEffect(() => {
+			let raf = 0;
+			let previousPosition = -Infinity;
+			// Keep correcting the active line while content-visibility settles the
+			// off-screen layout after a lyric change or a seek.
+			scrollFollowUntil.current = performance.now() + 1200;
+			const animate = (now: number) => {
+				if (showFpsRef.current) {
+					fpsRef.current.frames++;
+					if (now - fpsRef.current.lastTime >= 1000) {
+						const nextFps = Math.round(
+							(fpsRef.current.frames * 1000) /
+								(now - fpsRef.current.lastTime),
+						);
+						if (fpsLabelRef.current)
+							fpsLabelRef.current.textContent = `FPS: ${nextFps}`;
+						fpsRef.current.frames = 0;
+						fpsRef.current.lastTime = now;
 					}
 				}
-			}
-			const capMs =
-				typeof previewFrameRateCap === "number"
-					? 1000 / previewFrameRateCap
-					: 0;
-
-			lineStateRef.current.clear();
-			lineOffsetsRef.current = [];
-			lastLine.current = null;
-			firstFrameRef.current = true;
-			scrollOffsetRef.current = 0;
-			scrollTargetRef.current = 0;
-			track.style.transform = "translate3d(0, 0, 0)";
-
-			const clampScroll = (value: number) =>
-				Math.max(0, Math.min(maxScroll, value));
-
-			const applyScroll = () => {
-				const dpr = window.devicePixelRatio || 1;
-				const rounded = Math.round(scrollOffsetRef.current * dpr) / dpr;
-				track.style.transform = `translate3d(0, ${-rounded}px, 0)`;
-			};
-
-			const measure = () => {
-				if (disposed) return;
-				viewportHeight = viewport.clientHeight;
-				maxScroll = Math.max(0, track.scrollHeight - viewportHeight);
-				lineOffsetsRef.current = lines.map((line) => {
-					const node = lineNodes.current.get(line.id);
-					return node
-						? { top: node.offsetTop, height: node.offsetHeight }
-						: { top: 0, height: 0 };
-				});
-				scrollOffsetRef.current = clampScroll(scrollOffsetRef.current);
-				scrollTargetRef.current = clampScroll(scrollTargetRef.current);
-				applyScroll();
-			};
-
-			const setActiveScroll = (index: number) => {
-				const info = lineOffsetsRef.current[index];
-				if (!info) return;
-				scrollTargetRef.current = clampScroll(
-					info.top + info.height / 2 - viewportHeight / 2 + 30,
+				const dt = (now - lastTime.current) / 1000;
+				lastTime.current = now;
+				const time = Math.max(
+					0,
+					audioEngine.interpolatedCurrentTime * 1000 +
+						(audioEngine.musicPlaying ? 100 : 0) -
+						(simple ? 33.5 : 0),
 				);
-				if (firstFrameRef.current) {
-					scrollOffsetRef.current = scrollTargetRef.current;
-					firstFrameRef.current = false;
-					applyScroll();
+				const activeIndices = lines.flatMap((line, index) =>
+					stateAt(time, line.startTime, line.endTime) === "active"
+						? [index]
+						: [],
+				);
+				let activeIndex = activeIndices[0] ?? -1;
+				if (activeIndices.length > 1) {
+					const firstActive = activeIndices[0] ?? -1;
+					const lastActive =
+						activeIndices[activeIndices.length - 1] ?? firstActive;
+					activeIndex =
+						lastActive - firstActive <= 1 ? firstActive : lastActive;
 				}
-			};
-
-			const findActiveIndex = (time: number) => {
-				if (!lines.length) return -1;
-				if (activeIndex < 0) activeIndex = 0;
-				if (activeIndex >= lines.length) activeIndex = lines.length - 1;
-				while (activeIndex > 0 && lines[activeIndex].startTime > time)
-					activeIndex--;
-				while (
-					activeIndex + 1 < lines.length &&
-					lines[activeIndex + 1].startTime <= time
-				)
-					activeIndex++;
-				const from = Math.max(0, activeIndex - 8);
-				const to = Math.min(lines.length - 1, activeIndex + 8);
-				let found = -1;
-				for (let i = from; i <= to; i++) {
-					if (stateAt(time, lines[i].startTime, lines[i].endTime) === "active")
-						found = i;
-				}
-				return found;
-			};
-
-			const updateLineStates = (
-				time: number,
-				force: boolean,
-				focusIndex: number,
-			) => {
-				// A normal frame only needs the lines around the playhead. A seek
-				// (or the first frame after a mode/settings change) still refreshes
-				// every line so old highlights cannot survive behind the viewport.
-				const from = force ? 0 : Math.max(0, focusIndex - 2);
-				const to = force
-					? lines.length - 1
-					: Math.min(lines.length - 1, focusIndex + 2);
-				for (let i = from; i <= to; i++) {
+				const active = activeIndex >= 0 ? lines[activeIndex] : undefined;
+				if (active && lastLine.current !== active.id)
+					scrollFollowUntil.current = now + 900;
+				for (let i = 0; i < lines.length; i++) {
 					const line = lines[i];
 					const status = stateAt(time, line.startTime, line.endTime);
-					const previous = lineStateRef.current.get(line.id);
-					if (!force && previous === status) continue;
-					lineStateRef.current.set(line.id, status);
 					const node = lineNodes.current.get(line.id);
-					if (!node) continue;
-					node.dataset.state = status;
-					if (line.isDotLine) {
+					if (node) {
+						node.dataset.state = status;
 						node.dataset.prehidden = String(
-							status === "not-sung" || time > line.endTime - 500,
+							!!line.isDotLine &&
+								(status === "not-sung" || time > line.endTime - 500),
 						);
-					}
-					if (line.isLineSynced) {
-						node.style.setProperty(
-							"--line-gradient-position",
-							status === "sung"
-								? "100%"
-								: status === "active"
-									? `${progressAt(time, line.startTime, line.endTime) * 100}%`
-									: "-20%",
-						);
-					}
-				}
-			};
-
-			const updateActiveWords = (
-				line: SpicyLine,
-				time: number,
-				force: boolean,
-			) => {
-				const perLetter = effectiveQuality === "high" && !simple;
-				let focusWord = -1;
-				for (let wi = 0; wi < line.words.length; wi++) {
-					const word = line.words[wi];
-					if (word.endTime > time) {
-						focusWord = wi;
-						break;
-					}
-				}
-				if (focusWord < 0) focusWord = line.words.length - 1;
-				if (focusWord < 0) return;
-				// Keep the previous word in sync so it lands on 100% when focus
-				// moves, but never touch the next word: it is still not-sung and is
-				// covered by its static CSS state.
-				const from = force ? 0 : Math.max(0, focusWord - 1);
-				const to = force
-					? line.words.length - 1
-					: Math.min(line.words.length - 1, focusWord);
-				for (let wi = from; wi <= to; wi++) {
-					const word = line.words[wi];
-					if (!word.endTime || word.endTime <= word.startTime) continue;
-					const rootKey = keyFor(line, word, wi);
-					const root = wordNodes.current.get(rootKey);
-					const wordState = stateAt(time, word.startTime, word.endTime);
-					const wordProgress =
-						wordState === "active"
-							? progressAt(time, word.startTime, word.endTime)
-							: wordState === "sung"
-								? 1
-								: 0;
-					const rootPosition = simple
-						? -50 + 150 * wordProgress
-						: -20 + 120 * wordProgress;
-					if (root)
-						root.style.setProperty("--gradient-position", `${rootPosition}%`);
-
-					if (!word.letters) continue;
-					const duration =
-						(word.endTime - word.startTime) / word.letters.length;
-					for (let index = 0; index < word.letters.length; index++) {
-						const start = word.startTime + index * duration;
-						const end = start + duration;
-						const letter = wordNodes.current.get(`${rootKey}:${start}`);
-						if (!letter) continue;
-						let position = rootPosition;
-						if (perLetter) {
-							const letterState = stateAt(time, start, end);
-							const letterProgress =
-								letterState === "active"
-									? progressAt(time, start, end)
-									: letterState === "sung"
+						const blur =
+							status === "active"
+								? 0
+								: Math.min(Math.abs(i - activeIndex) * 1.25, 6.8);
+						node.style.setProperty("--blur", `${blur}px`);
+						if (line.isLineSynced && !line.isDotLine) {
+							const lineProgress =
+								status === "active"
+									? progressAt(time, line.startTime, line.endTime)
+									: status === "sung"
 										? 1
 										: 0;
-							position = simple
-								? -50 + 150 * letterProgress
-								: -20 + 120 * letterProgress;
+							if (simple) {
+								// The normal line renderer writes this variable inline. Pin it here
+								// as well, otherwise switching into SLM leaves a stale mid-sweep
+								// normal-mode value that the SLM stylesheet cannot override.
+								node.style.setProperty("--line-gradient-position", "100%");
+								node.style.setProperty("--line-shadow-alpha", "0");
+							} else {
+								let glow = lineGlowSprings.current.get(line.id);
+								if (!glow) {
+									glow = new Spring(0, 1, 0.5);
+									lineGlowSprings.current.set(line.id, glow);
+								}
+								glow.setGoal(lineGlowSpline.at(lineProgress));
+								const currentGlow = glow.step(dt);
+								node.style.setProperty(
+									"--line-shadow-blur",
+									`${4 + 8 * currentGlow}px`,
+								);
+								node.style.setProperty(
+									"--line-shadow-alpha",
+									String(currentGlow * 0.5),
+								);
+								node.style.setProperty(
+									"--line-gradient-position",
+									`${status === "active" ? lineProgress * 100 : status === "sung" ? 100 : -20}%`,
+								);
+							}
 						}
-						letter.style.setProperty("--gradient-position", `${position}%`);
 					}
 				}
-			};
+				for (const line of lines) {
+					// Only the line being sung needs per-frame word/letter animation.
+					// Every other line keeps its full token DOM and rests in the exact
+					// final pose supplied by its line state in CSS above.
+					if (line.isLineSynced && !line.isDotLine) continue;
+					if (stateAt(time, line.startTime, line.endTime) !== "active")
+						continue;
+					for (let wi = 0; wi < line.words.length; wi++) {
+							const word = line.words[wi];
+							const rootKey = keyFor(line, word, wi);
+							// Spicy's TimeSetter cascades the line state to every child when
+							// the line itself is not active. This matters for adjusted held-word
+							// timings near a line boundary.
+							const wordState =
+								stateAt(time, line.startTime, line.endTime) === "active"
+									? stateAt(time, word.startTime, word.endTime)
+									: stateAt(time, line.startTime, line.endTime);
+							const progress =
+								wordState === "active"
+									? progressAt(time, word.startTime, word.endTime)
+									: wordState === "sung"
+										? 1
+										: 0;
+							const slmStateFor = (nodeKey: string) => {
+								let result = slmAnimations.current.get(nodeKey);
+								if (!result) {
+									result = { phase: "idle" };
+									slmAnimations.current.set(nodeKey, result);
+								}
+								return result;
+							};
+							const pinSlmGradient = (
+								nodeKey: string,
+								node: HTMLElement | undefined,
+								position: "-50%" | "100%",
+							) => {
+								if (!node) return;
+								const animation = slmStateFor(nodeKey);
+								const phase = position === "100%" ? "sung" : "idle";
+								if (animation.phase === phase) return;
+								animation.animation?.cancel();
+								animation.animation = undefined;
+								animation.phase = phase;
+								node.style.setProperty(
+									"--spicy-slm-gradient-position",
+									position,
+								);
+							};
+							const runSlmAnimation = (
+								nodeKey: string,
+								node: HTMLElement | undefined,
+								phase: "pre" | "fill",
+								duration: number,
+							) => {
+								if (!node || !simple) return;
+								const animation = slmStateFor(nodeKey);
+								if (animation.phase === phase) return;
+								animation.animation?.cancel();
+								node.style.removeProperty("--spicy-slm-gradient-position");
+								animation.phase = phase;
+								animation.animation = node.animate(
+									phase === "fill"
+										? [
+												{ "--spicy-slm-gradient-position": "-27.5%" },
+												{ "--spicy-slm-gradient-position": "100%" },
+											]
+										: [
+												{ "--spicy-slm-gradient-position": "-50%" },
+												{ "--spicy-slm-gradient-position": "-27.5%" },
+											],
+									{
+										duration: Math.max(0, duration),
+										easing: "linear",
+										fill: "forwards",
+									},
+								);
+							};
+							const prefillToken = (
+								next: SpicyToken | undefined,
+								nextIndex: number,
+							) => {
+								if (
+									!next ||
+									stateAt(time, next.startTime, next.endTime) !== "not-sung"
+								)
+									return;
+								const nextKey = keyFor(line, next, nextIndex);
+								if (next.letters) {
+									for (let index = 0; index < next.letters.length; index++) {
+										const letterStart =
+											next.startTime +
+											index *
+												((next.endTime - next.startTime) / next.letters.length);
+										runSlmAnimation(
+											`${nextKey}:${letterStart}`,
+											wordNodes.current.get(`${nextKey}:${letterStart}`),
+											"pre",
+											125,
+										);
+									}
+								} else
+									runSlmAnimation(
+										nextKey,
+										wordNodes.current.get(nextKey),
+										"pre",
+										125,
+									);
+							};
+							const animateNode = (
+								nodeKey: string,
+								node: HTMLElement | undefined,
+								p: number,
+								isDot = false,
+								letter = false,
+							) => {
+								if (!node) return;
+								let set = springs.current.get(nodeKey);
+								if (!set) {
+									set = {
+										scale: new Spring(
+											isDot ? 0.75 : 0.95,
+											isDot ? 0.7 : 0.88,
+											isDot ? 0.6 : 0.64,
+										),
+										y: new Spring(isDot ? 0 : 0.01, isDot ? 1.25 : 1.45, 0.4),
+										glow: new Spring(0, isDot ? 1 : 1.18, isDot ? 0.5 : 0.56),
+										opacity: new Spring(isDot ? 0.35 : 1, 1, 0.5),
+									};
+									springs.current.set(nodeKey, set);
+								}
+								const scale = (
+									isDot
+										? dotScaleSpline
+										: letter
+											? letterScaleSpline
+											: scaleSpline
+								).at(p);
+								const y = (
+									isDot
+										? dotYSpline
+										: letter
+											? simple
+												? simpleLetterYSpline
+												: letterYSpline
+											: simple
+												? simpleYSpline
+												: ySpline
+								).at(p);
+								const glow = (isDot ? dotGlowSpline : glowSpline).at(p);
+								const simpleWord = simple && !isDot && !letter;
+								const simpleDot = simple && isDot;
+								if (!simpleWord && !simpleDot) {
+									set.scale.setGoal(scale);
+									set.glow.setGoal(glow);
+								}
+								if (!simpleDot) set.y.setGoal(y);
+								set.opacity.setGoal(
+									isDot
+										? simple
+											? simpleDotOpacitySpline.at(p)
+											: dotOpacitySpline.at(p)
+										: 1,
+								);
+								const currentScale =
+									simpleWord || simpleDot ? 1 : set.scale.step(dt);
+								const currentY = simpleDot ? 0 : set.y.step(dt);
+								const currentGlow =
+									simpleWord || simpleDot ? 0 : set.glow.step(dt);
+								// Spicy keeps translate and scale independent. Dots are 1.3× the
+								// line font, but their vertical bounce is still measured against the
+								// base lyric size, not their enlarged glyph size.
+								node.style.transform = isDot
+									? `translate3d(0, calc(var(--line-size) * ${currentY}), 0)`
+									: `translate3d(0, ${currentY}em, 0)`;
+								node.style.scale = String(currentScale);
+								if (!isDot) {
+									if (simple) {
+										const duration = word.endTime - word.startTime;
+										if (wordState === "active") {
+											runSlmAnimation(nodeKey, node, "fill", duration);
+											if (time >= word.startTime + duration * 0.6 - 22)
+												prefillToken(line.words[wi + 1], wi + 1);
+										} else
+											pinSlmGradient(
+												nodeKey,
+												node,
+												wordState === "sung" ? "100%" : "-50%",
+											);
+									} else
+										node.style.setProperty(
+											"--gradient-position",
+											`${wordState === "active" ? -20 + 120 * p : wordState === "sung" ? 100 : -20}%`,
+										);
+								}
+								node.style.setProperty(
+									"--shadow-blur",
+									`${4 + (letter ? 12 : isDot ? 6 : 2) * currentGlow}px`,
+								);
+								node.style.setProperty(
+									"--text-shadow-blur-radius",
+									`${4 + (letter ? 12 : isDot ? 6 : 2) * currentGlow}px`,
+								);
+								node.style.setProperty(
+									"--shadow-alpha",
+									String(
+										Math.min(
+											1,
+											currentGlow * (isDot ? 0.9 : letter ? 1 : 0.35),
+										),
+									),
+								);
+								node.style.setProperty(
+									"--text-shadow-opacity",
+									`${Math.min(100, Math.round(currentGlow * (isDot ? 90 : letter ? 100 : 35)))}%`,
+								);
+								if (isDot) node.style.opacity = String(set.opacity.step(dt));
+							};
+							const animateHeldGroup = (
+								nodeKey: string,
+								node: HTMLElement | undefined,
+								p: number,
+							) => {
+								if (!node) return;
+								let set = springs.current.get(nodeKey);
+								if (!set) {
+									set = {
+										scale: new Spring(0.95, 0.88, 0.64),
+										y: new Spring(0.01, 1.45, 0.4),
+										glow: new Spring(0, 1.18, 0.56),
+										opacity: new Spring(1, 1, 0.5),
+									};
+									springs.current.set(nodeKey, set);
+								}
+								// SLM deliberately disables the normal word bounce and glow. Held
+								// letters retain their own smaller proximity effects below.
+								if (!simple) {
+									set.scale.setGoal(scaleSpline.at(p));
+									set.glow.setGoal(glowSpline.at(p));
+								}
+								set.y.setGoal((simple ? simpleYSpline : ySpline).at(p));
+								const currentScale = simple ? 1 : set.scale.step(dt);
+								const currentY = set.y.step(dt);
+								node.style.transform = `translateY(${currentY}em)`;
+								node.style.scale = String(currentScale);
+							};
+							const animateHeldLetters = (
+								word: SpicyToken,
+								rootKey: string,
+								groupState: "not-sung" | "active" | "sung",
+							) => {
+								if (!word.letters) return;
+								const letterDuration =
+									(word.endTime - word.startTime) / word.letters.length;
+								const letterInfo = word.letters.map((_, index) => {
+									const start = word.startTime + index * letterDuration;
+									return { start, end: start + letterDuration };
+								});
+								const activeIndex =
+									groupState === "active"
+										? letterInfo.findIndex(
+												({ start, end }) =>
+													stateAt(time, start, end) === "active",
+											)
+										: -1;
+								const activeProgress =
+									activeIndex === -1
+										? 0
+										: progressAt(
+												time,
+												letterInfo[activeIndex].start,
+												letterInfo[activeIndex].end,
+											);
+								const letterScale = simple
+									? simpleLetterScaleSpline
+									: letterScaleSpline;
+								const letterY = simple ? simpleLetterYSpline : letterYSpline;
+								const wordDuration = word.endTime - word.startTime;
+								if (
+									simple &&
+									groupState === "active" &&
+									time >= word.startTime + wordDuration * 0.845 - 130
+								)
+									prefillToken(line.words[wi + 1], wi + 1);
+								for (let index = 0; index < letterInfo.length; index++) {
+									const { start, end } = letterInfo[index];
+									const nodeKey = `${rootKey}:${start}`;
+									const node = wordNodes.current.get(nodeKey);
+									if (!node) continue;
+									let set = springs.current.get(nodeKey);
+									if (!set) {
+										set = {
+											scale: new Spring(letterScale.at(0), 0.88, 0.64),
+											y: new Spring(letterY.at(0), 1.45, 0.4),
+											glow: new Spring(glowSpline.at(0), 1.18, 0.56),
+											opacity: new Spring(1, 1, 0.5),
+										};
+										springs.current.set(nodeKey, set);
+									}
 
-			const updateDebug = (
-				frame: PreviewFrame,
-				time: number,
-				frameMs: number,
-				jsMs: number,
-				line: string | null,
-				lineStatesMs: number,
-				wordsMs: number,
-				scrollMs: number,
-			) => {
-				if (!showFps) return;
-				lastFrameAt = frame.now;
-				debugFrames++;
-				debugFrameMs += frameMs;
-				if (frameMs > debugWorstMs) debugWorstMs = frameMs;
-				if (frameMs > 33) {
-					const memory = (
-						performance as Performance & {
-							memory?: { usedJSHeapSize: number };
+									// Spicy has distinct whole-group branches: before a held word, every
+									// letter rests; after it, every letter finishes at its sung value. The
+									// per-letter proximity wave only runs while its group is active.
+									const letterState =
+										groupState === "active"
+											? stateAt(time, start, end)
+											: groupState;
+									let targetScale = letterScale.at(
+										groupState === "sung" ? 1 : 0,
+									);
+									let targetY = letterY.at(groupState === "sung" ? 1 : 0);
+									let targetGlow = glowSpline.at(groupState === "sung" ? 1 : 0);
+									if (groupState === "active" && activeIndex !== -1) {
+										const progress = simple
+											? progressAt(time, word.startTime, word.endTime)
+											: activeProgress;
+										const strength =
+											word.endTime - word.startTime > 1500
+												? { glow: 0.4, y: 0.45, scale: 1.103 }
+												: { glow: 0.285, y: 0.1, scale: 1.09 };
+										const baseScale =
+											letterScale.at(progress) * (simple ? strength.scale : 1);
+										const baseY =
+											letterY.at(progress) * (simple ? strength.y : 1);
+										const baseGlow =
+											glowSpline.at(progress) * (simple ? strength.glow : 1);
+										const distance = Math.abs(index - activeIndex);
+										const falloff = 1 / (1 + distance ** 2.8);
+										const glowFalloff = 1 / (1 + distance * 0.9);
+										targetScale += (baseScale - targetScale) * falloff;
+										targetY += (baseY - targetY) * falloff;
+										targetGlow += (baseGlow - targetGlow) * glowFalloff;
+									}
+									if (
+										groupState === "active" &&
+										letterState === "not-sung" &&
+										!simple
+									) {
+										targetScale = letterScale.at(0);
+										targetY = letterY.at(0);
+										targetGlow = glowSpline.at(0);
+									} else if (
+										groupState === "active" &&
+										letterState === "sung" &&
+										activeIndex === -1
+									) {
+										targetGlow = glowSpline.at(0.2);
+									}
+									set.scale.setGoal(targetScale);
+									set.y.setGoal(targetY);
+									set.glow.setGoal(targetGlow);
+									const currentScale = set.scale.step(dt);
+									const currentY = set.y.step(dt);
+									const currentGlow = set.glow.step(dt);
+									const gradient =
+										groupState === "sung"
+											? 100
+											: groupState === "not-sung"
+												? simple
+													? -50
+													: -20
+												: letterState === "sung"
+													? 100
+													: letterState === "active" && index === activeIndex
+														? (simple ? -50 : -20) +
+															120 * easeSinOut(activeProgress)
+														: simple
+															? -50
+															: -20;
+									if (simple) {
+										if (letterState === "active")
+											runSlmAnimation(nodeKey, node, "fill", end - start);
+										else
+											pinSlmGradient(
+												nodeKey,
+												node,
+												letterState === "sung" ? "100%" : "-50%",
+											);
+									} else
+										node.style.setProperty(
+											"--gradient-position",
+											`${gradient}%`,
+										);
+									node.style.transform = `translateY(${currentY * 2}em)`;
+									node.style.scale = String(currentScale);
+									node.style.setProperty(
+										"--shadow-blur",
+										`${4 + 12 * currentGlow}px`,
+									);
+									node.style.setProperty(
+										"--text-shadow-blur-radius",
+										`${4 + 12 * currentGlow}px`,
+									);
+									node.style.setProperty(
+										"--shadow-alpha",
+										String(Math.min(1, currentGlow * 1.85)),
+									);
+									node.style.setProperty(
+										"--text-shadow-opacity",
+										`${Math.min(100, Math.round(currentGlow * 185))}%`,
+									);
+								}
+							}
+						if (line.isDotLine)
+								animateNode(
+									rootKey,
+									wordNodes.current.get(rootKey),
+									progress,
+									true,
+								);
+							else if (word.letters) {
+								animateHeldGroup(
+									rootKey,
+									wordNodes.current.get(rootKey),
+									progress,
+								);
+								animateHeldLetters(word, rootKey, wordState);
+															} else
+									animateNode(rootKey, wordNodes.current.get(rootKey), progress);
 						}
-					).memory;
-					const heapUsed = memory?.usedJSHeapSize ?? 0;
-					const heapDeltaMb =
-						memory && lastHeapUsed > 0
-							? Math.round(((heapUsed - lastHeapUsed) / 1048576) * 10) / 10
-							: null;
-					lastHeapUsed = heapUsed;
-					slowFrames.push({
-						frameMs: Math.round(frameMs * 10) / 10,
-						jsMs: Math.round(jsMs * 10) / 10,
-						time: Math.round(time),
-						line,
-						lineStatesMs: Math.round(lineStatesMs * 10) / 10,
-						wordsMs: Math.round(wordsMs * 10) / 10,
-						scrollMs: Math.round(scrollMs * 10) / 10,
-						heapDeltaMb,
-						longTasks: longTasks.slice(-4),
-					});
-					if (slowFrames.length > MAX_SLOW_FRAMES) slowFrames.shift();
-				}
-				const elapsed = frame.now - lastDebugAt;
-				if (elapsed < 500) return;
-				const fps = (debugFrames * 1000) / elapsed;
-				const avg = debugFrameMs / Math.max(1, debugFrames);
-				const renders =
-					((renderCountRef.current - debugRenderBase) * 1000) / elapsed;
-				const label = fpsLabelRef.current;
-				if (label) {
-					label.textContent = `FPS ${fps.toFixed(0)} · avg ${avg.toFixed(1)} ms · worst ${debugWorstMs.toFixed(1)} ms · slow ${slowFrames.length} · React ${renders.toFixed(1)}/s · t ${(time / 1000).toFixed(2)}s`;
-				}
-				debugFrames = 0;
-				debugFrameMs = 0;
-				debugWorstMs = 0;
-				debugRenderBase = renderCountRef.current;
-				lastDebugAt = frame.now;
-			};
-
-			const renderFrame = (frame: PreviewFrame, force = false) => {
-				if (disposed) return;
-				const frameStart = showFps ? performance.now() : 0;
-				let sectionAt = frameStart;
-				previousRenderedTime = lastRenderedTime;
-				lastRenderedTime =
-					frame.timeMs + (frame.playing ? 100 : 0) - (simple ? 33.5 : 0);
-				const seeked = Math.abs(lastRenderedTime - previousRenderedTime) > 250;
-				const nextActive = findActiveIndex(lastRenderedTime);
-				updateLineStates(
-					lastRenderedTime,
-					force || forceState || seeked,
-					activeIndex,
+					}
+				const allSung = lines.every(
+					(line) => stateAt(time, line.startTime, line.endTime) === "sung",
 				);
-				forceState = false;
-				const lineStatesMs = showFps ? performance.now() - sectionAt : 0;
-				if (showFps) sectionAt = performance.now();
-				let wordsMs = 0;
-
+				const shouldForce =
+					lastLine.current === null || Math.abs(time - previousPosition) > 1000;
+				const scrollTarget = allSung
+					? lines[lines.length - 1]
+					: active;
+				const scrollNode = scrollTarget
+					? lineNodes.current.get(scrollTarget.id)
+					: undefined;
+				const viewport = viewportRef.current;
+				const visible =
+					!!scrollNode &&
+					!!viewport &&
+					Math.min(
+						scrollNode.getBoundingClientRect().bottom,
+						viewport.getBoundingClientRect().bottom,
+					) -
+						Math.max(
+							scrollNode.getBoundingClientRect().top,
+							viewport.getBoundingClientRect().top,
+						) >=
+						5;
+				const followOffscreen =
+					!!scrollTarget &&
+					now < scrollFollowUntil.current &&
+					now > scrollPauseUntil.current &&
+					(!visible || lastLine.current !== scrollTarget.id);
 				if (
-					scrollPauseUntil.current > 0 &&
-					frame.now > scrollPauseUntil.current
+					scrollTarget &&
+					scrollNode &&
+					viewport &&
+					(shouldForce ||
+						followOffscreen ||
+						(now > scrollPauseUntil.current &&
+							visible &&
+							lastLine.current !== scrollTarget.id))
 				) {
-					scrollPauseUntil.current = 0;
-					lastLine.current = null;
-				}
-
-				if (nextActive >= 0) {
-					const line = lines[nextActive];
-					if (line.isLineSynced && !line.isDotLine) {
-						const node = lineNodes.current.get(line.id);
-						if (node)
-							node.style.setProperty(
-								"--line-gradient-position",
-								`${simple ? 100 : progressAt(lastRenderedTime, line.startTime, line.endTime) * 100}%`,
-							);
-					} else if (!line.isDotLine) {
-						updateActiveWords(line, lastRenderedTime, force || seeked);
-					}
-
-					if (lastLine.current !== line.id) {
-						lastLine.current = line.id;
-						setActiveScroll(nextActive);
-					}
-				} else if (activeIndex >= 0) {
-					// Between lines the previous line has ended; settle any word that
-					// was still mid-gradient instead of leaving it partly highlighted.
-					const line = lines[activeIndex];
-					if (line && !line.isDotLine && !line.isLineSynced)
-						updateActiveWords(line, lastRenderedTime, seeked);
-				}
-				wordsMs = showFps ? performance.now() - sectionAt : 0;
-				if (showFps) sectionAt = performance.now();
-
-				if (!frame.playing) {
-					scrollOffsetRef.current = scrollTargetRef.current;
-					applyScroll();
-				} else if (scrollPauseUntil.current === 0) {
-					const delta = scrollTargetRef.current - scrollOffsetRef.current;
-					if (Math.abs(delta) > 0.05) {
-						const factor = reducedMotion ? 1 : 1 - Math.exp(-14 * frame.dt);
-						scrollOffsetRef.current += delta * factor;
-						if (
-							Math.abs(scrollTargetRef.current - scrollOffsetRef.current) < 0.05
-						)
-							scrollOffsetRef.current = scrollTargetRef.current;
-						applyScroll();
-					}
-				}
-
-				const scrollMs = showFps ? performance.now() - sectionAt : 0;
-				if (showFps) {
-					const rawMs = Math.min(100, Math.max(0, frame.now - lastFrameAt));
-					updateDebug(
-						frame,
-						lastRenderedTime,
-						rawMs,
-						performance.now() - frameStart,
-						nextActive >= 0
-							? (lines[nextActive].text || lines[nextActive].id).slice(0, 120)
-							: null,
-						lineStatesMs,
-						wordsMs,
-						scrollMs,
+					const target = Math.max(
+						0,
+						Math.min(
+							viewport.scrollHeight - viewport.clientHeight,
+							scrollNode.offsetTop -
+								(viewport.clientHeight / 2 - scrollNode.offsetHeight / 2) +
+								30,
+						),
 					);
-				} else {
-					lastFrameAt = frame.now;
+					viewport.scrollTo({
+						top: target,
+						behavior: shouldForce ? "auto" : "smooth",
+					});
+					lastLine.current = scrollTarget.id;
 				}
+				previousPosition = time;
+				raf = requestAnimationFrame(animate);
 			};
+			raf = requestAnimationFrame(animate);
+			return () => cancelAnimationFrame(raf);
+		}, [lines, simple]);
 
-			const onWheel = (event: WheelEvent) => {
-				event.preventDefault();
-				scrollPauseUntil.current = performance.now() + 900;
-				scrollTargetRef.current = clampScroll(
-					scrollOffsetRef.current + event.deltaY,
-				);
-				scrollOffsetRef.current = scrollTargetRef.current;
-				applyScroll();
-			};
-			const onResize = () => {
-				measure();
-				lastLine.current = null;
-				forceState = true;
-				requestPreviewFrame();
-			};
-
-			viewport.addEventListener("wheel", onWheel, { passive: false });
-			window.addEventListener("resize", onResize);
-			const observer = new ResizeObserver(onResize);
-			observer.observe(viewport);
-			// Do not observe the track. State changes (especially dot lines) can
-			// resize it during playback; measuring then forces a synchronous layout
-			// on every line change. Line data and viewport changes are enough.
-
-			measure();
-			const unsubscribe = subscribePreviewClock((frame) => {
-				if (disposed) return;
-				if (capMs > 0 && frame.playing && frame.now - lastCapAt < capMs - 1)
-					return;
-				lastCapAt = frame.now;
-				renderFrame(frame);
-			});
-
-			return () => {
-				disposed = true;
-				unsubscribe();
-				viewport.removeEventListener("wheel", onWheel);
-				window.removeEventListener("resize", onResize);
-				observer.disconnect();
-				for (const performanceObserver of performanceObservers)
-					performanceObserver.disconnect();
-			};
-		}, [lines, simple, previewFrameRateCap, effectiveQuality, showFps]);
 		const renderToken = (
 			line: SpicyLine,
 			word: SpicyToken,
@@ -940,7 +1072,7 @@ export const SpicyLyrics = memo(
 						!isWordTimed
 							? (e) => {
 									e.stopPropagation();
-								}
+							  }
 							: undefined
 					}
 				>
@@ -976,132 +1108,128 @@ export const SpicyLyrics = memo(
 					hasDuetLines && styles.hasDuetLines,
 				)}
 			>
-				<div ref={trackRef} className={styles.track}>
-					{lines.map((line) => {
-						const isLineTimed =
-							line.isDotLine ||
-							line.startTime > 0 ||
-							line.endTime > 0 ||
-							Boolean(
-								line.words &&
-									line.words.some(
-										(w) =>
-											w.endTime > w.startTime &&
-											(w.startTime > 0 || w.endTime > 0),
-									),
-							);
-						return (
-							<div
-								key={line.id}
-								ref={(node) => {
-									if (node) lineNodes.current.set(line.id, node);
-									else lineNodes.current.delete(line.id);
-								}}
-								className={classNames(
-									styles.line,
-									line.isDotLine && styles.dotLine,
-									line.isLineSynced && styles.lineSynced,
-									line.isRtl && styles.rtl,
-									line.isBackground && styles.backgroundLine,
-									line.isDuet && styles.duet,
-									!isLineTimed && styles.lineUnsynced,
-								)}
-								dir={line.isRtl ? "rtl" : undefined}
-								onClick={() => {
-									if (!isLineTimed) return;
-									seek(line.startTime);
-								}}
-							>
-								{line.isDotLine ? (
-									<div className={styles.dotGroup}>
-										{line.words.map((word, wi) => {
-											const key = keyFor(line, word, wi);
-											return (
-												<span
-													key={key}
-													ref={(node) => {
-														if (node) wordNodes.current.set(key, node);
-														else wordNodes.current.delete(key);
-													}}
-													className={styles.dot}
-												>
-													{word.text}
-												</span>
-											);
-										})}
-									</div>
-								) : line.isLineSynced ? (
-									line.text
-								) : (
-									groupSpicyTokens(line.words).map((group) => {
-										const first = group.items[0];
-										if (group.items.length === 1)
-											return renderToken(
-												line,
-												first.token,
-												first.wordIndex,
-												group.hasTrailingSpace,
-											);
+				{lines.map((line) => {
+					const isLineTimed =
+						line.isDotLine ||
+						line.startTime > 0 ||
+						line.endTime > 0 ||
+						Boolean(
+							line.words &&
+								line.words.some(
+									(w) =>
+										w.endTime > w.startTime &&
+										(w.startTime > 0 || w.endTime > 0),
+								),
+						);
+					return (
+						<div
+							key={line.id}
+							ref={(node) => {
+								if (node) lineNodes.current.set(line.id, node);
+								else lineNodes.current.delete(line.id);
+							}}
+							className={classNames(
+								styles.line,
+								line.isDotLine && styles.dotLine,
+								line.isLineSynced && styles.lineSynced,
+								line.isRtl && styles.rtl,
+								line.isBackground && styles.backgroundLine,
+								line.isDuet && styles.duet,
+								!isLineTimed && styles.lineUnsynced,
+							)}
+							dir={line.isRtl ? "rtl" : undefined}
+							onClick={() => {
+								if (!isLineTimed) return;
+								seek(line.startTime);
+							}}
+						>
+							{line.isDotLine ? (
+								<div className={styles.dotGroup}>
+									{line.words.map((word, wi) => {
+										const key = keyFor(line, word, wi);
 										return (
 											<span
-												key={`group:${keyFor(line, first.token, first.wordIndex)}`}
-												className={classNames(
-													styles.wordGroup,
-													group.hasTrailingSpace && styles.wordBoundary,
-												)}
+												key={key}
+												ref={(node) => {
+													if (node) wordNodes.current.set(key, node);
+													else wordNodes.current.delete(key);
+												}}
+												className={styles.dot}
 											>
-												{group.items.map(({ token, wordIndex }) =>
-													renderToken(line, token, wordIndex, false),
-												)}
+												{word.text}
 											</span>
 										);
-									})
-								)}
-								{showTranslation && !line.isDotLine && line.translation ? (
-									<span className={styles.translation}>{line.translation}</span>
-								) : null}
-							</div>
-						);
-					})}
-					{songCredits && (
-						<div className={styles.songCredits}>
-							{songCredits.writers && (
-								<div className={styles.credits}>
-									<span className={styles.creditsLabel}>Written by</span>{" "}
-									<span className={styles.creditsValue}>
-										{songCredits.writers}
-									</span>
+									})}
 								</div>
-							)}
-							{songCredits.provider && (
-								<div className={styles.lyricsProvider}>
-									<span className={styles.creditsLabel}>Provided by</span>{" "}
-									<span className={styles.creditsValue}>
-										{songCredits.provider}
-									</span>
-								</div>
-							)}
-							{songCredits.community && (
-								<div className={styles.songInfo}>
-									<div className={styles.maker}>
-										<span className={styles.creditsLabel}>Synced by</span>{" "}
-										<span className={styles.creditsValue}>
-											{songCredits.community}
+							) : line.isLineSynced ? (
+								line.text
+							) : (
+								groupSpicyTokens(line.words).map((group) => {
+									const first = group.items[0];
+									if (group.items.length === 1)
+										return renderToken(
+											line,
+											first.token,
+											first.wordIndex,
+											group.hasTrailingSpace,
+										);
+									return (
+										<span
+											key={`group:${keyFor(line, first.token, first.wordIndex)}`}
+											className={classNames(
+												styles.wordGroup,
+												group.hasTrailingSpace && styles.wordBoundary,
+											)}
+										>
+											{group.items.map(({ token, wordIndex }) =>
+												renderToken(line, token, wordIndex, false),
+											)}
 										</span>
-									</div>
-								</div>
+									);
+								})
 							)}
+							{showTranslation && !line.isDotLine && line.translation ? (
+								<span className={styles.translation}>{line.translation}</span>
+							) : null}
 						</div>
-					)}
-				</div>
+					);
+				})}
+				{songCredits && (
+					<div className={styles.songCredits}>
+						{songCredits.writers && (
+							<div className={styles.credits}>
+								<span className={styles.creditsLabel}>Written by</span>{" "}
+								<span className={styles.creditsValue}>
+									{songCredits.writers}
+								</span>
+							</div>
+						)}
+						{songCredits.provider && (
+							<div className={styles.lyricsProvider}>
+								<span className={styles.creditsLabel}>Provided by</span>{" "}
+								<span className={styles.creditsValue}>
+									{songCredits.provider}
+								</span>
+							</div>
+						)}
+						{songCredits.community && (
+							<div className={styles.songInfo}>
+								<div className={styles.maker}>
+									<span className={styles.creditsLabel}>Synced by</span>{" "}
+									<span className={styles.creditsValue}>
+										{songCredits.community}
+									</span>
+								</div>
+							</div>
+						)}
+					</div>
+				)}
 			</div>
 		);
 
 		return (
 			<div
 				className={classNames(styles.root, simple && styles.simple)}
-				data-quality={effectiveQuality}
-				data-playing={isPlaying ? "true" : "false"}
 				style={
 					{
 						"--spicy-accent":
@@ -1115,53 +1243,25 @@ export const SpicyLyrics = memo(
 					ref={backgroundRef}
 					className={classNames(
 						styles.background,
-						backgroundMode === "animated" &&
-							animateBackground &&
-							styles.animatedBackground,
-						backgroundMode === "animated" &&
-							!animateBackground &&
-							styles.pausedBackground,
+						backgroundMode === "animated" && styles.animatedBackground,
 					)}
-					style={
-						backgroundMode === "animated" && !animateBackground
-							? {
-									backgroundImage: displayBackgroundImage
-										? `url("${displayBackgroundImage}")`
-										: undefined,
-								}
-							: undefined
-					}
 				/>
 				{backgroundMode === "color" ? (
 					<div className={styles.colorBackground} />
 				) : null}
-				{backgroundMode === "static" && displayBackgroundImage ? (
+				{backgroundMode === "static" && backgroundImage ? (
 					<div
 						className={styles.staticBackground}
-						style={{ backgroundImage: `url("${displayBackgroundImage}")` }}
+						style={{ backgroundImage: `url("${backgroundImage}")` }}
 					/>
 				) : null}
-				{backgroundMode === "static" && !displayBackgroundImage ? (
+				{backgroundMode === "static" && !backgroundImage ? (
 					<div className={styles.staticFallback} />
 				) : null}
 				<div className={styles.overlay} />
 				{showFps ? (
-					<div className={styles.fpsPanel}>
-						<div ref={fpsLabelRef} className={styles.fpsCounter}>
-							FPS: 0
-						</div>
-						<button
-							type="button"
-							className={styles.fpsCopy}
-							onClick={() => {
-								const frames = slowFramesRef.current;
-								const report = frames.map((frame) => JSON.stringify(frame)).join("\n");
-								const text = `TTML Tool slow frames (${frames.length})\nLong tasks: ${longTasksRef.current.map((task) => `${task.type} ${task.duration}ms`).join(", ") || "none"}\n${report || "no frames over 33ms"}`;
-								void copyText(text).then(setReportCopied);
-							}}
-						>
-							{reportCopied ? "Copied" : "Copy frame report"}
-						</button>
+					<div ref={fpsLabelRef} className={styles.fpsCounter}>
+						FPS: 0
 					</div>
 				) : null}
 

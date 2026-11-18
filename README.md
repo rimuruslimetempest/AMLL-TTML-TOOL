@@ -65,10 +65,9 @@ editing aids; they never decide when a word should be sung.
   duet layout, translations, and romanization.
 - Preview options for Simple lyrics, Show Translation, Show Romanization,
   BG Follows Duet, Album Artwork, Fullscreen, Mask Obscene Words, and Show FPS.
-- Preview quality and frame-rate cap settings for slower machines, plus a
-  Performance mode that reduces interface effects.
-- A smoothed playback clock and a single animation loop keep the current line
-  moving without restarting the whole lyric view.
+- A stable lyric renderer with word and line highlighting, transform-based
+  scrolling, duet layout, and background vocals.
+- Performance mode reduces interface effects on slower machines.
 
 ### Import and export
 
@@ -92,7 +91,7 @@ editing aids; they never decide when a word should be sung.
 
 - Light and dark appearance, UI density and scale, custom accents, fonts, and
   background images.
-- Performance mode, preview quality, and a frame-rate cap.
+- Performance mode and appearance controls.
 - Discord Rich Presence with customizable text.
 - A portable settings and project backup.
 - An optional yt-dlp/FFmpeg media downloader on desktop.
@@ -113,11 +112,10 @@ TTML Tool keeps the familiar TTML editing workflow and adds:
   roles, room chat, comments, review marks, history, and restore points.
 - **Saved personal splits.** A reusable split library with previews and notes,
   plus optional sharing inside a room.
-- **A redesigned interface with Performance mode.** Density and scale controls,
-  preview quality and frame-rate settings, and a lower-effects mode for slower
-  computers.
-- **A smoother Preview.** One shared playback clock, one animation loop,
-  transform-based scrolling, and less per-frame work on the lyric text.
+- **A redesigned interface with Performance mode.** Density and scale controls
+  plus a lower-effects mode for slower computers.
+- **A stable Preview.** Word and line highlighting, transform-based scrolling,
+  duet and background-vocal layout, and the Preview options listed above.
 - **Extra import and export formats.** LRC, enhanced LRC, SRT, ASS/SSA, WebVTT,
   plain text, and TTML, with a review step before imported timing is trusted.
 - **First-run setup and an auto-updater.** A short onboarding wizard and update
