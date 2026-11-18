@@ -2,7 +2,7 @@
 	"app": {
 		"error": {
 			"title": "Aduh, terjadi kesalahan!",
-			"description": "AMLL TTML Tools mengalami kesalahan saat dijalankan",
+			"description": "TTML Tools mengalami kesalahan saat dijalankan",
 			"checkDevTools": "Detail kesalahan dapat diperiksa di alat pengembang (DevTools)",
 			"saveLyrics": "Coba simpan lirik saat ini",
 			"tryRestart": "Coba masuk kembali ke aplikasi",
@@ -575,7 +575,7 @@
 			"preview": "Pratinjau"
 		},
 		"boykisser": "boykisser",
-		"appName": "Apple Music-like Lyrics TTML Tool",
+		"appName": "TTML Tool",
 		"menu": {
 			"undo": "Urungkan",
 			"redo": "Ulangi",
@@ -1313,12 +1313,12 @@
 	"aboutModal": {
 		"appName": "Apple Music-like lyrics TTML Tools",
 		"description": "Alat pengeditan dan penyelarasan waktu lirik TTML untuk ekosistem lirik bergaya Apple Music",
-		"maintainers": "Fork Maintainers",
-		"maintainersDesc": "This fork is maintained and developed by:",
+		"maintainers": "Maintainer",
+		"maintainersDesc": "TTML Tool is designed, developed, and maintained by:",
 		"forkMaintainer": "Fork maintainer & contributor",
 		"visitWebsite": "Visit website",
 		"credits": "Credits & Third-Party Notices",
-		"creditsIntro": "This project includes work adapted from the following open-source projects.",
+		"creditsIntro": "TTML Tool began from the AMLL TTML Tool codebase; its copyright and license notices are retained in LICENSE.",
 		"community": "Community & Contributions",
 		"communityDesc": "Help us make the tool better by contributing code, reporting issues, or providing translations.",
 		"github": "GitHub Repository",

@@ -354,10 +354,10 @@ export function DiscordPresenceSettings() {
 	// Preview details and state texts based on privacy preset and idle state
 	const detailsPreviewText = useMemo(() => {
 		if (privacyPreset === "none") return undefined;
-		if (isIdle) return "AMLL TTML Tool";
-		if (privacyPreset === "minimal") return "AMLL TTML Tool";
+		if (isIdle) return "TTML Tool";
+		if (privacyPreset === "minimal") return "TTML Tool";
 		return (
-			detailsPreview || (fileName ? `Editing ${fileName}` : "AMLL TTML Tool")
+			detailsPreview || (fileName ? `Editing ${fileName}` : "TTML Tool")
 		);
 	}, [isIdle, privacyPreset, detailsPreview, fileName]);
 
@@ -380,11 +380,11 @@ export function DiscordPresenceSettings() {
 					rendered ||
 					user?.displayName ||
 					user?.email?.split("@")[0] ||
-					"AMLL TTML Tool"
+					"TTML Tool"
 				);
 			} catch {
 				return (
-					user?.displayName || user?.email?.split("@")[0] || "AMLL TTML Tool"
+					user?.displayName || user?.email?.split("@")[0] || "TTML Tool"
 				);
 			}
 		}
@@ -457,8 +457,8 @@ export function DiscordPresenceSettings() {
 						}}
 					>
 						{activityType === "listening"
-							? "Listening to AMLL TTML Tool"
-							: "Playing AMLL TTML Tool"}
+							? "Listening to TTML Tool"
+							: "Playing TTML Tool"}
 					</Text>
 					<Flex gap="3" align="center">
 						<Box
@@ -862,7 +862,7 @@ export function DiscordPresenceSettings() {
 					title={t("settings.discord.enable", "Enable Discord RPC")}
 					description={t(
 						"settings.discord.enableDesc",
-						"Publish the current AMLL Tool activity to Discord.",
+						"Publish the current TTML Tool activity to Discord.",
 					)}
 					control={<Switch checked={enabled} onCheckedChange={setEnabled} />}
 				/>
@@ -1158,7 +1158,7 @@ export function DiscordPresenceSettings() {
 							<Button
 								size="1"
 								variant="surface"
-								onClick={() => setIdleBottomText("AMLL TTML Tool")}
+								onClick={() => setIdleBottomText("TTML Tool")}
 								style={{ fontSize: "11px", padding: "4px 8px" }}
 							>
 								📁 Tool Name

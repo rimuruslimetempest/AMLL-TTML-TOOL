@@ -63,7 +63,7 @@ function readCargoPackageVersion(source, file) {
 }
 
 function readCargoLockVersion(source, file) {
-	const escapedName = "amll-ttml-tool".replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const escapedName = "ttml-tool".replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	const packageEntry = source.match(
 		new RegExp(
 			`^\\[\\[package\\]\\]\\s*\\r?\\nname = "${escapedName}"\\s*\\r?\\nversion = "([^"]+)"`,
@@ -146,7 +146,7 @@ export function updateVersionSources(sources, currentVersion, nextVersion) {
 		"src-tauri/Cargo.lock": replaceOnce(
 			sources["src-tauri/Cargo.lock"],
 			new RegExp(
-				`(^\\[\\[package\\]\\]\\s*\\r?\\nname = "amll-ttml-tool"\\s*\\r?\\nversion = ")${escapedCurrent}(")`,
+				`(^\\[\\[package\\]\\]\\s*\\r?\\nname = "ttml-tool"\\s*\\r?\\nversion = ")${escapedCurrent}(")`,
 				"m",
 			),
 			`$1${nextVersion}$2`,

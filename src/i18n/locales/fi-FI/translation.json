@@ -2,7 +2,7 @@
 	"app": {
 		"error": {
 			"title": "Hups, tapahtui virhe!",
-			"description": "Suorituksen aikana tapahtui virhe: AMLL TTML Tools.",
+			"description": "Suorituksen aikana tapahtui virhe: TTML Tools.",
 			"checkDevTools": "Lisätietoja löytyy Kehittäjän työkaluista",
 			"saveLyrics": "Koita tallentaa nykyiset sanoitukset",
 			"tryRestart": "Koita uudelleenkäynnistystä",
@@ -575,7 +575,7 @@
 			"preview": "Preview"
 		},
 		"boykisser": "boykisser",
-		"appName": "Apple Music-like Lyrics TTML Tool",
+		"appName": "TTML Tool",
 		"menu": {
 			"undo": "Undo",
 			"redo": "Redo",
@@ -1311,14 +1311,14 @@
 		"noSuggestions": "No automated split suggestions available for this content."
 	},
 	"aboutModal": {
-		"appName": "Apple Music-like Lyrics TTML Tool",
+		"appName": "TTML Tool",
 		"description": "A Word-by-Word TTML Editing and Timeline Tool for Apple Music-like Lyrics",
-		"maintainers": "Fork Maintainers",
-		"maintainersDesc": "This fork is maintained and developed by:",
+		"maintainers": "Maintainer",
+		"maintainersDesc": "TTML Tool is designed, developed, and maintained by:",
 		"forkMaintainer": "Fork maintainer & contributor",
 		"visitWebsite": "Visit website",
 		"credits": "Credits & Third-Party Notices",
-		"creditsIntro": "This project includes work adapted from the following open-source projects.",
+		"creditsIntro": "TTML Tool began from the AMLL TTML Tool codebase; its copyright and license notices are retained in LICENSE.",
 		"community": "Community & Contributions",
 		"communityDesc": "Help us make the tool better by contributing code, reporting issues, or providing translations.",
 		"github": "GitHub Repository",

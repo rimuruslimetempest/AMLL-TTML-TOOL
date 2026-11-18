@@ -134,12 +134,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
 				<div className="hero-badge">
 					<span className="hero-badge-dot"></span>
-					<span>TTML Editor v5.1.0 Released</span>
+					<span>TTML Tool v1.0.0 Released</span>
 				</div>
 
 				<div className="hero-buttons">
 					<a
-						href="https://ttmleditor.com"
+						href="https://github.com/rimuruslimetempest/ttml-tool"
 						target="_blank"
 						rel="noopener noreferrer"
 						className="btn btn-primary"
@@ -151,7 +151,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 					</a>
 
 					<a
-						href="https://github.com/bobjoerules/AMLL-TTML-TOOL/releases/latest"
+						href="https://github.com/rimuruslimetempest/ttml-tool/releases/latest"
 						target="_blank"
 						rel="noopener noreferrer"
 						className="btn btn-secondary"
@@ -251,7 +251,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 							</p>
 						</div>
 						<a
-							href="https://github.com/bobjoerules/AMLL-TTML-TOOL"
+							href="https://github.com/rimuruslimetempest/ttml-tool"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="btn btn-secondary btn-sm"
@@ -917,7 +917,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 						>
 							Liquid Player is a gorgeous, feature-rich music player and synced
 							lyrics companion built with SwiftUI to render syllable-timed TTML
-							lyrics created with TTML Editor in full glory.
+							lyrics created with TTML Tool in full glory.
 						</p>
 					</div>
 					<div style={{ display: "flex", gap: 14 }}>

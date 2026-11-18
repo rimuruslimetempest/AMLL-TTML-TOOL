@@ -144,8 +144,8 @@ function countMatchingChars(s1: string, s2: string): number {
 export function stripParentheses(title: string): string {
 	if (!title || typeof title !== "string") return "";
 	const stripped = title
-		.replace(/\s*[\(\uff08][^\)\uff09]*[\)\uff09]?/g, "")
-		.replace(/\s*[\[\uff3b][^\]\uff3d]*[\]\uff3d]?/g, "")
+		.replace(/\s*[(\uff08][^)\uff09]*[)\uff09]?/g, "")
+		.replace(/\s*[[\uff3b][^\]\uff3d]*[\]\uff3d]?/g, "")
 		.trim();
 	return stripped.length > 0 ? stripped : title.trim();
 }
@@ -244,7 +244,8 @@ export function formatDuration(ms: number | undefined | null): string {
 	return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-export const SPOTMATCH_WEB_PROXY = "https://proxy.bobjoerules.com/?url=";
+export const SPOTMATCH_WEB_PROXY =
+	import.meta.env.VITE_SPOTMATCH_PROXY?.trim() ?? "";
 
 /**
  * Native cross-platform HTTP fetcher using Tauri's fetch_url when available,
@@ -267,12 +268,12 @@ async function fetchSafeText(
 		}
 	}
 
-	// Browser / Web mode: route through proxies to bypass CORS
+	// Browser / Web mode: route through proxies to bypass CORS. Set
+	// VITE_SPOTMATCH_PROXY to your own proxy prefix if needed.
 	const encoded = encodeURIComponent(url);
-	const proxies = [
-		`${SPOTMATCH_WEB_PROXY}${encoded}`,
-		`https://corsproxy.io/?url=${encoded}`,
-	];
+	const proxies = [SPOTMATCH_WEB_PROXY, "https://corsproxy.io/?url="]
+		.filter(Boolean)
+		.map((base) => `${base}${encoded}`);
 
 	for (const proxyUrl of proxies) {
 		try {

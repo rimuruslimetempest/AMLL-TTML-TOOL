@@ -77,6 +77,8 @@
 	height: 100%;
 	border-radius: 9999px;
 	background: #ffffff;
+	transform-origin: left center;
+	will-change: transform;
 }
 
 .variantSpicy .scrubberTrack {

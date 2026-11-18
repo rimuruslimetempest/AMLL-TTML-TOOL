@@ -15,6 +15,7 @@ import { ReplaceRomanizationDialog } from "$/modules/lyric-editor/tools/ReplaceR
 import { ReplaceWordDialog } from "$/modules/lyric-editor/tools/ReplaceWordDialog.tsx";
 import { TimeShiftDialog } from "$/modules/lyric-editor/tools/TimeShift.tsx";
 import { TimeStretchDialog } from "$/modules/lyric-editor/tools/TimeStretch.tsx";
+import { FormatExportDialog, FormatImportDialog } from "$/modules/lyrics-formats/FormatDialogs";
 import { ImportLyricsDialog } from "$/modules/lyrics-import/modals/ImportLyricsDialog.tsx";
 import { JooxAudioSearchDialog } from "$/modules/joox/modals/JooxAudioSearchDialog.tsx";
 import { JooxImportLyricsDialog } from "$/modules/joox/modals/JooxImportLyricsDialog.tsx";
@@ -30,6 +31,7 @@ import { ApplySavedSplitsDialog } from "$/modules/split-library/components/Apply
 import { SplitLibraryDialog } from "$/modules/split-library/components/SplitLibraryDialog";
 import { FontSelectionDialog } from "$/modules/settings/modals/FontSelectionDialog.tsx";
 import { SettingsDialog } from "$/modules/settings/modals/index.tsx";
+import { SetupWizard } from "$/modules/setup/SetupWizard";
 import { SongInfoDialog } from "$/modules/song-info/SongInfoDialog";
 import { SpotMatchDialog } from "$/modules/spotmatch/SpotMatchDialog.tsx";
 import { TTMLChecklistDialog } from "$/modules/ttml-checklist/TTMLChecklistDialog.tsx";
@@ -48,6 +50,8 @@ export const Dialogs = () => {
 		<>
 			<ImportLyricsChooserDialog />
 			<ImportFromText />
+			<FormatImportDialog />
+			<FormatExportDialog />
 			<ImportFromLRCLIB />
 			<ImportLyricsDialog />
 			<JooxImportLyricsDialog />
@@ -56,6 +60,7 @@ export const Dialogs = () => {
 			<ImportAppleTtmlDialog />
 			<MetadataEditor />
 			<SettingsDialog />
+			<SetupWizard />
 			<SongInfoDialog />
 			<SplitWordDialog />
 			<SplitLibraryDialog />

@@ -120,6 +120,7 @@ import styles from "./App.module.css";
 import DarkThemeDetector from "./components/DarkThemeDetector";
 import RibbonBar from "./components/RibbonBar";
 import { NewTitleBar } from "./components/TitleBar/NewTitleBar";
+import { UpdateBanner, UpdateDialog } from "./components/UpdateBanner";
 import { TitleBar } from "./components/TitleBar";
 import { ResizablePanel } from "./components/ResizablePanel";
 import { useFileOpener } from "./hooks/useFileOpener.ts";
@@ -214,7 +215,7 @@ const AppErrorPage = ({
 				<Text>
 					{t(
 						"app.error.description",
-						"AMLL TTML Tools encountered an error while running",
+						"TTML Tool encountered an error while running",
 					)}
 				</Text>
 				<Text>
@@ -397,9 +398,9 @@ function App() {
 			!projectIdentity.isUntitled &&
 			projectIdentity.displayName
 		) {
-			document.title = `${projectIdentity.displayName} — TTML Editor`;
+			document.title = `${projectIdentity.displayName} — TTML Tool`;
 		} else {
-			document.title = "TTML Editor";
+			document.title = "TTML Tool";
 		}
 	}, [projectIdentity]);
 	const [previewFullscreen, setPreviewFullscreen] = useAtom(
@@ -1036,8 +1037,7 @@ function App() {
 	}, [appFont, editorFont, previewFont]);
 
 	const effectiveTheme = isDarkTheme ? "dark" : "light";
-	const { checkUpdate, status, update } = useAppUpdate();
-	const hasNotifiedRef = useRef(false);
+	const { checkUpdate } = useAppUpdate();
 	const setSettingsOpen = useSetAtom(settingsDialogAtom);
 	const setSettingsTab = useSetAtom(settingsTabAtom);
 	const initCustomBackgroundImage = useSetAtom(customBackgroundImageInitAtom);
@@ -1051,6 +1051,7 @@ function App() {
 	useEffect(() => {
 		if (!import.meta.env.TAURI_ENV_PLATFORM) return;
 
+		// The hook enforces the once-per-day gate when this check is silent.
 		void checkUpdate(true);
 		const interval = window.setInterval(
 			() => void checkUpdate(true),
@@ -1058,33 +1059,6 @@ function App() {
 		);
 		return () => window.clearInterval(interval);
 	}, [checkUpdate]);
-
-	useEffect(() => {
-		if (status === "available" && update && !hasNotifiedRef.current) {
-			hasNotifiedRef.current = true;
-
-			toast.info(
-				<div>
-					<div style={{ fontWeight: "bold" }}>
-						{t(
-							"app.update.updateAvailable",
-							"New version available: {version}",
-							{
-								version: update.version,
-							},
-						)}
-					</div>
-				</div>,
-				{
-					autoClose: 5000,
-					onClick: () => {
-						setSettingsTab("about");
-						setSettingsOpen(true);
-					},
-				},
-			);
-		}
-	}, [status, update, t, setSettingsOpen, setSettingsTab]);
 
 	const setIsGlobalDragging = useSetAtom(isGlobalFileDraggingAtom);
 	const { openFile } = useFileOpener();
@@ -1113,6 +1087,29 @@ function App() {
 				openFile(fileObj);
 			}
 		})();
+	}, [openFile]);
+
+	useEffect(() => {
+		const onDragOver = (event: DragEvent) => {
+			if (event.dataTransfer?.types.includes("Files")) {
+				event.preventDefault();
+			}
+		};
+		const onDrop = (event: DragEvent) => {
+			const files = event.dataTransfer?.files;
+			if (!files || files.length === 0) return;
+			event.preventDefault();
+			const lyricFile = Array.from(files).find((file) =>
+				/\.(ttml|lrc|srt|ass|ssa|vtt|txt)$/i.test(file.name),
+			);
+			if (lyricFile) void openFile(lyricFile);
+		};
+		window.addEventListener("dragover", onDragOver);
+		window.addEventListener("drop", onDrop);
+		return () => {
+			window.removeEventListener("dragover", onDragOver);
+			window.removeEventListener("drop", onDrop);
+		};
 	}, [openFile]);
 
 	useEffect(() => {
@@ -1577,6 +1574,7 @@ function App() {
 					<MigrationNotice />
 					<DiscordPresence />
 				<BeginnerGuide />
+				<UpdateDialog />
 				<ChecklistBackgroundSync />
 				{customStyleString ? <style>{customStyleString}</style> : null}
 				{hasCustomBackground && (
@@ -1632,6 +1630,7 @@ function App() {
 							) : (
 								<TitleBar key="titlebar" />
 							))}
+						{!isPreviewFullscreen && <UpdateBanner />}
 						{(() => {
 							const sidePreviewPanelElement = previewPanelVisible ? (
 								<ResizablePanel>

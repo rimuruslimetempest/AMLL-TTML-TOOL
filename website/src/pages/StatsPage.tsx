@@ -238,12 +238,12 @@ export const StatsPage: React.FC<StatsPageProps> = ({
 	// Dynamic document title & SEO description for selected creator profile
 	useEffect(() => {
 		if (selectedProfile) {
-			document.title = `${selectedProfile.displayName} — Creator Profile | TTML Editor`;
+			document.title = `${selectedProfile.displayName} — Creator Profile | TTML Tool`;
 			const metaDesc = document.querySelector('meta[name="description"]');
 			if (metaDesc) {
 				metaDesc.setAttribute(
 					"content",
-					`View sync stats and community TTML lyrics created by ${selectedProfile.displayName} on TTML Editor. ${selectedProfile.totalSongs} songs and ${selectedProfile.totalLines.toLocaleString()} lines timed.`,
+					`View sync stats and community TTML lyrics created by ${selectedProfile.displayName} on TTML Tool. ${selectedProfile.totalSongs} songs and ${selectedProfile.totalLines.toLocaleString()} lines timed.`,
 				);
 			}
 		}

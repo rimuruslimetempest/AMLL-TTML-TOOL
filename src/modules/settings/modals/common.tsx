@@ -81,6 +81,7 @@ import {
 } from "$/modules/settings/states/sync";
 import { checklistShowUploadedToDbAtom } from "$/modules/ttml-checklist/states";
 import { latencyTestDialogAtom } from "$/states/dialogs.ts";
+import { setupWizardOpenAtom } from "$/modules/setup/states";
 import {
 	KeyBindingTriggerMode,
 	keyBindingTriggerModeAtom,
@@ -103,6 +104,7 @@ export const SettingsCommonTab = ({
 }) => {
 	const shouldShow = (id: string) => !filterItemIds || filterItemIds.has(id);
 	const setLatencyDialogOpen = useSetAtom(latencyTestDialogAtom);
+	const setSetupWizardOpen = useSetAtom(setupWizardOpenAtom);
 	const languageOptions: readonly string[] = Object.keys(resources);
 	const [layoutMode, setLayoutMode] = useAtom(layoutModeAtom);
 	const [newLineInsertionMode, setNewLineInsertionMode] = useAtom(
@@ -285,6 +287,27 @@ export const SettingsCommonTab = ({
 		<Flex direction="column" gap="4">
 			{showGeneralSection && (
 				<Flex direction="column" gap="2">
+					{section === "general" && (
+						<Card>
+							<Flex align="center" justify="between" gap="3" wrap="wrap">
+								<Box>
+									<Text weight="bold" as="div">
+										First-run setup
+									</Text>
+									<Text size="1" color="gray" as="div">
+										Review display name, appearance, audio, performance,
+										and privacy choices.
+									</Text>
+								</Box>
+								<Button
+									variant="soft"
+									onClick={() => setSetupWizardOpen(true)}
+								>
+									Run setup again
+								</Button>
+							</Flex>
+						</Card>
+					)}
 					{(shouldShow("general-language") ||
 						shouldShow("general-layout") ||
 						shouldShow("general-scale") ||

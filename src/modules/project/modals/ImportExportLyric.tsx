@@ -27,6 +27,8 @@ import {
 	appleTtmlImportDialogAtom,
 	geniusImportLyricsDialogAtom,
 	importFromLRCLIBDialogAtom,
+	formatExportDialogAtom,
+	formatImportDialogAtom,
 	importFromTextDialogAtom,
 	jooxAudioSearchDialogAtom,
 	jooxImportLyricsDialogAtom,
@@ -45,6 +47,8 @@ import { error } from "$/utils/logging.ts";
 export const ImportExportLyric = () => {
 	const store = useStore();
 	const setImportFromTextDialog = useSetAtom(importFromTextDialogAtom);
+	const setFormatImportDialog = useSetAtom(formatImportDialogAtom);
+	const setFormatExportDialog = useSetAtom(formatExportDialogAtom);
 	const setImportFromLRCLIBDialog = useSetAtom(importFromLRCLIBDialogAtom);
 	const setGeniusImportLyricsDialog = useSetAtom(geniusImportLyricsDialogAtom);
 	const setLyricallyImportDialog = useSetAtom(lyricallyImportLyricsDialogAtom);
@@ -298,6 +302,12 @@ export const ImportExportLyric = () => {
 						</DropdownMenu.Item>
 					)}
 
+					<DropdownMenu.Item onClick={() => setFormatImportDialog(true)}>
+						{t(
+							"topBar.menu.importLyric.fromTimedFile",
+							"Import LRC, SRT, ASS, or VTT with preview…",
+						)}
+					</DropdownMenu.Item>
 					<DropdownMenu.Item onClick={() => onImportLyric("lrc")}>
 						{t("topBar.menu.importLyric.fromLyRiC", "Import from LyRiC file…")}
 					</DropdownMenu.Item>
@@ -335,6 +345,13 @@ export const ImportExportLyric = () => {
 					{t("topBar.menu.exportLyric.export", "Export lyrics")}
 				</DropdownMenu.SubTrigger>
 				<DropdownMenu.SubContent>
+					<DropdownMenu.Item onClick={() => setFormatExportDialog(true)}>
+						{t(
+							"topBar.menu.exportLyric.asFormat",
+							"Export as LRC, SRT, or plain text…",
+						)}
+					</DropdownMenu.Item>
+					<DropdownMenu.Separator />
 					<DropdownMenu.Item onClick={onExportLyric(stringifyLrc, "lrc")}>
 						{t("topBar.menu.exportLyric.toLyRiC", "Export to LyRiC")}
 					</DropdownMenu.Item>

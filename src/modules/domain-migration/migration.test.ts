@@ -20,7 +20,7 @@ import {
 const backup = (
 	overrides: Partial<BackupFile["categories"]> = {},
 ): BackupFile => ({
-	app: "amll-ttml-tool",
+	app: "ttml-tool",
 	formatVersion: 1,
 	exportedAt: "2026-08-16T00:00:00.000Z",
 	build: { commit: "test", time: "2026-08-16T00:00:00.000Z" },

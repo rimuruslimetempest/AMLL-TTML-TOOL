@@ -1,5 +1,5 @@
 /**
- * Cloudflare Worker for AMLL TTML Tool
+ * Cloudflare Worker for TTML Tool
  *
  * 1. Discord Component Embeds & Open Graph tags:
  *    - /stats or /leaderboard: Community Leaderboard Embed
@@ -10,12 +10,16 @@
  *    - Transparent pass-through / proxy to SPA site origin
  */
 
-const FIRESTORE_BASE =
-	"https://firestore.googleapis.com/v1/projects/amll-ttml/databases/(default)/documents";
-const SITE_ORIGIN = "https://ttml.bobjoerules.com";
-const EDITOR_ORIGIN = "https://ttmleditor.com";
-const GITHUB_REPO = "https://github.com/bobjoerules/AMLL-TTML-TOOL";
-const DEFAULT_ICON = "https://ttml.bobjoerules.com/apple-touch-icon.png";
+// [TODO] Set this to your own Firebase project ID. Do not deploy this Worker
+// against a project you do not own.
+const FIRESTORE_PROJECT_ID = "YOUR_FIREBASE_PROJECT_ID";
+const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents`;
+// [TODO] Set these to your own deployed website/editor origins before deploying
+// this Worker. They are intentionally not tied to any inherited deployment.
+const SITE_ORIGIN = "https://rimuruslimetempest.github.io/ttml-tool";
+const EDITOR_ORIGIN = SITE_ORIGIN;
+const GITHUB_REPO = "https://github.com/rimuruslimetempest/ttml-tool";
+const DEFAULT_ICON = `${SITE_ORIGIN}/apple-touch-icon.png`;
 
 export default {
 	async fetch(request, _env, _ctx) {
@@ -487,7 +491,7 @@ async function handleSongEmbed(_request, songId) {
 
 		const bodyContent = `
 <header>
-  <nav><a href="${SITE_ORIGIN}/">← AMLL TTML Community Hub</a> | <a href="${SITE_ORIGIN}/finished">Browse Lyrics</a></nav>
+  			  <nav><a href="${SITE_ORIGIN}/">← TTML Tool Community Hub</a> | <a href="${SITE_ORIGIN}/finished">Browse Lyrics</a></nav>
   <h1>${escapeHtml(song.title)} — ${escapeHtml(song.artist)}</h1>
   ${song.album ? `<p><strong>Album:</strong> ${escapeHtml(song.album)}</p>` : ""}
 </header>
@@ -503,7 +507,7 @@ async function handleSongEmbed(_request, songId) {
 
 		return renderHtmlResponse({
 			title: `${song.title} — ${song.artist} | AMLL TTML Lyrics`,
-			description: `${song.title} by ${song.artist} — ${song.lineCount} timed lyric lines synchronized by ${song.authorName} on AMLL TTML Tool.`,
+			description: `${song.title} by ${song.artist} — ${song.lineCount} timed lyric lines synchronized by ${song.authorName} on TTML Tool.`,
 			url: `${SITE_ORIGIN}/song/${encodeURIComponent(song.id)}`,
 			imageUrl: song.coverArt || DEFAULT_ICON,
 			ogType: "music.song",
@@ -671,15 +675,15 @@ async function handleStatsEmbed(_request) {
 		const jsonLd = {
 			"@context": "https://schema.org",
 			"@type": "CollectionPage",
-			name: "Community Leaderboard — AMLL TTML Tool",
+			name: "Community Leaderboard — TTML Tool",
 			description: `${songs.length} songs synced across ${creators.length} contributors. View top lyric timing creators.`,
 			url: `${SITE_ORIGIN}/stats`,
 		};
 
 		const bodyContent = `
 <header>
-  <nav><a href="${SITE_ORIGIN}/">← AMLL TTML Community Hub</a> | <a href="${SITE_ORIGIN}/finished">Browse Lyrics</a></nav>
-  <h1>Community Leaderboard & Statistics — AMLL TTML Tool</h1>
+  			  <nav><a href="${SITE_ORIGIN}/">← TTML Tool Community Hub</a> | <a href="${SITE_ORIGIN}/finished">Browse Lyrics</a></nav>
+  <h1>Community Leaderboard & Statistics — TTML Tool</h1>
   <p>Live community statistics: <strong>${songs.length}</strong> songs and <strong>${totalLines.toLocaleString()}</strong> lines timed by <strong>${creators.length}</strong> contributors.</p>
 </header>
 <main>
@@ -690,7 +694,7 @@ async function handleStatsEmbed(_request) {
 </main>`;
 
 		return renderHtmlResponse({
-			title: "Community Leaderboard — AMLL TTML Tool",
+			title: "Community Leaderboard — TTML Tool",
 			description: `${songs.length} songs synced across ${creators.length} contributors. View top lyric timing creators.`,
 			url: `${SITE_ORIGIN}/stats`,
 			imageUrl: DEFAULT_ICON,
@@ -898,12 +902,12 @@ async function handleUserProfileEmbed(_request, uid) {
 </header>
 <main>
   ${latestSong ? `<h2>Latest Contribution</h2><p><strong>${escapeHtml(latestSong.title)}</strong> — ${escapeHtml(latestSong.artist)} (${latestSong.lines} lines)</p>` : ""}
-  <p><a href="${SITE_ORIGIN}/user/${encodeURIComponent(uid)}">View All Contributed Songs on AMLL TTML Tool</a></p>
+  <p><a href="${SITE_ORIGIN}/user/${encodeURIComponent(uid)}">View All Contributed Songs on TTML Tool</a></p>
 </main>`;
 
 		return renderHtmlResponse({
 			title: `${displayName} — Creator Profile`,
-			description: `${displayName} has synchronized ${totalUserSongs} songs and ${totalUserLines.toLocaleString()} lines on AMLL TTML Tool.`,
+			description: `${displayName} has synchronized ${totalUserSongs} songs and ${totalUserLines.toLocaleString()} lines on TTML Tool.`,
 			url: `${SITE_ORIGIN}/user/${encodeURIComponent(uid)}`,
 			imageUrl: photoURL || DEFAULT_ICON,
 			ogType: "profile",
@@ -948,7 +952,7 @@ function renderHtmlResponse({
   <link rel="canonical" href="${escapeHtml(url)}" />
 
   <!-- Open Graph -->
-  <meta property="og:site_name" content="AMLL TTML Tool" />
+  <meta property="og:site_name" content="TTML Tool" />
   <meta property="og:type" content="${escapeHtml(ogType || "website")}" />
   <meta property="og:title" content="${escapeHtml(title)}" />
   <meta property="og:description" content="${escapeHtml(description)}" />

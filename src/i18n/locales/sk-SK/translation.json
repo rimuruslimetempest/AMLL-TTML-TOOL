@@ -2,7 +2,7 @@
 	"app": {
 		"error": {
 			"title": "Ojoj, vyskytla sa chyba!",
-			"description": "Pri behu AMLL TTML Tools sa vyskytla chyba",
+			"description": "Pri behu TTML Tools sa vyskytla chyba",
 			"checkDevTools": "Podrobnosti nájdete v Nástrojoch pre vývojárov",
 			"saveLyrics": "Skúste uložiť aktuálne texty",
 			"tryRestart": "Skúste aplikáciu znovu načítať",
@@ -1313,12 +1313,12 @@
 	"aboutModal": {
 		"appName": "Nástroj TTML pre texty v štýle Apple Music",
 		"description": "Nástroj pre úpravu a časovanie TTML po slovách pre texty v štýle Apple Music",
-		"maintainers": "Fork Maintainers",
-		"maintainersDesc": "This fork is maintained and developed by:",
+		"maintainers": "Maintainer",
+		"maintainersDesc": "TTML Tool is designed, developed, and maintained by:",
 		"forkMaintainer": "Fork maintainer & contributor",
 		"visitWebsite": "Visit website",
 		"credits": "Credits & Third-Party Notices",
-		"creditsIntro": "This project includes work adapted from the following open-source projects.",
+		"creditsIntro": "TTML Tool began from the AMLL TTML Tool codebase; its copyright and license notices are retained in LICENSE.",
 		"community": "Community & Contributions",
 		"communityDesc": "Help us make the tool better by contributing code, reporting issues, or providing translations.",
 		"github": "GitHub Repository",

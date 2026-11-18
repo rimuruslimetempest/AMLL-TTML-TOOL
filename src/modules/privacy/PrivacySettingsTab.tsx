@@ -16,6 +16,7 @@ import {
 	Separator,
 	Text,
 } from "@radix-ui/themes";
+import { REPORT_EMAIL } from "$/config/links";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useState } from "react";
 import { toast } from "react-toastify";
@@ -213,8 +214,8 @@ export function PrivacySettingsTab() {
 							This build does not have a self-service account-deletion button.
 							To request deletion of your Firebase Auth account, profile,
 							avatars, and remaining cloud records, email{" "}
-							<a href="mailto:rimurusamllttmltool@gmail.com">
-								rimurusamllttmltool@gmail.com
+							<a href={`mailto:${REPORT_EMAIL}`}>
+								{REPORT_EMAIL}
 							</a>{" "}
 							from the account's
 							email address. Include your display name and user ID

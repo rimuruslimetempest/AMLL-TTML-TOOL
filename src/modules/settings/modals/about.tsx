@@ -1,7 +1,6 @@
 import { BUILD_TIME, GIT_COMMIT } from "virtual:buildmeta";
 import {
 	ArrowSync24Regular,
-	BoxRegular,
 	CheckmarkCircle24Regular,
 	CloudArrowDown24Regular,
 	MusicNote1Regular,
@@ -23,17 +22,24 @@ import {
 	Heading,
 	Link,
 	Progress,
+	Select,
 	Text,
 } from "@radix-ui/themes";
 import { useAtom } from "jotai";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { gt as semverGt } from "semver";
+import { buildReportProblemUrl, RELEASES_URL } from "$/config/links";
 import { APP_VERSION } from "$/modules/changelog/data";
 import { whatsNewAutoOpenAtom } from "$/modules/changelog/states";
-import { buildReportProblemUrl, RELEASES_URL } from "$/config/links";
-import { whatsNewDialogAtom } from "$/states/dialogs";
-import { gt as semverGt } from "semver";
-import { useTranslation } from "react-i18next";
 import { PrivacyLinksCard } from "$/modules/privacy/PrivacyDialogs";
+import { whatsNewDialogAtom } from "$/states/dialogs";
+import {
+	autoUpdateCheckAtom,
+	skippedUpdateVersionAtom,
+	type UpdateChannel,
+	updateChannelAtom,
+} from "$/states/update";
 import { openExternal } from "$/utils/openExternal";
 import { clearWebsiteCache, forceWebsiteRefresh } from "$/utils/pwa";
 import { useAppUpdate } from "$/utils/useAppUpdate";
@@ -58,6 +64,9 @@ export const SettingsAboutTab = () => {
 	const [autoWhatsNew, setAutoWhatsNew] = useAtom(whatsNewAutoOpenAtom);
 	const [, setWhatsNewOpen] = useAtom(whatsNewDialogAtom);
 	const [cacheConfirmationOpen, setCacheConfirmationOpen] = useState(false);
+	const [autoUpdate, setAutoUpdate] = useAtom(autoUpdateCheckAtom);
+	const [updateChannel, setUpdateChannel] = useAtom(updateChannelAtom);
+	const [skippedUpdate, setSkippedUpdate] = useAtom(skippedUpdateVersionAtom);
 	const [recoveryAction, setRecoveryAction] = useState<
 		"refresh" | "clear" | null
 	>(null);
@@ -98,10 +107,7 @@ export const SettingsAboutTab = () => {
 							What&apos;s new
 						</Button>
 						{RELEASES_URL && (
-							<Button
-								variant="soft"
-								onClick={() => openExternal(RELEASES_URL)}
-							>
+							<Button variant="soft" onClick={() => openExternal(RELEASES_URL)}>
 								Releases
 							</Button>
 						)}
@@ -116,9 +122,7 @@ export const SettingsAboutTab = () => {
 						<Flex gap="2" align="center">
 							<Checkbox
 								checked={autoWhatsNew}
-								onCheckedChange={(checked) =>
-									setAutoWhatsNew(checked === true)
-								}
+								onCheckedChange={(checked) => setAutoWhatsNew(checked === true)}
 							/>
 							Show What&apos;s New automatically after an update
 						</Flex>
@@ -200,6 +204,63 @@ export const SettingsAboutTab = () => {
 									>
 										{t("settings.about.errorBadge", "Update Failed")}
 									</Badge>
+								)}
+							</Flex>
+
+							<Flex direction="column" gap="2" style={{ marginTop: 4 }}>
+								<Text as="label" size="2">
+									<Flex gap="2" align="center">
+										<Checkbox
+											checked={autoUpdate}
+											onCheckedChange={(checked) =>
+												setAutoUpdate(checked === true)
+											}
+										/>
+										Check for updates automatically (once per day)
+									</Flex>
+								</Text>
+								<Flex gap="2" align="center" wrap="wrap">
+									<Text size="2">Update channel</Text>
+									<Select.Root
+										value={updateChannel}
+										onValueChange={(value) =>
+											setUpdateChannel(value as UpdateChannel)
+										}
+									>
+										<Select.Trigger style={{ minWidth: 110 }} />
+										<Select.Content>
+											<Select.Item value="stable">Stable</Select.Item>
+											<Select.Item value="beta">Beta</Select.Item>
+										</Select.Content>
+									</Select.Root>
+									<Text size="1" color="gray">
+										Beta includes pre-releases when the update feed publishes
+										them.
+									</Text>
+								</Flex>
+								{skippedUpdate && (
+									<Flex gap="2" align="center" wrap="wrap">
+										<Text size="1" color="gray">
+											Skipped version: v{skippedUpdate}
+										</Text>
+										<Button
+											size="1"
+											variant="soft"
+											onClick={() => setSkippedUpdate("")}
+										>
+											Check again
+										</Button>
+									</Flex>
+								)}
+								{update && (
+									<Button
+										size="1"
+										variant="ghost"
+										color="gray"
+										onClick={() => setSkippedUpdate(update.version)}
+									>
+										Skip this version (v{update.version})
+									</Button>
 								)}
 							</Flex>
 
@@ -351,21 +412,19 @@ export const SettingsAboutTab = () => {
 										<Text size="2" weight="bold">
 											{t(
 												"settings.about.originalProject",
-												"Original TTML Editor",
-											)} v{upstreamRelease.version}
+												"Latest public release",
+											)}{" "}
+											v{upstreamRelease.version}
 										</Text>
-										<Text
-											size="1"
-											color={upstreamIsNewer ? "amber" : "gray"}
-										>
+										<Text size="1" color={upstreamIsNewer ? "amber" : "gray"}>
 											{upstreamIsNewer
 												? t(
 														"settings.about.upstreamNewer",
-														"The original project has a newer version. It will not be installed automatically because that would remove your local features; publish a feature-preserving build to update.",
+														"A newer release is available on GitHub. Use the Software Update section above to install it.",
 													)
 												: t(
 														"settings.about.upstreamCurrent",
-														"The original project is at the same version as this feature build.",
+														"This is the latest public release on GitHub.",
 													)}
 										</Text>
 										<Flex>
@@ -377,7 +436,7 @@ export const SettingsAboutTab = () => {
 												<Open16Regular />
 												{t(
 													"settings.about.viewOriginalRelease",
-													"View original release",
+													"View release",
 												)}
 											</Button>
 										</Flex>
@@ -427,12 +486,12 @@ export const SettingsAboutTab = () => {
 			<Card>
 				<Flex direction="column" gap="3">
 					<Heading size="3">
-						{t("aboutModal.maintainers", "Fork Maintainers")}
+						{t("aboutModal.maintainers", "Maintainer")}
 					</Heading>
 					<Text size="2" color="gray">
 						{t(
 							"aboutModal.maintainersDesc",
-							"This fork is maintained and developed by:",
+							"TTML Tool is designed, developed, and maintained by:",
 						)}
 					</Text>
 					<Box
@@ -445,26 +504,23 @@ export const SettingsAboutTab = () => {
 						<Flex align="center">
 							<Flex align="center" gap="2" style={{ minWidth: 0, flex: 1 }}>
 								<Avatar
-									src="https://avatars.githubusercontent.com/bobjoerules"
-									fallback="M"
+									src="https://avatars.githubusercontent.com/rimuruslimetempest"
+									fallback="R"
 									size="3"
 									radius="small"
 								/>
 								<Flex direction="column" gap="1">
 									<Text as="div" weight="bold">
-										Bobjoerules
+										Rimurulover
 									</Text>
 									<Text as="div" size="1" color="gray">
-										{t(
-											"aboutModal.forkMaintainer",
-											"Fork maintainer & contributor",
-										)}
+										{t("aboutModal.forkMaintainer", "Author & maintainer")}
 									</Text>
 								</Flex>
 							</Flex>
 							<Button asChild variant="soft" size="1">
 								<a
-									href="https://github.com/bobjoerules"
+									href="https://github.com/rimuruslimetempest"
 									target="_blank"
 									rel="noreferrer"
 									aria-label={t("aboutModal.visitWebsite", "Visit website")}
@@ -485,7 +541,7 @@ export const SettingsAboutTab = () => {
 					<Text size="2" color="gray">
 						{t(
 							"aboutModal.creditsIntro",
-							"This project includes work adapted from the following open-source projects.",
+							"TTML Tool began from the AMLL TTML Tool codebase; its copyright and license notices are retained in LICENSE.",
 						)}
 					</Text>
 					<Grid columns="2" gap="3">
@@ -632,43 +688,6 @@ export const SettingsAboutTab = () => {
 								</Text>
 							</Flex>
 						</Card>
-						<Card variant="classic" style={{ padding: "var(--space-3)" }}>
-							<Flex direction="column" gap="2">
-								<Flex align="center" gap="2">
-									<Flex
-										align="center"
-										justify="center"
-										style={{
-											color: "var(--gold-11)",
-											width: 20,
-											height: 20,
-											flexShrink: 0,
-											display: "inline-flex",
-											lineHeight: 1,
-										}}
-									>
-										<BoxRegular />
-									</Flex>
-									<Heading
-										size="3"
-										style={{ margin: 0, display: "flex", alignItems: "center" }}
-									>
-										AMLL TTML Tool
-									</Heading>
-								</Flex>
-								<Text size="2" color="gray">
-									Forked from{" "}
-									<Link
-										href="https://github.com/amll-dev/amll-ttml-tool"
-										target="_blank"
-										rel="noreferrer"
-									>
-										amll-dev/amll-ttml-tool
-									</Link>
-									, licensed under GPL-3.0-or-later.
-								</Text>
-							</Flex>
-						</Card>
 					</Grid>
 				</Flex>
 			</Card>
@@ -688,7 +707,7 @@ export const SettingsAboutTab = () => {
 						<Button
 							variant="soft"
 							onClick={() =>
-								openExternal("https://github.com/bobjoerules/AMLL-TTML-TOOL")
+								openExternal("https://github.com/rimuruslimetempest/ttml-tool")
 							}
 						>
 							{t("aboutModal.github", "GitHub Repository")}
@@ -755,14 +774,14 @@ export const SettingsAboutTab = () => {
 										t("aboutModal.unknown", "Unknown")
 									) : (
 										<Link
-											href={`https://github.com/bobjoerules/AMLL-TTML-TOOL/commit/${GIT_COMMIT}`}
+											href={`https://github.com/rimuruslimetempest/ttml-tool/commit/${GIT_COMMIT}`}
 											target="_blank"
 											rel="noreferrer"
 											onClick={(event) => {
 												if (import.meta.env.TAURI_ENV_PLATFORM) {
 													event.preventDefault();
 													openExternal(
-														`https://github.com/bobjoerules/AMLL-TTML-TOOL/commit/${GIT_COMMIT}`,
+														`https://github.com/rimuruslimetempest/ttml-tool/commit/${GIT_COMMIT}`,
 													);
 												}
 											}}

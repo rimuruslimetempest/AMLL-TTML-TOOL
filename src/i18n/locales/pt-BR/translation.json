@@ -2,7 +2,7 @@
 	"app": {
 		"error": {
 			"title": "Ops, ocorreu um erro!",
-			"description": "Ocorreu um erro ao executar o AMLL TTML Tools",
+			"description": "Ocorreu um erro ao executar o TTML Tools",
 			"checkDevTools": "Os detalhes podem ser encontrados nas Ferramentas do Desenvolvedor",
 			"saveLyrics": "Tente salvar as letras atuais",
 			"tryRestart": "Tente recarregar o aplicativo",
@@ -1313,12 +1313,12 @@
 	"aboutModal": {
 		"appName": "Ferramenta TTML de Letras estilo Apple Music",
 		"description": "Uma ferramenta de edição e linha do tempo TTML palavra por palavra para letras estilo Apple Music",
-		"maintainers": "Fork Maintainers",
-		"maintainersDesc": "This fork is maintained and developed by:",
+		"maintainers": "Maintainer",
+		"maintainersDesc": "TTML Tool is designed, developed, and maintained by:",
 		"forkMaintainer": "Fork maintainer & contributor",
 		"visitWebsite": "Visit website",
 		"credits": "Credits & Third-Party Notices",
-		"creditsIntro": "This project includes work adapted from the following open-source projects.",
+		"creditsIntro": "TTML Tool began from the AMLL TTML Tool codebase; its copyright and license notices are retained in LICENSE.",
 		"community": "Community & Contributions",
 		"communityDesc": "Help us make the tool better by contributing code, reporting issues, or providing translations.",
 		"github": "GitHub Repository",

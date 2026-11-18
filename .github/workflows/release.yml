@@ -1,0 +1,226 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build and publish, for example v1.0.0"
+        required: true
+        type: string
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  prepare:
+    name: Validate release and prepare notes
+    runs-on: ubuntu-latest
+    outputs:
+      release_body: ${{ steps.notes.outputs.body }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Verify tag matches every version file
+        run: node scripts/validate-release-version.mjs --tag "$RELEASE_TAG"
+
+      - name: Generate release notes
+        id: notes
+        shell: bash
+        run: |
+          node scripts/generate-changelog-notes.mjs \
+            --version "${RELEASE_TAG#v}" \
+            --output release-notes.md
+          {
+            echo "body<<RELEASE_NOTES_EOF"
+            cat release-notes.md
+            echo "RELEASE_NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check updater signing secret
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "::error::Add TAURI_SIGNING_PRIVATE_KEY under Settings → Secrets and variables → Actions before tagging a release."
+            exit 1
+          fi
+
+      - name: Upload prepared notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.md
+          if-no-files-found: error
+
+  build:
+    name: Build ${{ matrix.name }}
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            platform: windows-latest
+            rust_targets: ""
+            args: "--bundles nsis,msi"
+          - name: macos-arm64
+            platform: macos-latest
+            rust_targets: "aarch64-apple-darwin"
+            args: "--target aarch64-apple-darwin --bundles dmg"
+          - name: macos-x64
+            platform: macos-latest
+            rust_targets: "x86_64-apple-darwin"
+            args: "--target x86_64-apple-darwin --bundles dmg"
+          - name: linux-x64
+            platform: ubuntu-22.04
+            rust_targets: ""
+            args: "--bundles appimage,deb,rpm"
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Add wasm target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Install LLVM and Clang on macOS
+        if: matrix.platform == 'macos-latest'
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: "15"
+
+      - name: Install Linux system dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libasound2-dev \
+            patchelf \
+            rpm \
+            build-essential \
+            curl \
+            file \
+            libssl-dev \
+            libxdo-dev
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build bundles and publish release
+        uses: tauri-apps/tauri-action@v0
+        with:
+          tagName: ${{ env.RELEASE_TAG }}
+          releaseName: TTML Tool ${{ env.RELEASE_TAG }}
+          releaseBody: ${{ needs.prepare.outputs.release_body }}
+          releaseAssetNamePattern: "TTML-Tool_[version]_[arch][setup][ext]"
+          uploadUpdaterJson: true
+          updaterJsonPreferNsis: true
+          retryAttempts: 3
+          args: ${{ matrix.args }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+  verify:
+    name: Verify published assets and latest.json
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          persist-credentials: false
+
+      - name: List release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --json assets --jq '.assets[].name' | tee assets.txt
+
+      - name: Require Windows, macOS, Linux, and updater assets
+        shell: bash
+        run: |
+          fail=0
+          for pattern in 'setup.exe' '.msi' 'aarch64.dmg' 'x64.dmg' '.AppImage' '.deb' '.rpm' 'latest.json'; do
+            if ! grep -q -- "$pattern" assets.txt; then
+              echo "::error::Missing release asset matching $pattern"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Download and inspect latest.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern latest.json \
+            --dir updater \
+            --clobber
+          node -e '
+            const fs = require("node:fs");
+            const json = JSON.parse(fs.readFileSync("updater/latest.json", "utf8"));
+            const required = ["windows-x86_64", "darwin-aarch64", "darwin-x86_64", "linux-x86_64"];
+            const missing = required.filter((key) => !json.platforms?.[key]?.url);
+            if (missing.length) {
+              console.error(`latest.json is missing: ${missing.join(", ")}`);
+              process.exit(1);
+            }
+            for (const [key, entry] of Object.entries(json.platforms)) {
+              if (!entry.signature) {
+                console.error(`latest.json entry ${key} has no signature`);
+                process.exit(1);
+              }
+            }
+            console.log(`latest.json covers ${Object.keys(json.platforms).join(", ")}`);
+          '

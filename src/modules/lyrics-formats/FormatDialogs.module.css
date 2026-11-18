@@ -1,0 +1,62 @@
+.chooseButton,
+.primaryButton,
+.secondaryButton {
+	font: inherit;
+	font-size: 13px;
+	border-radius: var(--radius-3);
+	cursor: pointer;
+	padding: 7px 12px;
+	line-height: 1.2;
+}
+
+.chooseButton,
+.secondaryButton {
+	border: 1px solid var(--gray-7);
+	background: var(--gray-3);
+	color: var(--gray-12);
+}
+
+.primaryButton {
+	border: 1px solid var(--accent-9);
+	background: var(--accent-9);
+	color: var(--accent-contrast);
+}
+
+.chooseButton:hover,
+.secondaryButton:hover {
+	background: var(--gray-4);
+}
+
+.primaryButton:hover {
+	background: var(--accent-10);
+}
+
+.primaryButton:disabled,
+.chooseButton:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.preview {
+	margin: 6px 0 0;
+	padding: 10px 12px;
+	max-height: 190px;
+	overflow: auto;
+	border: 1px solid var(--gray-5);
+	border-radius: var(--radius-3);
+	background: var(--gray-2);
+	white-space: pre-wrap;
+	font-size: 12px;
+	line-height: 1.55;
+}
+
+.warnings {
+	font-size: 12px;
+	line-height: 1.5;
+	color: var(--gray-11);
+}
+
+.warnings ul {
+	margin: 4px 0 0;
+	padding-left: 18px;
+}

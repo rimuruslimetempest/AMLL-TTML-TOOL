@@ -1,12 +1,12 @@
-/**
- * Fill this in with the GitHub releases page for this fork, for example
- * "https://github.com/OWNER/REPO/releases". While empty, every Releases link
- * is hidden.
- */
-export const RELEASES_URL =
-	"https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/releases";
-
-export const REPORT_EMAIL = "lemonsqueezy.enhance895@passinbox.com";
+/** Public project identity and contact details. */
+export const APP_NAME = "TTML Tool";
+export const AUTHOR_NAME = "Rimurulover";
+export const GITHUB_USERNAME = "rimuruslimetempest";
+export const REPOSITORY_URL =
+	"https://github.com/rimuruslimetempest/ttml-tool";
+export const RELEASES_URL = `${REPOSITORY_URL}/releases`;
+export const ISSUES_URL = `${REPOSITORY_URL}/issues`;
+export const REPORT_EMAIL = "rimurusamllttmltool@gmail.com";
 
 function describeOs(): string {
 	if (typeof navigator === "undefined") return "Unknown OS";

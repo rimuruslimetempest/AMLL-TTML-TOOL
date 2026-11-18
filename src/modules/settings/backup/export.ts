@@ -158,10 +158,10 @@ export async function saveBackupFile(
 	const json = JSON.stringify(backup);
 	const date = backup.exportedAt.slice(0, 10);
 	const saved = await saveFile(new Blob([json], { type: "application/json" }), {
-		suggestedName: `amll-ttml-tool-backup-${date}.json`,
+		suggestedName: `ttml-tool-backup-${date}.json`,
 		types: [
 			{
-				description: "AMLL TTML Tool Backup",
+				description: "TTML Tool Backup",
 				accept: { "application/json": [".json"] },
 			},
 		],

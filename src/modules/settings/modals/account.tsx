@@ -434,7 +434,7 @@ export const SettingsAccountTab = memo(() => {
 										type="button"
 										style={{ cursor: "pointer" }}
 										onClick={() =>
-											openExternal("https://ttml.bobjoerules.com/#stats")
+											openExternal("https://github.com/rimuruslimetempest/ttml-tool")
 										}
 									>
 										<Globe16Regular style={{ width: 14, height: 14 }} />
@@ -765,7 +765,7 @@ export const SettingsAccountTab = memo(() => {
 							style={{ cursor: "pointer" }}
 							onClick={() =>
 								openExternal(
-									`https://ttml.bobjoerules.com/#user=${encodeURIComponent(user.uid)}`,
+									`https://github.com/rimuruslimetempest/ttml-tool`,
 								)
 							}
 						>
@@ -778,7 +778,7 @@ export const SettingsAccountTab = memo(() => {
 							size="2"
 							style={{ cursor: "pointer" }}
 							onClick={() =>
-								openExternal("https://ttml.bobjoerules.com/#stats")
+								openExternal("https://github.com/rimuruslimetempest/ttml-tool")
 							}
 						>
 							{t("cloud.viewCommunityStats", "Community Leaderboard")}
@@ -793,7 +793,7 @@ export const SettingsAccountTab = memo(() => {
 								style={{ cursor: "pointer" }}
 								onClick={() => {
 									navigator.clipboard.writeText(
-										`https://ttml.bobjoerules.com/#user=${encodeURIComponent(user.uid)}`,
+										`https://github.com/rimuruslimetempest/ttml-tool`,
 									);
 									toast.success(
 										t(

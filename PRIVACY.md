@@ -3,9 +3,9 @@
 **Version:** 2026-11-06  
 **Effective:** November 6, 2026
 
-This policy describes the data flows that exist in this build of AMLL TTML Tool. It is based on the app's code and configuration. Items marked `[TODO: ...]` are unknown and still need legal or operational confirmation.
+This policy describes the data flows that exist in this build of TTML Tool. It is based on the app's code and configuration. Items marked `[TODO: ...]` are unknown and still need legal or operational confirmation.
 
-The data controller is **the operator of this app**. Privacy contact: **rimurusamllttmltool@gmail.com**.
+The data controller is **Rimurulover**, the author and maintainer of TTML Tool. Privacy contact: **rimurusamllttmltool@gmail.com**.
 
 ## Summary
 
@@ -49,7 +49,7 @@ Room state, chat, comments, review marks, history, and restore points exist for 
 
 ## 3. Cloud accounts and cloud library
 
-Cloud features are optional. Signing in sends data to the Firebase project configured for the build. The default project is `amll-ttml`. If you configure your own Firebase project, that project's operator receives the data instead.
+Cloud features are optional. Signing in sends data to the Firebase project configured for the build through the `VITE_FIREBASE_*` variables. This repository does not ship a default Firebase project; if none is configured, cloud sign-in stays disabled. The operator of the project you configure receives the data.
 
 - Authentication can use Google, GitHub, Apple, or email/password. Firebase Auth processes email address, display name, profile photo URL, provider identifier, user ID, and authentication metadata.
 - A profile document is stored at `users/{uid}`. Desktop sign-in also uses a short-lived handoff record at `auth_sessions/{sessionId}` to pass a token from the browser flow to the desktop app.
@@ -67,7 +67,7 @@ Firebase/Google acts as the authentication, database, storage, and hosting provi
 
 ## 4. AI review and AI chat
 
-AI Check and the AI side panel are optional. They are not used automatically and do not change timing. When you run an AI review, the app sends the relevant lyric text, TTML-like context, your prompt, and conversation history to the endpoint you configured. Review mode and translation/romanization editors do not call AI; they only record what people type or import.
+AI Check and the AI side panel are optional. They are not used automatically and do not change timing. When you run an AI review, the app sends the relevant lyric text, TTML-like context, your prompt, and conversation history to the endpoint you configured. Translation and romanization editors do not call AI; they only record what people type or import.
 
 - An OpenAI-compatible provider receives the request at the base URL and model you entered, with your API key.
 - Ollama receives the request at the local or remote URL you entered.
@@ -152,4 +152,4 @@ Firebase/Google, Sentry, Cloudflare, AI providers, and other services may proces
 
 This policy may be updated when data flows change. The version and effective date are shown at the top, and material changes require a new consent decision before the affected feature is used again.
 
-Questions or requests: **rimurusamllttmltool@gmail.com**. Controller: **the operator of this app**.
+Questions or requests: **rimurusamllttmltool@gmail.com**. Controller: **Rimurulover** (GitHub: [rimuruslimetempest](https://github.com/rimuruslimetempest)).

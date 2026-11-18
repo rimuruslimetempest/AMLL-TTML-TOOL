@@ -224,7 +224,7 @@ function SenderPage() {
 		<MigrationShell>
 			<Flex direction="column" gap="4">
 				<Box>
-					<Heading>Move to the official AMLL TTML Tool</Heading>
+					<Heading>Move to TTML Tool</Heading>
 					<Text color="gray">{OFFICIAL_TOOL_ORIGIN}</Text>
 				</Box>
 				<Text>{countsText(counts)}</Text>

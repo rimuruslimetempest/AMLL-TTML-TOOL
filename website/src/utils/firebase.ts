@@ -98,20 +98,33 @@ export function getSongKey(title: string, artist: string): string {
 	return `${nTitle}:::${nArtist}`;
 }
 
+// The companion website uses the same Firebase project as the desktop app,
+// supplied through Vite environment variables. Web API keys are public, but
+// the project must be one you control.
 const FIREBASE_CONFIG = {
-	apiKey: "AIzaSyBLreHn7aJHItOdp9Sq8EHEf-cQtKIjvus",
-	authDomain: "amll-ttml.firebaseapp.com",
-	projectId: "amll-ttml",
-	storageBucket: "amll-ttml.firebasestorage.app",
-	messagingSenderId: "733113073433",
-	appId: "1:733113073433:web:37a70a2f3741dd3847cf88",
+	apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? "",
+	authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? "",
+	projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? "",
+	storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ?? "",
+	messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? "",
+	appId: import.meta.env.VITE_FIREBASE_APP_ID ?? "",
 };
+const FIREBASE_CONFIGURED = Boolean(
+	FIREBASE_CONFIG.apiKey &&
+		FIREBASE_CONFIG.projectId &&
+		FIREBASE_CONFIG.appId,
+);
 
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
 let auth: Auth | null = null;
 
 try {
+	if (!FIREBASE_CONFIGURED) {
+		throw new Error(
+			"Set the VITE_FIREBASE_* variables to enable accounts and the community library.",
+		);
+	}
 	if (getApps().length === 0) {
 		app = initializeApp(FIREBASE_CONFIG);
 	} else {

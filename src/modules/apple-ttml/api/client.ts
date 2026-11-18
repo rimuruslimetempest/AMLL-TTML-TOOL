@@ -134,13 +134,15 @@ async function fetchAppleJson<T>(endpoint: string): Promise<T> {
 		}
 		return (await res.json()) as T;
 	} catch (webErr) {
-		// Attempt CORS proxy in web mode if direct fetch failed
+		// Attempt CORS proxy in web mode if direct fetch failed. Set
+		// VITE_APPLE_TTML_PROXY to your own proxy prefix if you deploy the web build.
 		const encoded = encodeURIComponent(url);
-		const corsProxies = [
-			`https://proxy.bobjoerules.com/?url=${encoded}`,
-			`https://corsproxy.io/?url=${encoded}`,
-			`https://api.allorigins.win/raw?url=${encoded}`,
-		];
+		const proxyBases = [
+			import.meta.env.VITE_APPLE_TTML_PROXY?.trim(),
+			"https://corsproxy.io/?url=",
+			"https://api.allorigins.win/raw?url=",
+		].filter((base): base is string => Boolean(base));
+		const corsProxies = proxyBases.map((base) => `${base}${encoded}`);
 
 		for (const proxyUrl of corsProxies) {
 			try {

@@ -36,7 +36,7 @@ pub struct RecordingResult {
 }
 
 fn recordings_dir() -> PathBuf {
-    std::env::temp_dir().join("ttml-editor-recordings")
+    std::env::temp_dir().join("ttml-tool-recordings")
 }
 
 fn stamp() -> u128 {

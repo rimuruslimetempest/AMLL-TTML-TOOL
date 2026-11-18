@@ -1,6 +1,8 @@
-import React, { memo, useCallback, useEffect, useRef } from "react";
 import classNames from "classnames";
 import { useSetAtom } from "jotai";
+import type React from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
+import { subscribePreviewClock } from "$/components/SpicyLyrics/clock";
 import { audioEngine } from "$/modules/audio/audio-engine";
 import { currentTimeAtom } from "$/modules/audio/states/index.ts";
 import styles from "./PreviewProgressBar.module.css";
@@ -46,7 +48,7 @@ export const PreviewProgressBar: React.FC<PreviewProgressBarProps> = memo(
 				}
 
 				if (fillRef.current) {
-					fillRef.current.style.width = `${pct}%`;
+					fillRef.current.style.transform = `scaleX(${pct / 100})`;
 				}
 				if (thumbRef.current) {
 					thumbRef.current.style.left = `${pct}%`;
@@ -56,52 +58,16 @@ export const PreviewProgressBar: React.FC<PreviewProgressBarProps> = memo(
 		);
 
 		useEffect(() => {
-			let rafId: number | null = null;
-
-			const tick = () => {
-				if (!isDraggingRef.current) {
-					const currentTimeMs = audioEngine.musicCurrentTime * 1000;
-					updateProgress(currentTimeMs);
-				}
-				if (audioEngine.musicPlaying) {
-					rafId = requestAnimationFrame(tick);
-				} else {
-					rafId = null;
-				}
-			};
-
-			const handlePlay = () => {
-				if (rafId !== null) cancelAnimationFrame(rafId);
-				rafId = requestAnimationFrame(tick);
-			};
-
-			const handlePauseOrSeek = () => {
-				if (!isDraggingRef.current) {
-					lastDisplaySecRef.current = -1;
-					updateProgress(audioEngine.musicCurrentTime * 1000);
-				}
-			};
-
-			audioEngine.addEventListener("music-resume", handlePlay);
-			audioEngine.addEventListener("music-pause", handlePauseOrSeek);
-			audioEngine.addEventListener("music-seeked", handlePauseOrSeek);
-			audioEngine.addEventListener("music-timeupdate", handlePauseOrSeek);
-
-			// Initial sync on mount or totalDuration change
+			let lastPaint = 0;
+			const unsubscribe = subscribePreviewClock((frame) => {
+				if (isDraggingRef.current) return;
+				if (frame.playing && frame.now - lastPaint < 33) return;
+				lastPaint = frame.now;
+				updateProgress(frame.timeMs);
+			});
 			lastDisplaySecRef.current = -1;
 			updateProgress(audioEngine.musicCurrentTime * 1000);
-
-			if (audioEngine.musicPlaying) {
-				rafId = requestAnimationFrame(tick);
-			}
-
-			return () => {
-				if (rafId !== null) cancelAnimationFrame(rafId);
-				audioEngine.removeEventListener("music-resume", handlePlay);
-				audioEngine.removeEventListener("music-pause", handlePauseOrSeek);
-				audioEngine.removeEventListener("music-seeked", handlePauseOrSeek);
-				audioEngine.removeEventListener("music-timeupdate", handlePauseOrSeek);
-			};
+			return unsubscribe;
 		}, [updateProgress]);
 
 		const getTimeFromPointer = (e: React.PointerEvent | PointerEvent) => {
@@ -196,7 +162,7 @@ export const PreviewProgressBar: React.FC<PreviewProgressBarProps> = memo(
 						<div
 							className={styles.scrubberFill}
 							ref={fillRef}
-							style={{ width: "0%" }}
+							style={{ transform: "scaleX(0)" }}
 						/>
 					</div>
 					<div

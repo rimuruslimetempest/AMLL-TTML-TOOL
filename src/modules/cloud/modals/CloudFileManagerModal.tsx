@@ -2185,7 +2185,7 @@ export const CloudFileManagerModal: FC = () => {
 											<Text size="1" color="gray">
 												{t(
 													"cloud.publishToCommunityDesc",
-													"Opt-in to showcase this finished song in the public community library on ttml.bobjoerules.com/#finished.",
+													"Opt-in to showcase this finished song in the public community library.",
 												)}
 											</Text>
 										</Flex>
@@ -2421,7 +2421,7 @@ export const CloudFileManagerModal: FC = () => {
 												<Text size="1" color="gray">
 													{t(
 														"cloud.batchPublishDesc",
-														"Make public on ttml.bobjoerules.com/#finished",
+														"Make public in the community library",
 													)}
 												</Text>
 											</Flex>

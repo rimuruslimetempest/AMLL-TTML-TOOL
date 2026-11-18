@@ -1,0 +1,8 @@
+[Desktop Entry]
+Categories=AudioVideo;Audio;AudioVideoEditing;
+Exec=ttml-tool %U
+Icon=ttml-tool
+Name=TTML Tool
+Comment=Word-synced TTML lyric editor for Apple Music-style lyrics
+Terminal=false
+Type=Application

@@ -71,7 +71,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </div>
           <h3>{isSignUp ? 'Create App Account' : 'Firebase Sign In'}</h3>
           <p className="auth-subtitle">
-            Sign in with your AMLL TTML app account to manage your profile and published songs.
+            Sign in with your TTML Tool account to manage your profile and published songs.
           </p>
         </div>
 

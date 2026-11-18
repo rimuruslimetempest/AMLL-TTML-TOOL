@@ -22,11 +22,13 @@ import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { audioEngine } from "$/modules/audio/audio-engine";
 import { lyricLinesAtom } from "$/states/main";
+import { DownloaderSetupGuideDialog } from "./DownloaderSetupGuideDialog";
 import { loadAudioFromPath } from "./download-helper";
 import styles from "./downloader.module.css";
-import { DownloaderSetupGuideDialog } from "./DownloaderSetupGuideDialog";
 import {
 	AUDIO_FORMATS,
+	COOKIE_BROWSERS,
+	type CookieBrowser,
 	type DownloadEvent,
 	type DownloadFormat,
 	downloadError,
@@ -38,6 +40,7 @@ import {
 	validDownloadUrl,
 } from "./model";
 import {
+	downloaderCookieBrowserAtom,
 	downloaderInitialFormatAtom,
 	downloaderInitialQueryAtom,
 	downloaderInitialTrackAtom,
@@ -68,6 +71,9 @@ export function DownloaderDialog() {
 	const [url, setUrl] = useState("");
 	const [mode, setMode] = useState("audio");
 	const [format, setFormat] = useState<DownloadFormat>("mp3");
+	const [cookieBrowser, setCookieBrowser] = useAtom(
+		downloaderCookieBrowserAtom,
+	);
 	const [height, setHeight] = useState("1080");
 	const [busy, setBusy] = useState(false);
 	const [cancelling, setCancelling] = useState(false);
@@ -230,6 +236,7 @@ export function DownloaderDialog() {
 					format,
 					maxHeight:
 						mode === "video" && height !== "best" ? Number(height) : null,
+					cookiesFromBrowser: cookieBrowser === "none" ? null : cookieBrowser,
 				},
 				jobId: id,
 				events,
@@ -287,16 +294,27 @@ export function DownloaderDialog() {
 				: event?.kind === "preparing"
 					? t("downloader.preparing")
 					: t("downloader.pickFolder");
+	const botCheck = failure?.detail.toLowerCase().includes("not a bot") ?? false;
 	const errorText =
-		failure?.code === "invalidUrl"
-			? t("downloader.invalidUrl")
-			: failure?.code === "cancelled"
-				? t("downloader.cancelled")
-				: failure?.code === "timeout"
-					? t("downloader.timeout")
-					: failure?.code === "busy"
-						? t("downloader.busy")
-						: t("downloader.failed");
+		failure?.code === "invalidCookies"
+			? t("downloader.invalidCookies")
+			: botCheck
+				? t("downloader.botCheck")
+				: failure?.code === "invalidUrl"
+					? t("downloader.invalidUrl")
+					: failure?.code === "cancelled"
+						? t("downloader.cancelled")
+						: failure?.code === "timeout"
+							? t("downloader.timeout")
+							: failure?.code === "busy"
+								? t("downloader.busy")
+								: t("downloader.failed");
+	const cookieBrowserLabels: Record<(typeof COOKIE_BROWSERS)[number], string> = {
+		brave: t("downloader.cookiesBrave"),
+		chrome: t("downloader.cookiesChrome"),
+		edge: t("downloader.cookiesEdge"),
+		firefox: t("downloader.cookiesFirefox"),
+	};
 
 	return (
 		<>
@@ -583,6 +601,36 @@ export function DownloaderDialog() {
 												</Select.Root>
 											</Flex>
 										)}
+									</Flex>
+									<Flex direction="column" gap="2">
+										<Text as="label" size="2" htmlFor="downloader-cookies">
+											{t("downloader.cookies")}
+										</Text>
+										<Select.Root
+											value={cookieBrowser}
+											onValueChange={(value) =>
+												setCookieBrowser(value as CookieBrowser)
+											}
+											disabled={busy}
+										>
+											<Select.Trigger
+												id="downloader-cookies"
+												aria-label={t("downloader.cookies")}
+											/>
+											<Select.Content>
+												<Select.Item value="none">
+													{t("downloader.cookiesNone")}
+												</Select.Item>
+												{COOKIE_BROWSERS.map((browser) => (
+													<Select.Item key={browser} value={browser}>
+														{cookieBrowserLabels[browser]}
+													</Select.Item>
+												))}
+											</Select.Content>
+										</Select.Root>
+										<Text size="1" color="gray">
+											{t("downloader.cookiesHint")}
+										</Text>
 									</Flex>
 									<Text size="1" color="gray">
 										{t("downloader.folderHint")}

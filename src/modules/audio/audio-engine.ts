@@ -106,6 +106,24 @@ export class AudioEngine extends EventTarget {
 		return this._ctx;
 	}
 
+	/**
+	 * Select an output device for playback where the webview supports
+	 * AudioContext.setSinkId. Returns false when the platform cannot switch
+	 * outputs; callers should keep the system default in that case.
+	 */
+	public async setOutputDevice(deviceId: string): Promise<boolean> {
+		const context = this.ctx as AudioContext & {
+			setSinkId?: (id: string) => Promise<void>;
+		};
+		if (typeof context.setSinkId !== "function") return false;
+		try {
+			await context.setSinkId(deviceId || "");
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
 	private _volume = 0.5;
 	private gainNode: GainNode | null = null;
 	private get gain() {

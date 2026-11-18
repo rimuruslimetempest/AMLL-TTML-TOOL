@@ -3,7 +3,7 @@
 	"app": {
 		"windows": [
 			{
-				"title": "TTML Editor",
+				"title": "TTML Tool",
 				"label": "main",
 				"width": 1280,
 				"height": 800,
@@ -31,7 +31,7 @@
 		}
 	},
 	"bundle": {
-		"targets": ["nsis"],
+		"targets": ["nsis", "msi"],
 		"windows": {
 			"nsis": {
 				"installMode": "currentUser",

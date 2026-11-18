@@ -1,6 +1,6 @@
 {
-  "name": "TTML Editor",
-  "short_name": "TTML Editor",
+  "name": "TTML Tool",
+  "short_name": "TTML Tool",
   "icons": [
     {
       "src": "/pwa-192x192.png",
@@ -36,6 +36,6 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#101211",
-  "theme_color": "#FFFFFF",
-  "description": "A brand new syllable lyric editor made for AMLL!"
+  "theme_color": "#6366F1",
+  "description": "A word-synced lyric editor by Rimurulover. All timing is manual."
 }

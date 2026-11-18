@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ttml.bobjoerules.com/sitemap.xml
+Sitemap: https://github.com/rimuruslimetempest/ttml-tool/sitemap.xml

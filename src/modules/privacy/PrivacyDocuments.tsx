@@ -1,5 +1,6 @@
 import { Box, Heading, Text } from "@radix-ui/themes";
 import type { ReactNode } from "react";
+import { REPORT_EMAIL } from "$/config/links";
 import {
 	PRIVACY_POLICY_UPDATED,
 	PRIVACY_POLICY_VERSION,
@@ -56,11 +57,9 @@ export function PrivacyPolicyContent() {
 				known, it is marked as a TODO.
 			</P>
 			<P>
-				The data controller is the operator of this app. The privacy contact is{" "}
-				<a href="mailto:rimurusamllttmltool@gmail.com">
-					rimurusamllttmltool@gmail.com
-				</a>
-				.
+				The data controller is Rimurulover, the author and maintainer of TTML
+				Tool. The privacy contact is{" "}
+				<a href={`mailto:${REPORT_EMAIL}`}>{REPORT_EMAIL}</a>.
 			</P>
 
 			<Section title="The short version">
@@ -88,8 +87,13 @@ export function PrivacyPolicyContent() {
 						opt in and the build has a Sentry DSN configured.
 					</Item>
 					<Item>
-						The app contains no advertising, third-party analytics, or
-						data-sale SDKs in this build.
+						Update checks contact GitHub and send only the app version and
+						operating-system name. They never send lyrics, projects, or account
+						data, and updates install only after you choose Update now.
+					</Item>
+					<Item>
+						The app contains no advertising, third-party analytics, or data-sale
+						SDKs in this build.
 					</Item>
 				</List>
 			</Section>
@@ -118,16 +122,33 @@ export function PrivacyPolicyContent() {
 					</Item>
 					<Item>
 						A local cache of your cloud profile and cloud lyric list, and
-						Firebase's local authentication/offline cache. This can remain
-						after you sign out until you clear local data.
+						Firebase's local authentication/offline cache. This can remain after
+						you sign out until you clear local data.
 					</Item>
 				</List>
 				<P>
 					Local data stays until you delete the project, clear the relevant
 					cache, or use <strong>Settings → Privacy → Clear local data</strong>.
 					Clearing local data removes projects, audio caches, settings, API
-					keys, custom backgrounds, and consent state from this installation.
-					It does not delete cloud files.
+					keys, custom backgrounds, and consent state from this installation. It
+					does not delete cloud files.
+				</P>
+			</Section>
+
+			<Section title="Update checks">
+				<P>
+					When automatic update checks are enabled, the desktop app contacts
+					GitHub Releases at most once per day. The request contains the app
+					version and operating-system name; it does not contain lyrics,
+					projects, account details, or device identifiers. Manual checks send
+					the same information.
+				</P>
+				<P>
+					If an update is offered, the signed release metadata and installer are
+					downloaded from this project's GitHub repository. Nothing is installed
+					until you choose <strong>Update now</strong>; choosing Later or Skip
+					this version leaves the app unchanged. You can turn automatic checks
+					off in Settings → About.
 				</P>
 			</Section>
 
@@ -141,14 +162,13 @@ export function PrivacyPolicyContent() {
 				<List>
 					<Item>
 						The host and room members receive your display name, a randomly
-						assigned color, your peer identifier, your edits, chat messages,
-						and your connection status.
+						assigned color, your peer identifier, your edits, chat messages, and
+						your connection status.
 					</Item>
 					<Item>
-						The room shares the current TTML project: lyrics, timing,
-						metadata, sections, marks, and the changes made in the room. It can
-						also share song audio or recordings when a member chooses to share
-						them.
+						The room shares the current TTML project: lyrics, timing, metadata,
+						sections, marks, and the changes made in the room. It can also share
+						song audio or recordings when a member chooses to share them.
 					</Item>
 					<Item>
 						Song info shared with the room includes extra video or reference
@@ -171,9 +191,9 @@ export function PrivacyPolicyContent() {
 					</Item>
 					<Item>
 						Shared media is stored in the host's operating-system temporary
-						directory while the room is running and removed when the room
-						server stops. A guest may choose to download shared media; that
-						creates a copy on the guest's device.
+						directory while the room is running and removed when the room server
+						stops. A guest may choose to download shared media; that creates a
+						copy on the guest's device.
 					</Item>
 					<Item>
 						Shared song audio is loaded into a guest's memory for playback. It
@@ -181,12 +201,12 @@ export function PrivacyPolicyContent() {
 					</Item>
 				</List>
 				<P>
-					The host can create invite links with a role, expiry, maximum
-					uses, an optional password, and optional approval before joining.
-					Invites can be revoked or regenerated; people can be kicked, banned,
-					or locked out. Roles are Host, Editor, Commenter, and Viewer. Only
-					the host and editors can edit lyrics or timing, and only the host,
-					editors, and commenters can comment or review.
+					The host can create invite links with a role, expiry, maximum uses, an
+					optional password, and optional approval before joining. Invites can
+					be revoked or regenerated; people can be kicked, banned, or locked
+					out. Roles are Host, Editor, Commenter, and Viewer. Only the host and
+					editors can edit lyrics or timing, and only the host, editors, and
+					commenters can comment or review.
 				</P>
 				<P>
 					<strong>Visibility warning:</strong> anyone with a valid invite link
@@ -208,19 +228,18 @@ export function PrivacyPolicyContent() {
 					review marks, history, and restore points are not persisted in the
 					host's room database after the host stops the room or closes the app.
 					Each participant's app may keep a local project-notes copy of
-					comments, review marks, and related history with that project;
-					those notes are never written into TTML. Temporary shared-media
-					files are cleaned up when the room server stops.
+					comments, review marks, and related history with that project; those
+					notes are never written into TTML. Temporary shared-media files are
+					cleaned up when the room server stops.
 				</P>
 			</Section>
 
 			<Section title="3. Cloud accounts and the cloud library">
 				<P>
-					Cloud features are optional. If you create an account or sign in,
-					the app sends data to the Firebase project configured for the build.
-					The default project is <code>amll-ttml</code>. If you configure your
-					own Firebase project, that project's operator receives the data
-					instead.
+					Cloud features are optional. If you create an account or sign in, the
+					app sends data to the Firebase project configured for the build. This
+					repository does not ship a default project. If you configure your own
+					Firebase project, that project's operator receives the data instead.
 				</P>
 				<List>
 					<Item>
@@ -276,14 +295,14 @@ export function PrivacyPolicyContent() {
 					Avatar fallback: if Firebase Storage upload fails or is unavailable,
 					the app may upload your chosen avatar to Litterbox
 					(litterbox.catbox.moe, configured for 72 hours) and then to Imgur's
-					anonymous image API. Those uploads produce public URLs and are
-					subject to those services' policies and retention. The app does not
-					tell you before trying the fallback.
+					anonymous image API. Those uploads produce public URLs and are subject
+					to those services' policies and retention. The app does not tell you
+					before trying the fallback.
 				</P>
 				<P>
 					Firebase/Google acts as the authentication, database, storage, and
-					hosting provider. Firebase receives account data, request metadata,
-					IP address, and the content you choose to store.{" "}
+					hosting provider. Firebase receives account data, request metadata, IP
+					address, and the content you choose to store.{" "}
 					<Todo>
 						name the Firebase project owner, backup retention, data-region, and
 						international-transfer safeguards
@@ -295,9 +314,9 @@ export function PrivacyPolicyContent() {
 				<P>
 					AI Check and the AI side panel are optional. They are not used
 					automatically, and they do not change timing. When you run an AI
-					review, the app sends the relevant lyric text, TTML/TTML-like
-					context, your prompt, and the conversation history to the endpoint
-					you configured.
+					review, the app sends the relevant lyric text, TTML/TTML-like context,
+					your prompt, and the conversation history to the endpoint you
+					configured.
 				</P>
 				<List>
 					<Item>
@@ -314,17 +333,16 @@ export function PrivacyPolicyContent() {
 					</Item>
 				</List>
 				<P>
-					The AI provider may log or retain the request under its own policy.
-					Do not send lyrics or other content that you are not allowed to send
-					to that provider. Local rule-based checks do not make a network
-					request.
+					The AI provider may log or retain the request under its own policy. Do
+					not send lyrics or other content that you are not allowed to send to
+					that provider. Local rule-based checks do not make a network request.
 				</P>
 			</Section>
 
 			<Section title="5. Search, import, and media providers">
 				<P>
-					When you use a search or import feature, the app sends the query,
-					URL, or identifiers needed for that request to the relevant service.
+					When you use a search or import feature, the app sends the query, URL,
+					or identifiers needed for that request to the relevant service.
 					Typical recipients include:
 				</P>
 				<List>
@@ -339,8 +357,8 @@ export function PrivacyPolicyContent() {
 					</Item>
 					<Item>
 						CORS proxies such as api.allorigins.win and corsproxy.io, which
-						receive the target URL and request metadata when the app cannot
-						call a provider directly.
+						receive the target URL and request metadata when the app cannot call
+						a provider directly.
 					</Item>
 					<Item>
 						GitHub for repository, release, update, and avatar resources.
@@ -354,10 +372,10 @@ export function PrivacyPolicyContent() {
 					not using the corresponding import/search feature.
 				</P>
 				<P>
-					Audio download uses a local yt-dlp/ffmpeg process and contacts the
-					URL you provide. Imported audio, lyric files, and cover images are
-					saved locally as project data unless you choose to upload them to a
-					cloud account or share them in a room.
+					Audio download uses a local yt-dlp/ffmpeg process and contacts the URL
+					you provide. Imported audio, lyric files, and cover images are saved
+					locally as project data unless you choose to upload them to a cloud
+					account or share them in a room.
 				</P>
 			</Section>
 
@@ -412,9 +430,11 @@ export function PrivacyPolicyContent() {
 						replay, screenshots, or automatic transcription.
 					</Item>
 					<Item>
-						A configured remote destination or Sentry processes the report
-						under its own policy.{" "}
-						<Todo>name the remote crash-report organization and retention period</Todo>
+						A configured remote destination or Sentry processes the report under
+						its own policy.{" "}
+						<Todo>
+							name the remote crash-report organization and retention period
+						</Todo>
 					</Item>
 				</List>
 				<P>
@@ -429,8 +449,8 @@ export function PrivacyPolicyContent() {
 					The app itself does not use advertising cookies, third-party
 					analytics, cross-site tracking, or data-sale SDKs. It uses browser
 					storage (localStorage, IndexedDB, and Cache Storage) and Firebase's
-					local authentication cache. Embedded external pages and providers
-					may set their own cookies under their policies.
+					local authentication cache. Embedded external pages and providers may
+					set their own cookies under their policies.
 				</P>
 			</Section>
 
@@ -455,9 +475,9 @@ export function PrivacyPolicyContent() {
 					</Item>
 					<Item>
 						<strong>Account deletion:</strong> this build has no self-service
-						account-deletion button. Use the deletion instructions in Settings
-						→ Privacy or email <Todo>privacy email address</Todo>. Cloud
-						documents can be deleted individually from the cloud library.
+						account-deletion button. Use the deletion instructions in Settings →
+						Privacy or email <Todo>privacy email address</Todo>. Cloud documents
+						can be deleted individually from the cloud library.
 					</Item>
 					<Item>
 						<strong>Avatar fallbacks:</strong> Litterbox is configured for 72
@@ -466,8 +486,8 @@ export function PrivacyPolicyContent() {
 					</Item>
 					<Item>
 						<strong>Crash reports:</strong> the local copy is kept until you
-						delete it or clear local data. Remote reports, when you opt in and
-						a destination exists, are retained by that destination.{" "}
+						delete it or clear local data. Remote reports, when you opt in and a
+						destination exists, are retained by that destination.{" "}
 						<Todo>remote crash-report retention period</Todo>
 					</Item>
 				</List>
@@ -484,15 +504,15 @@ export function PrivacyPolicyContent() {
 				<P>
 					No system is perfectly secure. Protect invite links, account
 					credentials, API keys, exported TTML files, and audio. Treat shared
-					rooms and cloud saves as shareable content. See the access-rule
-					notice in section 3.
+					rooms and cloud saves as shareable content. See the access-rule notice
+					in section 3.
 				</P>
 			</Section>
 
 			<Section title="12. Children">
 				<P>
-					The app is not directed to children under 13. If you are in the EEA
-					or UK, you must be at least 16 to use an account or live room without
+					The app is not directed to children under 13. If you are in the EEA or
+					UK, you must be at least 16 to use an account or live room without
 					appropriate consent. <Todo>confirm the minimum age with counsel</Todo>
 				</P>
 			</Section>
@@ -506,14 +526,15 @@ export function PrivacyPolicyContent() {
 				</P>
 				<List>
 					<Item>View or withdraw consent in Settings → Privacy.</Item>
-					<Item>Delete individual cloud songs and audio in the cloud library.</Item>
-					<Item>Clear local projects, settings, caches, and API keys locally.</Item>
+					<Item>
+						Delete individual cloud songs and audio in the cloud library.
+					</Item>
+					<Item>
+						Clear local projects, settings, caches, and API keys locally.
+					</Item>
 					<Item>
 						Request account or provider-side deletion by emailing{" "}
-						<a href="mailto:rimurusamllttmltool@gmail.com">
-							rimurusamllttmltool@gmail.com
-						</a>
-						.
+						<a href={`mailto:${REPORT_EMAIL}`}>{REPORT_EMAIL}</a>.
 					</Item>
 				</List>
 				<P>
@@ -542,10 +563,8 @@ export function PrivacyPolicyContent() {
 				</P>
 				<P>
 					Questions or requests:{" "}
-					<a href="mailto:rimurusamllttmltool@gmail.com">
-						rimurusamllttmltool@gmail.com
-					</a>
-					. Controller: the operator of this app.
+					<a href={`mailto:${REPORT_EMAIL}`}>{REPORT_EMAIL}</a>. Controller: the
+					operator of this app.
 				</P>
 			</Section>
 		</Box>
@@ -565,10 +584,9 @@ export function TermsContent() {
 
 			<Section title="1. Acceptance">
 				<P>
-					By using the app, creating an account, hosting or joining a live
-					room, or accepting the consent dialog, you agree to these terms and
-					the Privacy Policy. If you do not agree, do not use the affected
-					feature.
+					By using the app, creating an account, hosting or joining a live room,
+					or accepting the consent dialog, you agree to these terms and the
+					Privacy Policy. If you do not agree, do not use the affected feature.
 				</P>
 			</Section>
 
@@ -590,15 +608,17 @@ export function TermsContent() {
 					have the rights needed to upload, share, or publish the content.
 				</P>
 				<P>
-					Cloud saves are not a private vault in this build. Published items
-					and cloud library records may be readable by others as described in
-					the Privacy Policy. Do not upload confidential material.
+					Cloud saves are not a private vault in this build. Published items and
+					cloud library records may be readable by others as described in the
+					Privacy Policy. Do not upload confidential material.
 				</P>
 			</Section>
 
 			<Section title="4. Acceptable use">
 				<List>
-					<Item>Do not upload or share content you do not have permission to use.</Item>
+					<Item>
+						Do not upload or share content you do not have permission to use.
+					</Item>
 					<Item>
 						Do not use live rooms to harass, threaten, impersonate, spam, or
 						distribute unlawful material.
@@ -620,14 +640,14 @@ export function TermsContent() {
 
 			<Section title="5. Live rooms">
 				<P>
-					The host controls the room and its lifetime, including roles,
-					invite links, passwords, expiry, approval, removal, bans, room lock,
-					and restoring earlier states. Anyone with a valid invite can join
-					while it is open unless the room is locked or approval is required.
-					The host and participants can see and copy what is shared,
-					including comments, review notes, and room history. The app does
-					not provide end-to-end encryption. The host is responsible for the
-					room and the content shared in it.
+					The host controls the room and its lifetime, including roles, invite
+					links, passwords, expiry, approval, removal, bans, room lock, and
+					restoring earlier states. Anyone with a valid invite can join while it
+					is open unless the room is locked or approval is required. The host
+					and participants can see and copy what is shared, including comments,
+					review notes, and room history. The app does not provide end-to-end
+					encryption. The host is responsible for the room and the content
+					shared in it.
 				</P>
 			</Section>
 
@@ -661,9 +681,9 @@ export function TermsContent() {
 			<Section title="9. Termination">
 				<P>
 					Access to cloud or live features may be limited or terminated for
-					misuse, security risk, legal requirements, or provider action.
-					You may stop using the app at any time and can withdraw consent in
-					Settings → Privacy.
+					misuse, security risk, legal requirements, or provider action. You may
+					stop using the app at any time and can withdraw consent in Settings →
+					Privacy.
 				</P>
 			</Section>
 
@@ -688,10 +708,7 @@ export function TermsContent() {
 			<Section title="12. Contact">
 				<P>
 					Legal and privacy contact:{" "}
-					<a href="mailto:rimurusamllttmltool@gmail.com">
-						rimurusamllttmltool@gmail.com
-					</a>
-					.
+					<a href={`mailto:${REPORT_EMAIL}`}>{REPORT_EMAIL}</a>.
 				</P>
 			</Section>
 		</Box>

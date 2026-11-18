@@ -1,0 +1,39 @@
+name: Feature request
+description: Suggest an improvement to TTML Tool.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion. Please explain the workflow problem first, then the proposed solution.
+
+        **Do not paste lyrics, audio, private project data, or credentials.**
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the current workflow and where it breaks down.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Project constraints
+      options:
+        - label: This request does not add automatic lyric timing; all timing in TTML Tool stays manual.
+          required: true

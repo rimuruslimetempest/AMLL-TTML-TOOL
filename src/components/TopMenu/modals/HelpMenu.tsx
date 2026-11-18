@@ -1,6 +1,6 @@
-import { Button, DropdownMenu } from "@radix-ui/themes";
 import {
 	ArrowDownload20Regular,
+	ArrowSync20Regular,
 	BookOpen20Regular,
 	Code20Regular,
 	DocumentText20Regular,
@@ -8,26 +8,33 @@ import {
 	Shield20Regular,
 	Sparkle20Regular,
 } from "@fluentui/react-icons";
+import { Button, DropdownMenu } from "@radix-ui/themes";
 import { useSetAtom } from "jotai";
 import { Toolbar } from "radix-ui";
 import type { CSSProperties } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { changelogDialogAtom, whatsNewDialogAtom } from "$/states/dialogs.ts";
-import {
-	privacyPolicyDialogAtom as privacyPolicyAtom,
-	termsDialogAtom as termsAtom,
-} from "$/modules/privacy/states";
-import { APP_VERSION } from "$/modules/changelog/data";
 import { buildReportProblemUrl, RELEASES_URL } from "$/config/links";
-import { openExternal } from "$/utils/openExternal";
-import { NewMenuIcon } from "../NewMenuIcon";
-import { useTopMenuActions } from "../useTopMenuActions";
+import { APP_VERSION } from "$/modules/changelog/data";
 import {
 	guideExportedAtom,
 	guidePanelOpenAtom,
 	guideStepAtom,
 	guideWelcomeOpenAtom,
 } from "$/modules/onboarding/states";
+import {
+	privacyPolicyDialogAtom as privacyPolicyAtom,
+	termsDialogAtom as termsAtom,
+} from "$/modules/privacy/states";
+import {
+	changelogDialogAtom,
+	settingsDialogAtom,
+	settingsTabAtom,
+	whatsNewDialogAtom,
+} from "$/states/dialogs.ts";
+import { openExternal } from "$/utils/openExternal";
+import { useAppUpdate } from "$/utils/useAppUpdate";
+import { NewMenuIcon } from "../NewMenuIcon";
+import { useTopMenuActions } from "../useTopMenuActions";
 
 type HelpMenuProps = {
 	variant: "toolbar" | "submenu";
@@ -52,6 +59,9 @@ const HelpMenuItems = () => {
 	const setGuidePanelOpen = useSetAtom(guidePanelOpenAtom);
 	const setGuideStep = useSetAtom(guideStepAtom);
 	const setGuideExported = useSetAtom(guideExportedAtom);
+	const setSettingsOpen = useSetAtom(settingsDialogAtom);
+	const setSettingsTab = useSetAtom(settingsTabAtom);
+	const { checkUpdate } = useAppUpdate();
 
 	return (
 		<>
@@ -78,13 +88,13 @@ const HelpMenuItems = () => {
 				<NewMenuIcon>
 					<BookOpen20Regular />
 				</NewMenuIcon>
-				{t("topBar.menu.helpDoc", "SpicyLyrics Guides")}
+				{t("topBar.menu.helpDoc", "Documentation")}
 			</DropdownMenu.Item>
 			{isWebsite && (
 				<DropdownMenu.Item
 					onSelect={() =>
 						window.open(
-							"https://github.com/bobjoerules/AMLL-TTML-TOOL/releases/latest",
+							"https://github.com/rimuruslimetempest/ttml-tool/releases/latest",
 							"_blank",
 							"noopener,noreferrer",
 						)
@@ -109,6 +119,20 @@ const HelpMenuItems = () => {
 				</NewMenuIcon>
 				Changelog & Updates
 			</DropdownMenu.Item>
+			{!isWebsite && (
+				<DropdownMenu.Item
+					onSelect={() => {
+						setSettingsTab("about");
+						setSettingsOpen(true);
+						void checkUpdate(false);
+					}}
+				>
+					<NewMenuIcon>
+						<ArrowSync20Regular />
+					</NewMenuIcon>
+					Check for updates
+				</DropdownMenu.Item>
+			)}
 			{RELEASES_URL && (
 				<DropdownMenu.Item onSelect={() => openExternal(RELEASES_URL)}>
 					<NewMenuIcon>

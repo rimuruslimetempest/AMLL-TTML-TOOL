@@ -1,5 +1,7 @@
 export const AUDIO_FORMATS = ["mp3", "m4a", "flac", "wav", "opus"] as const;
 export const VIDEO_FORMATS = ["mp4", "mkv"] as const;
+export const COOKIE_BROWSERS = ["brave", "chrome", "edge", "firefox"] as const;
+export type CookieBrowser = "none" | (typeof COOKIE_BROWSERS)[number];
 export type DownloadFormat =
 	| (typeof AUDIO_FORMATS)[number]
 	| (typeof VIDEO_FORMATS)[number];

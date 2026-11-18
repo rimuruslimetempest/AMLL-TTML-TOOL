@@ -11,9 +11,9 @@ const sources = {
 	"package.json": '{\n\t"version": "0.7.7"\n}\n',
 	"src-tauri/tauri.conf.json": '{\n\t"version": "0.7.7"\n}\n',
 	"src-tauri/Cargo.toml":
-		'[package]\nname = "amll-ttml-tool"\nversion = "0.7.7"\n\n[dependencies]\n',
+		'[package]\nname = "ttml-tool"\nversion = "0.7.7"\n\n[dependencies]\n',
 	"src-tauri/Cargo.lock":
-		'[[package]]\nname = "amll-ttml-tool"\nversion = "0.7.7"\ndependencies = []\n',
+		'[[package]]\nname = "ttml-tool"\nversion = "0.7.7"\ndependencies = []\n',
 };
 
 test("calculates stable SemVer bumps", () => {

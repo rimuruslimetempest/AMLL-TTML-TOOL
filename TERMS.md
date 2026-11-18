@@ -3,7 +3,7 @@
 **Version:** 2026-11-06  
 **Effective:** November 6, 2026
 
-These terms are a plain-language draft for this build. They are not a substitute for legal review. **[TODO: legal review and governing law]**
+These terms are a plain-language draft for TTML Tool, maintained by **Rimurulover** (GitHub: [rimuruslimetempest](https://github.com/rimuruslimetempest)). They are not a substitute for legal review. **[TODO: legal review and governing law]**
 
 ## 1. Acceptance
 
@@ -37,7 +37,7 @@ Cloud features depend on Firebase. Search, import, AI, Discord, Cloudflare, cras
 
 ## 7. AI output
 
-AI review is assistive only. It can be wrong, incomplete, or offensive. You are responsible for reviewing suggestions before using them. AI features do not automatically change timing or lyrics. Review mode, translation, romanization, comments, and matching-word prompts are human-controlled and do not call AI.
+AI review is assistive only. It can be wrong, incomplete, or offensive. You are responsible for reviewing suggestions before using them. AI features do not automatically change timing or lyrics. Translation, romanization, comments, and matching-word prompts are human-controlled and do not call AI.
 
 ## 8. Availability and changes
 

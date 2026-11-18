@@ -227,7 +227,7 @@ export function CollabDialog() {
 								style={{ width: "100%" }}
 							/>
 							<Text as="div" size="1" color="gray" mt="1">
-								Another TTML Editor user can paste this under Collaborate → Join
+								Another TTML Tool user can paste this under Collaborate → Join
 								a room. It also opens in a browser.
 							</Text>
 						</Box>

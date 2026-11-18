@@ -10,10 +10,13 @@ export interface ChangelogRelease {
 }
 
 const SECTION_NAMES: Record<string, string> = {
+	highlights: "Highlights",
+	new: "New",
 	added: "Added",
 	improved: "Improved",
 	changed: "Improved",
 	fixed: "Fixed",
+	credits: "Credits",
 };
 
 /**

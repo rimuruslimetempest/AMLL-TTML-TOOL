@@ -1,18 +1,18 @@
 {
 	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-	"productName": "TTML Editor",
-	"version": "5.1.0",
-	"identifier": "com.bobjoerules.amll-ttml-tool",
+	"productName": "TTML Tool",
+	"version": "1.0.0",
+	"identifier": "com.rimuruslimetempest.ttmltool",
 	"build": {
 		"frontendDist": "../dist",
 		"devUrl": "http://localhost:5173",
-		"beforeDevCommand": "npm run dev",
-		"beforeBuildCommand": "npm run build && npm run build:collab-web"
+		"beforeDevCommand": "pnpm dev",
+		"beforeBuildCommand": "pnpm build && pnpm build:collab-web"
 	},
 	"app": {
 		"windows": [
 			{
-				"title": "",
+				"title": "TTML Tool",
 				"label": "main",
 				"width": 1280,
 				"height": 800,
@@ -41,6 +41,12 @@
 	"bundle": {
 		"active": true,
 		"targets": "all",
+		"publisher": "Rimurulover",
+		"copyright": "Copyright © 2026 Rimurulover",
+		"homepage": "https://github.com/rimuruslimetempest/ttml-tool",
+		"category": "Music",
+		"shortDescription": "A word-synced TTML lyric editor for Apple Music-style lyrics.",
+		"longDescription": "TTML Tool is a desktop editor for word-synced TTML lyrics, with manual timing, a smooth live preview, format import and export, live rooms, comments, and collaboration.",
 		"icon": [
 			"icons/32x32.png",
 			"icons/128x128.png",
@@ -51,13 +57,33 @@
 		"resources": [
 			"resources/web/**/*"
 		],
+		"fileAssociations": [
+			{
+				"ext": ["ttml"],
+				"name": "TTML Lyric",
+				"description": "TTML timed lyric file",
+				"role": "Editor"
+			},
+			{
+				"ext": ["lrc"],
+				"name": "LRC Lyric",
+				"description": "LRC timed lyric file",
+				"role": "Editor"
+			},
+			{
+				"ext": ["srt"],
+				"name": "SRT Subtitle",
+				"description": "SRT subtitle file",
+				"role": "Editor"
+			}
+		],
 		"createUpdaterArtifacts": true
 	},
 	"plugins": {
 		"updater": {
 			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc4MTVGNjc5N0I4MDQzMzUKUldRMVE0QjdlZllWZUdqakZ5ZG9TMDEwWUhUUXUzYjR1R3Y0aXBMeng2bHVTUzE1eDhhYVI5NHoK",
 			"endpoints": [
-				"https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/releases/latest/download/latest.json"
+				"https://github.com/rimuruslimetempest/ttml-tool/releases/latest/download/latest.json"
 			]
 		}
 	}

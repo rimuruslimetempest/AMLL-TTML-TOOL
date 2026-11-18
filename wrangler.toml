@@ -1,15 +1,12 @@
-name = "amll-ttml-discord-embeds"
+# TTML Tool Discord/OG embed worker.
+# [TODO] Before deploying, replace the placeholder Firebase project ID in
+# cloudflare-worker.js and add your own route and zone here.
+name = "ttml-tool-discord-embeds"
 main = "cloudflare-worker.js"
 compatibility_date = "2024-09-01"
+workers_dev = true
 
-routes = [
-  { pattern = "ttml.bobjoerules.com/api*", zone_name = "bobjoerules.com" },
-  { pattern = "ttml.bobjoerules.com/stats*", zone_name = "bobjoerules.com" },
-  { pattern = "ttml.bobjoerules.com/leaderboard*", zone_name = "bobjoerules.com" },
-  { pattern = "ttml.bobjoerules.com/user/*", zone_name = "bobjoerules.com" },
-  { pattern = "ttml.bobjoerules.com/u/*", zone_name = "bobjoerules.com" },
-  { pattern = "ttml.bobjoerules.com/song/*", zone_name = "bobjoerules.com" },
-  { pattern = "ttml.bobjoerules.com/track/*", zone_name = "bobjoerules.com" },
-  { pattern = "ttml.bobjoerules.com/s/*", zone_name = "bobjoerules.com" },
-  { pattern = "ttml.bobjoerules.com/sitemap.xml", zone_name = "bobjoerules.com" }
-]
+# Example — uncomment and change to a domain you own:
+# routes = [
+#   { pattern = "lyrics.example.com/api*", zone_name = "example.com" }
+# ]

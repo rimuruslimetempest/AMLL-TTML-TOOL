@@ -1,7 +1,8 @@
 {
-  "name": "amll-ttml-website",
+  "name": "ttml-tool-website",
   "private": true,
   "version": "1.0.0",
+  "author": "Rimurulover",
   "type": "module",
   "scripts": {
     "dev": "vite",

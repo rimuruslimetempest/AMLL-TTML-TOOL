@@ -2,7 +2,7 @@
 	"app": {
 		"error": {
 			"title": "Oups, une erreur s'est produite !",
-			"description": "Une erreur s'est produite lors de l'exécution d'AMLL TTML Tools",
+			"description": "Une erreur s'est produite lors de l'exécution d'TTML Tools",
 			"checkDevTools": "Les détails peuvent être trouvés dans les Outils de développement",
 			"saveLyrics": "Essayez de sauvegarder les paroles actuelles",
 			"tryRestart": "Essayez de recharger l'application",
@@ -1313,12 +1313,12 @@
 	"aboutModal": {
 		"appName": "Outil TTML de paroles style Apple Music",
 		"description": "Un outil d'édition et de chronométrage TTML mot par mot pour les paroles style Apple Music",
-		"maintainers": "Fork Maintainers",
-		"maintainersDesc": "This fork is maintained and developed by:",
+		"maintainers": "Maintainer",
+		"maintainersDesc": "TTML Tool is designed, developed, and maintained by:",
 		"forkMaintainer": "Fork maintainer & contributor",
 		"visitWebsite": "Visit website",
 		"credits": "Credits & Third-Party Notices",
-		"creditsIntro": "This project includes work adapted from the following open-source projects.",
+		"creditsIntro": "TTML Tool began from the AMLL TTML Tool codebase; its copyright and license notices are retained in LICENSE.",
 		"community": "Community & Contributions",
 		"communityDesc": "Help us make the tool better by contributing code, reporting issues, or providing translations.",
 		"github": "GitHub Repository",

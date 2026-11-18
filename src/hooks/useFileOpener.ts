@@ -16,6 +16,11 @@ import { toast } from "react-toastify";
 import { uid } from "uid";
 
 import { audioEngine } from "$/modules/audio/audio-engine";
+import { parsedResultToTTML } from "$/modules/lyrics-formats/import";
+import {
+	decodeLyricBytes,
+	parseLyricText,
+} from "$/modules/lyrics-formats/parsers";
 import { getProjectList } from "$/modules/project/autosave/autosave";
 import { getSuggestedTtmlFileName } from "$/modules/project/logic/metadata-filename";
 import { isProjectMatch } from "$/modules/project/logic/project-match";
@@ -46,6 +51,8 @@ const LYRIC_PARSERS: Record<string, (text: string) => LyricLine[]> = {
 	yrc: parseYrc,
 	lys: parseLys,
 };
+
+const TIMED_LYRIC_EXTENSIONS = new Set(["srt", "ass", "ssa", "vtt", "txt"]);
 
 const AUDIO_EXTENSIONS = new Set([
 	"opus",
@@ -109,21 +116,33 @@ export const useFileOpener = () => {
 				}
 
 				let lyricData: TTMLLyric | null = null;
-				const text = await file.text();
 
-				if (ext === "ttml") {
-					lyricData = parseTTML(text);
-				} else if (ext in LYRIC_PARSERS) {
-					const parser = LYRIC_PARSERS[ext];
-					const rawLines = parser(text);
-					lyricData = normalizeLyricLines(rawLines);
+				if (TIMED_LYRIC_EXTENSIONS.has(ext)) {
+					const decoded = decodeLyricBytes(await file.arrayBuffer());
+					const parsed = parseLyricText(file.name, decoded.text);
+					lyricData = parsedResultToTTML(parsed);
+					if (parsed.warnings.length > 0) {
+						toast.warn(
+							`Imported with ${parsed.warnings.length} problem${parsed.warnings.length === 1 ? "" : "s"} reported. Check the lines marked for review.`,
+						);
+					}
+					toast.info("Imported timing needs to be checked against the audio.");
 				} else {
+					const text = await file.text();
+					if (ext === "ttml") {
+						lyricData = parseTTML(text);
+					} else if (ext in LYRIC_PARSERS) {
+						const parser = LYRIC_PARSERS[ext];
+						const rawLines = parser(text);
+						lyricData = normalizeLyricLines(rawLines);
+					} else {
 					toast.error(
 						t("error.unsupportedFileFormat", "Unsupported file format: {ext}", {
 							ext,
 						}),
 					);
-					return;
+						return;
+					}
 				}
 
 				if (!lyricData) return;

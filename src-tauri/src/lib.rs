@@ -8,10 +8,12 @@ use std::time::{Duration, Instant};
 
 use discord_rich_presence::{DiscordIpc, DiscordIpcClient, activity};
 
+// [TODO] Replace with your own Discord application ID before publishing.
+// The current ID is inherited from the upstream project's Discord app.
 const DISCORD_CLIENT_ID: &str = "1564500602854318111";
 const DISCORD_LOGO_URL: &str =
-    "https://raw.githubusercontent.com/bobjoerules/TTML-Editor/main/public/logo.png";
-const REPOSITORY_URL: &str = "https://github.com/bobjoerules/TTML-Editor";
+    "https://raw.githubusercontent.com/rimuruslimetempest/ttml-tool/main/public/logo.png";
+const REPOSITORY_URL: &str = "https://github.com/rimuruslimetempest/ttml-tool";
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -94,7 +96,7 @@ async fn set_discord_activity(
     if let Some(large_image_text) = payload.large_image_text.as_deref() {
         assets = assets.large_text(large_image_text);
     } else {
-        assets = assets.large_text("TTML Editor");
+        assets = assets.large_text("TTML Tool");
     }
 
     if let Some(small_image) = payload.small_image.as_deref() {
@@ -325,7 +327,7 @@ async fn create_new_window(app: tauri::AppHandle) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
         builder = builder
-            .title("TTML Editor")
+            .title("TTML Tool")
             .decorations(false)
             .transparent(true)
             .visible(true)
@@ -542,7 +544,7 @@ pub fn run() {
                 let handle = app.handle();
 
                 // 1. App menu
-                let app_menu = Submenu::new(app, "TTML Editor", true)?;
+                let app_menu = Submenu::new(app, "TTML Tool", true)?;
                 app_menu.append(&PredefinedMenuItem::about(app, None, None)?)?;
                 app_menu.append(&PredefinedMenuItem::separator(app)?)?;
                 let account_item = MenuItem::with_id(
@@ -787,7 +789,7 @@ pub fn run() {
                 let github_item =
                     MenuItem::with_id(app, "menu-github", "GitHub", true, None::<&str>)?;
                 let wiki_item =
-                    MenuItem::with_id(app, "menu-wiki", "SpicyLyrics Guides", true, None::<&str>)?;
+                    MenuItem::with_id(app, "menu-wiki", "Documentation", true, None::<&str>)?;
                 let whats_new_item =
                     MenuItem::with_id(app, "menu-whats-new", "What's New", true, None::<&str>)?;
                 let changelog_item = MenuItem::with_id(
@@ -798,7 +800,7 @@ pub fn run() {
                     None::<&str>,
                 )?;
                 let about_item =
-                    MenuItem::with_id(app, "menu-about", "About TTML Editor", true, None::<&str>)?;
+                    MenuItem::with_id(app, "menu-about", "About TTML Tool", true, None::<&str>)?;
 
                 help_menu.append(&start_guide_item)?;
                 help_menu.append(&github_item)?;

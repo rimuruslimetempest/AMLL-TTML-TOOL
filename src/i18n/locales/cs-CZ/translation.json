@@ -2,7 +2,7 @@
 	"app": {
 		"error": {
 			"title": "Jejda, došlo k chybě!",
-			"description": "Při běhu AMLL TTML Tools došlo k chybě",
+			"description": "Při běhu TTML Tools došlo k chybě",
 			"checkDevTools": "Podrobnosti najdete v Nástrojích pro vývojáře",
 			"saveLyrics": "Zkuste uložit aktuální titulky",
 			"tryRestart": "Zkuste aplikaci znovu načíst",
@@ -1313,12 +1313,12 @@
 	"aboutModal": {
 		"appName": "Nástroj TTML pro titulky ve stylu Apple Music",
 		"description": "Nástroj pro úpravu a časování TTML po slovech pro titulky ve stylu Apple Music",
-		"maintainers": "Fork Maintainers",
-		"maintainersDesc": "This fork is maintained and developed by:",
+		"maintainers": "Maintainer",
+		"maintainersDesc": "TTML Tool is designed, developed, and maintained by:",
 		"forkMaintainer": "Fork maintainer & contributor",
 		"visitWebsite": "Visit website",
 		"credits": "Credits & Third-Party Notices",
-		"creditsIntro": "This project includes work adapted from the following open-source projects.",
+		"creditsIntro": "TTML Tool began from the AMLL TTML Tool codebase; its copyright and license notices are retained in LICENSE.",
 		"community": "Community & Contributions",
 		"communityDesc": "Help us make the tool better by contributing code, reporting issues, or providing translations.",
 		"github": "GitHub Repository",

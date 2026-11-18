@@ -171,7 +171,7 @@ class CollabClient {
 		return session;
 	}
 
-	/** Join a host link directly from TTML Editor instead of opening its web room. */
+	/** Join a host link directly from TTML Tool instead of opening its web room. */
 	joinGuestFromLink(
 		link: string,
 		name: string,

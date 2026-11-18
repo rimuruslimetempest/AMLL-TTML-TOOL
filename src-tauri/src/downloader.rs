@@ -67,7 +67,20 @@ pub struct DownloadRequest {
     max_height: Option<u32>,
     #[serde(default)]
     destination_dir: Option<PathBuf>,
+    #[serde(default)]
+    cookies_from_browser: Option<String>,
 }
+
+const COOKIE_BROWSERS: &[&str] = &[
+    "brave",
+    "chrome",
+    "chromium",
+    "edge",
+    "firefox",
+    "opera",
+    "safari",
+    "vivaldi",
+];
 
 #[derive(Clone, serde::Serialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
@@ -332,6 +345,9 @@ fn arguments(request: &DownloadRequest, dir: &Path, tools: &Path) -> Vec<String>
     .into_iter()
     .map(str::to_owned)
     .collect();
+    if let Some(browser) = request.cookies_from_browser.as_deref() {
+        args.extend(["--cookies-from-browser".into(), browser.to_owned()]);
+    }
     let deno_binary = tools.join(format!("deno{}", std::env::consts::EXE_SUFFIX));
     let deno_path = if deno_binary.is_file() {
         Some(deno_binary)
@@ -739,6 +755,13 @@ pub async fn download_media(
     {
         return Err(error("failed", "Invalid height"));
     }
+    if request
+        .cookies_from_browser
+        .as_deref()
+        .is_some_and(|browser| !COOKIE_BROWSERS.contains(&browser))
+    {
+        return Err(error("invalidCookies", ""));
+    }
     let tools = tools_dir(window.app_handle())?;
     let cancelled = claim_job(&state, &job_id)?;
     let guard = ActiveJob(state.inner().clone());
@@ -834,6 +857,7 @@ mod tests {
             format: Format::Mp3,
             max_height: None,
             destination_dir: None,
+            cookies_from_browser: None,
         };
         let args = arguments(
             &request,
@@ -847,12 +871,29 @@ mod tests {
     }
 
     #[test]
+    fn adds_selected_browser_cookies() {
+        let request = DownloadRequest {
+            url: "https://example.org/a".into(),
+            format: Format::Mp3,
+            max_height: None,
+            destination_dir: None,
+            cookies_from_browser: Some("brave".into()),
+        };
+        let args = arguments(&request, Path::new("out"), Path::new("tools"));
+        assert!(
+            args.windows(2)
+                .any(|s| s == ["--cookies-from-browser", "brave"])
+        );
+    }
+
+    #[test]
     fn caps_video_height_and_does_not_extract_audio() {
         let request = DownloadRequest {
             url: "https://example.org/a".into(),
             format: Format::Mp4,
             max_height: Some(1080),
             destination_dir: None,
+            cookies_from_browser: None,
         };
         let args = arguments(&request, Path::new("out"), Path::new("tools"));
         assert!(
@@ -1135,6 +1176,7 @@ mod tests {
                 format,
                 max_height: Some(1080),
                 destination_dir: None,
+                cookies_from_browser: None,
             };
             let output = run_download(
                 &request,
@@ -1171,6 +1213,7 @@ mod tests {
             format: Format::Mp3,
             max_height: None,
             destination_dir: None,
+            cookies_from_browser: None,
         };
         let result = run_download(&request, &fixture.dir, &fixture.tools, &cancelled, &events);
         assert_eq!(result.unwrap_err().code, "cancelled");

@@ -11,12 +11,13 @@ import {
 	cloudFileManagerInitialTabAtom,
 	cloudFileManagerOpenAtom,
 } from "$/modules/cloud/states";
+import { getNearestRemainingLineId } from "$/modules/lyric-editor/components/selection-scroll";
 import { grammarCheckDialogAtom } from "$/modules/lyric-editor/modals/GrammarCheckDialog.tsx";
 import { applyAutoDuetBySinger } from "$/modules/lyric-editor/utils/auto-duet.ts";
 import { getSynchronizableUnits } from "$/modules/lyric-editor/utils/lyric-states.ts";
 import { removeWordsFromLine } from "$/modules/lyric-editor/utils/normalize-line-time";
 import { notifySectionIssues } from "$/modules/lyric-editor/utils/notify-section-issues.tsx";
-import { validateSections } from "$/modules/lyric-editor/utils/section-system.ts";
+import { usePrivacyGate } from "$/modules/privacy/usePrivacyGate";
 import exportTTMLText from "$/modules/project/logic/ttml-writer";
 import {
 	segmentationEngineAtom,
@@ -29,7 +30,6 @@ import {
 } from "$/modules/segmentation/utils/segmentation";
 import { SYLLABIFICATION_ENGINES } from "$/modules/segmentation/utils/syllabification-engines";
 import { useSegmentationConfig } from "$/modules/segmentation/utils/useSegmentationConfig";
-import { usePrivacyGate } from "$/modules/privacy/usePrivacyGate";
 import {
 	allowConsecutiveBackgroundLinesAtom,
 	lyricTextNormalizationOptionsAtom,
@@ -72,7 +72,6 @@ import {
 	keyUndoAtom,
 } from "$/states/keybindings.ts";
 import {
-	ToolMode,
 	isDirtyAtom,
 	lyricLinesAtom,
 	markSavedAtom,
@@ -82,6 +81,7 @@ import {
 	saveFileNameAtom,
 	selectedLinesAtom,
 	selectedWordsAtom,
+	ToolMode,
 	toolModeAtom,
 	undoableLyricLinesAtom,
 	undoLyricLinesAtom,
@@ -90,7 +90,6 @@ import { type LyricWord, type LyricWordBase, newLyricWord } from "$/types/ttml";
 import { openFileWithDialog } from "$/utils/fileDialog.ts";
 import { saveFile } from "$/utils/fileSystem.ts";
 import { error, log } from "$/utils/logging.ts";
-import { getNearestRemainingLineId } from "$/modules/lyric-editor/components/selection-scroll";
 import { openExternal } from "$/utils/openExternal";
 import { createHistoryActionGate } from "./history-action-gate";
 
@@ -388,13 +387,7 @@ export const useTopMenuActions = () => {
 		} else {
 			action();
 		}
-	}, [
-		saveFileName,
-		store,
-		setSaveFileName,
-		setConfirmDialog,
-		t,
-	]);
+	}, [saveFileName, store, setSaveFileName, setConfirmDialog, t]);
 
 	const onOpenHistoryRestore = useCallback(() => {
 		setHistoryRestoreDialog(true);
@@ -495,7 +488,7 @@ export const useTopMenuActions = () => {
 	}, [setGeniusLyricsRefreshDialog]);
 
 	const onOpenStatsAndProfiles = useCallback(async () => {
-		await openExternal("https://ttml.bobjoerules.com/#stats");
+		await openExternal("https://github.com/rimuruslimetempest/ttml-tool");
 	}, []);
 
 	const onOpenSpotMatch = useCallback(() => {
@@ -503,11 +496,13 @@ export const useTopMenuActions = () => {
 	}, [setSpotMatchDialog]);
 
 	const onOpenGitHub = useCallback(async () => {
-		await openExternal("https://github.com/bobjoerules/AMLL-TTML-TOOL");
+		await openExternal("https://github.com/rimuruslimetempest/ttml-tool");
 	}, []);
 
 	const onOpenWiki = useCallback(async () => {
-		await openExternal("https://guide.spicylyrics.org/");
+		await openExternal(
+			"https://github.com/rimuruslimetempest/ttml-tool#readme",
+		);
 	}, []);
 
 	const onUndo = useCallback(() => {

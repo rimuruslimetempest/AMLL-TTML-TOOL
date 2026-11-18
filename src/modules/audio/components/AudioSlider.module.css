@@ -3,6 +3,28 @@
 	position: relative;
 	z-index: 1;
 }
+
+.fallbackWaveform {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 0;
+	pointer-events: none;
+}
+
+.fallbackPlayhead {
+	position: absolute;
+	top: 2px;
+	bottom: 2px;
+	left: 0;
+	width: 2px;
+	border-radius: 1px;
+	background: #a8ceff;
+	box-shadow: 0 0 7px rgba(76, 154, 255, 0.7);
+	pointer-events: none;
+	will-change: transform;
+	z-index: 2;
+}
 .waveformContainer ::part(progress) {
 	/* Use transparent background to avoid flooding track with accent tint */
 	background-color: transparent;

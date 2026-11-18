@@ -2,7 +2,7 @@
 	"app": {
 		"error": {
 			"title": "Ups, a apărut o eroare!",
-			"description": "A apărut o eroare la rularea AMLL TTML Tools",
+			"description": "A apărut o eroare la rularea TTML Tools",
 			"checkDevTools": "Detalii pot fi găsite în Developer Tools",
 			"saveLyrics": "Încercați să salvați Lyric-urile curente",
 			"tryRestart": "Încercați să reîncărcați aplicația",
@@ -1313,12 +1313,12 @@
 	"aboutModal": {
 		"appName": "Unealta TTML cu versuri asemănătoare cu Apple",
 		"description": "Un text cu cuvânt TTML Editarea și Timeline Tool pentru versuri asemănătoare Apple",
-		"maintainers": "Fork Maintainers",
-		"maintainersDesc": "This fork is maintained and developed by:",
+		"maintainers": "Maintainer",
+		"maintainersDesc": "TTML Tool is designed, developed, and maintained by:",
 		"forkMaintainer": "Fork maintainer & contributor",
 		"visitWebsite": "Visit website",
 		"credits": "Credits & Third-Party Notices",
-		"creditsIntro": "This project includes work adapted from the following open-source projects.",
+		"creditsIntro": "TTML Tool began from the AMLL TTML Tool codebase; its copyright and license notices are retained in LICENSE.",
 		"community": "Community & Contributions",
 		"communityDesc": "Help us make the tool better by contributing code, reporting issues, or providing translations.",
 		"github": "GitHub Repository",

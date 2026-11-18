@@ -212,7 +212,7 @@ describe("settings backups", () => {
 	it("restores an old single-binding backup as a one-entry list", async () => {
 		const old = backupImport.parseBackupFile(
 			JSON.stringify({
-				app: "amll-ttml-tool",
+				app: "ttml-tool",
 				formatVersion: 1,
 				exportedAt: "2026-01-01T00:00:00.000Z",
 				build: { commit: "old", time: "2026-01-01T00:00:00.000Z" },

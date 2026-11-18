@@ -1,14 +1,29 @@
 {
-	"name": "amll-ttml-tool",
+	"name": "ttml-tool",
 	"private": true,
-	"version": "5.1.0",
+	"version": "1.0.0",
+	"description": "A word-synced TTML lyric editor for Apple Music-style lyrics, built with React, TypeScript, and Tauri.",
+	"author": {
+		"name": "Rimurulover",
+		"email": "rimurusamllttmltool@gmail.com",
+		"url": "https://github.com/rimuruslimetempest"
+	},
+	"homepage": "https://github.com/rimuruslimetempest/ttml-tool#readme",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/rimuruslimetempest/ttml-tool.git"
+	},
+	"bugs": {
+		"url": "https://github.com/rimuruslimetempest/ttml-tool/issues"
+	},
+	"license": "AGPL-3.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
 		"build:tsc": "tsc -b && vite build",
 		"build": "vite build",
 		"build:collab-web": "node scripts/build-collab-web.mjs",
-		"tauri:build": "tauri build --no-bundle && for app in \"src-tauri/target/release/bundle/macos/\"*.app; do [ -d \"$app\" ] || continue; cp -f src-tauri/target/release/amll-ttml-tool \"$app/Contents/MacOS/amll-ttml-tool\"; [ -d src-tauri/downloader-tools ] && mkdir -p \"$app/Contents/Resources/downloader-tools\" && cp -RP src-tauri/downloader-tools/* \"$app/Contents/Resources/downloader-tools/\"; touch \"$app\"; done",
+		"tauri:build": "tauri build --no-bundle && for app in \"src-tauri/target/release/bundle/macos/\"*.app; do [ -d \"$app\" ] || continue; cp -f src-tauri/target/release/ttml-tool \"$app/Contents/MacOS/ttml-tool\"; [ -d src-tauri/downloader-tools ] && mkdir -p \"$app/Contents/Resources/downloader-tools\" && cp -RP src-tauri/downloader-tools/* \"$app/Contents/Resources/downloader-tools/\"; touch \"$app\"; done",
 		"version:bump": "node scripts/bump-version.mjs",
 		"version:set": "node scripts/set-version.mjs",
 		"test:versioning": "node --test scripts/version-utils.test.mjs",

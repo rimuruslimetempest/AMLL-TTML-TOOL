@@ -15,10 +15,10 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab }) => {
           <div className="nav-brand" onClick={() => onSelectTab('home')}>
             <img
               src="/logo.svg"
-              alt="TTML Editor Logo"
+              alt="TTML Tool Logo"
               style={{ width: 26, height: 26, objectFit: 'contain' }}
             />
-            <span style={{ fontSize: 17 }}>TTML Editor</span>
+            <span style={{ fontSize: 17 }}>TTML Tool</span>
           </div>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
             The premier syllable-by-syllable TTML lyric timing and visual editor.
@@ -42,7 +42,7 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab }) => {
             Liquid Player
           </button>
           <a
-            href="https://ttmleditor.com"
+            href="https://github.com/rimuruslimetempest/ttml-tool"
             target="_blank"
             rel="noopener noreferrer"
             className="footer-link"
@@ -52,7 +52,7 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab }) => {
             Web App (Browser)
           </a>
           <a
-            href="https://github.com/bobjoerules/AMLL-TTML-TOOL"
+            href="https://github.com/rimuruslimetempest/ttml-tool"
             target="_blank"
             rel="noopener noreferrer"
             className="footer-link"

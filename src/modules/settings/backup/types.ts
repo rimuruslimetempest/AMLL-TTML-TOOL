@@ -1,13 +1,15 @@
+import type { WASMPlugin } from "$/modules/plugins/types";
 import type {
 	ProjectInfo,
 	ProjectVersion,
 } from "$/modules/project/autosave/autosave";
-import type { WASMPlugin } from "$/modules/plugins/types";
 
 /**
  * @description 备份文件的应用标识，用于拒绝非本应用的文件
  */
-export const BACKUP_APP_ID = "amll-ttml-tool";
+export const BACKUP_APP_ID = "ttml-tool";
+/** Older backups used the inherited application id; keep reading them. */
+const LEGACY_BACKUP_APP_IDS = new Set(["amll-ttml-tool"]);
 
 /**
  * @description 备份文件格式版本。导入比此版本更新的文件时会拒绝并提示。
@@ -101,7 +103,10 @@ export function validateBackupFile(data: unknown): asserts data is BackupFile {
 	if (!isPlainObject(data)) {
 		throw new BackupValidationError("notObject");
 	}
-	if (data.app !== BACKUP_APP_ID) {
+	if (
+		data.app !== BACKUP_APP_ID &&
+		!LEGACY_BACKUP_APP_IDS.has(String(data.app))
+	) {
 		throw new BackupValidationError("notBackupFile");
 	}
 	if (typeof data.formatVersion !== "number") {

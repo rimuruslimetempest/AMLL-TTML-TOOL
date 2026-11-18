@@ -101,7 +101,7 @@ export function DownloaderSetupGuideDialog({
 				<Dialog.Description size="2" mb="3">
 					{t(
 						"downloader.setupGuideDesc",
-						"Because official GitHub Actions releases do not bundle yt-dlp and FFmpeg, you can install them once on your system. TTML Editor searches your system PATH automatically.",
+						"Because official GitHub Actions releases do not bundle yt-dlp and FFmpeg, you can install them once on your system. TTML Tool searches your system PATH automatically.",
 					)}
 				</Dialog.Description>
 

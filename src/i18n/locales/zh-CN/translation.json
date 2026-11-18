@@ -2,7 +2,7 @@
   "app": {
     "error": {
       "title": "诶呀，出错了！",
-      "description": "TTML Editor 在运行时出现了错误",
+      "description": "TTML Tool 在运行时出现了错误",
       "checkDevTools": "具体错误详情可以在开发者工具中查询",
       "saveLyrics": "尝试保存当前歌词",
       "tryRestart": "尝试重新进入程序",
@@ -1438,12 +1438,12 @@
   "aboutModal": {
     "appName": "Apple Music-like lyrics TTML Tools",
     "description": "一个用于 Apple Music-like lyrics 生态的逐词歌词 TTML 编辑和时间轴工具",
-    "maintainers": "Fork Maintainers",
-    "maintainersDesc": "This fork is maintained and developed by:",
+    "maintainers": "Maintainer",
+    "maintainersDesc": "TTML Tool is designed, developed, and maintained by:",
     "forkMaintainer": "Fork maintainer & contributor",
     "visitWebsite": "Visit website",
     "credits": "Credits & Third-Party Notices",
-    "creditsIntro": "This project includes work adapted from the following open-source projects.",
+    "creditsIntro": "TTML Tool began from the AMLL TTML Tool codebase; its copyright and license notices are retained in LICENSE.",
     "community": "Community & Contributions",
     "communityDesc": "Help us make the tool better by contributing code, reporting issues, or providing translations.",
     "github": "GitHub Repository",

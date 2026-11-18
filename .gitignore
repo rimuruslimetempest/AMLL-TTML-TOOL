@@ -16,12 +16,40 @@ dist-ssr
 **/target
 /.tauri
 
+# Build and release output
+build/
+release/
+out/
+coverage/
+*.tsbuildinfo
+
+# Environment and local configuration
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.jks
+*.mobileprovision
+.firebase/
+.firebaserc
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
 .million
 .DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
 *.tsbuildinfo
 *.suo
 *.ntvs*
@@ -31,20 +59,30 @@ dist-ssr
 *.code-workspace
 scratch/
 
+# Test and temporary audio/artifacts
+*.wav
+*.flac
+*.mp3
+*.m4a
+*.ogg
+*.opus
+test-audio/
+tmp/
+temp/
+.cache/
+.turbo/
+.next/
+.vite/
+
 # ffmpeg
 ffmpeg.wasm
 ffmpeg-core.js
 
-# environment variables you fuckah
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.development
-.env.test
-.env.production
+# Local agent/editor files
 AGENTS.md
+.worktrees/
+bench/
+TTML Editor/
 
 # Python
 __pycache__/

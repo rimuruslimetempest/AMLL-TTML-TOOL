@@ -172,7 +172,7 @@ describe("Discord presence", () => {
 
 		expect(snapshot.hasFile).toBe(false);
 		expect(formatDiscordActivity(snapshot, 1_000)).toMatchObject({
-			details: "TTML Editor",
+			details: "TTML Tool",
 			state: "No file open",
 		});
 
@@ -199,7 +199,7 @@ describe("Discord presence", () => {
 				showProgressTimer: true,
 			}),
 		).toMatchObject({
-			details: "TTML Editor",
+			details: "TTML Tool",
 			state: "No file open",
 			playing: false,
 		});
@@ -219,7 +219,7 @@ describe("Discord presence", () => {
 
 		expect(snapshot.hasFile).toBe(false);
 		expect(formatDiscordActivity(snapshot, 1_000)).toMatchObject({
-			details: "TTML Editor",
+			details: "TTML Tool",
 			state: "No file open",
 		});
 	});
@@ -301,8 +301,8 @@ describe("Discord presence", () => {
 			remaining: "0:23",
 			playbackRate: "1.25×",
 			projectElapsed: "2h 14m",
-			appName: "TTML Editor",
-			username: "AMLL User",
+			appName: "TTML Tool",
+			username: "TTML User",
 			checklistCompleted: "0",
 			checklistTotal: "0",
 			checklistPercentage: "0%",
@@ -464,7 +464,7 @@ describe("Discord presence", () => {
 
 	it("uses a generic private payload while inactive", () => {
 		expect(createInactiveDiscordActivity()).toEqual({
-			details: "TTML Editor",
+			details: "TTML Tool",
 			state: "Working on lyrics",
 			playing: false,
 			showRepositoryButton: false,
@@ -472,7 +472,7 @@ describe("Discord presence", () => {
 		expect(
 			createInactiveDiscordActivity("Idle in editor", "listening"),
 		).toEqual({
-			details: "TTML Editor",
+			details: "TTML Tool",
 			state: "Idle in editor",
 			playing: false,
 			activityType: "listening",
@@ -644,7 +644,7 @@ describe("Discord presence", () => {
 		});
 
 		expect(payload).toMatchObject({
-			details: "TTML Editor",
+			details: "TTML Tool",
 			state: "No file open",
 			playing: false,
 			largeImage: "https://i.imgur.com/custom_avatar.png",

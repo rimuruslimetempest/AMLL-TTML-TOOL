@@ -1,10 +1,10 @@
-# AMLL TTML Tool Companion Website
+# TTML Tool Companion Website
 
-Official companion web application for **AMLL TTML Tool** and **Liquid Player**.
+Official companion web application for **TTML Tool** and **Liquid Player**.
 
 ## ✨ Features
 1. **Home Page**:
-   - Showcase and interactive tour of AMLL TTML Tool.
+   - Showcase and interactive tour of TTML Tool.
    - High-resolution screenshot gallery using app images (`preview tab.png`, `sync tab.png`, `edit tab.png`, `ttml checklist.png`, `cloud.png`, `rpc page.png`, `theme settings.png`).
    - Direct download links to the latest desktop releases on GitHub.
 2. **Finished TTMLs Page**:

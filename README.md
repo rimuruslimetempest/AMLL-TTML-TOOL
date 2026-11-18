@@ -1,119 +1,218 @@
-<div align=center>
+<div align="center">
 
-<img src="./public/logo.svg" align="center" width="256">
+<img src="./public/logo.svg" width="180" alt="TTML Tool logo">
 
-# TTML Editor
+# TTML Tool
 
-A fork of the word-by-word lyrics editor designed specifically for the [Spicy Lyrics ecosystem](https://spicylyrics.org/).
+**A desktop editor for word-synced TTML lyrics.**
 
-<p align="center">
-  <img src="./images/preview%20tab.png" alt="TTML Editor - Apple Music Live Preview" width="100%">
-</p>
+Made and maintained by **[Rimurulover](https://github.com/rimuruslimetempest)**.
+
+[Download](https://github.com/rimuruslimetempest/ttml-tool/releases/latest) ·
+[Report a problem](https://github.com/rimuruslimetempest/ttml-tool/issues) ·
+[Privacy Policy](./PRIVACY.md) ·
+[Terms of Use](./TERMS.md)
 
 </div>
 
-## Showcase & Screenshots
+## What it is
 
-<table width="100%">
-  <tr>
-    <td width="50%" valign="top">
-      <h3 align="center">Syllable Audio Syncing</h3>
-      <p align="center">Fast keyboard and waveform sync engine for recording precise start, end, and duration timestamps for every syllable.</p>
-      <img src="./images/sync%20tab.png" alt="Syllable Audio Syncing" width="100%">
-    </td>
-    <td width="50%" valign="top">
-      <h3 align="center">Full TTML Lyric Editor</h3>
-      <p align="center">Line-by-line management, auto syllabification, songwriter metadata extraction, and multi-track background vocal management.</p>
-      <img src="./images/edit%20tab.png" alt="Full TTML Lyric Editor" width="100%">
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <h3 align="center">Smart TTML Checklist</h3>
-      <p align="center">Song cover art thumbnails, live progress bar, direct lyric provider search, and 1-click lyric importing.</p>
-      <img src="./images/ttml%20checklist.png" alt="Smart TTML Checklist" width="100%">
-    </td>
-    <td width="50%" valign="top">
-      <h3 align="center">Cloud Sync & Library</h3>
-      <p align="center">Upload, manage, and share your synced TTML lyrics and audio files seamlessly with Firebase Cloud integration.</p>
-      <img src="./images/cloud.png" alt="Cloud Sync & Library" width="100%">
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <h3 align="center">Discord Rich Presence</h3>
-      <p align="center">Broadcast your live editing sessions, current song, album cover art, and progress directly to Discord.</p>
-      <img src="./images/rpc%20page.png" alt="Discord Rich Presence" width="100%">
-    </td>
-    <td width="50%" valign="top">
-      <h3 align="center">Custom Themes & Visuals</h3>
-      <p align="center">Extensive customization with custom background artwork, equalizer curves, latency testing, and UI styling.</p>
-      <img src="./images/theme%20settings.png" alt="Custom Themes & Visuals" width="100%">
-    </td>
-  </tr>
-</table>
+TTML Tool is a Windows, macOS, and Linux desktop app for writing and timing
+TTML lyric files. It puts the waveform, spectrogram, lyric timeline, and a live
+preview in one window so you can place every line, word, and syllable yourself
+and immediately see how the result behaves.
 
-## Usage
+Every timestamp is manual. TTML Tool does not invent, move, or retime a lyric
+on its own. Importing a file, splitting words, and converting a format are
+editing aids; they never decide when a word should be sung.
 
-> [!WARNING]
-> This tool is not recommended for mobile phones or small screens, as the operation can be very cumbersome.
+## Features
 
-You can use the online version of this tool by visiting [https://ttmleditor.com/](https://ttmleditor.com/).
+### Syncing and editing
 
-You can also use the Tauri desktop version built via GitHub Actions; see the [Latest Release](https://github.com/bobjoerules/AMLL-TTML-TOOL/releases/latest) for details.
+- Line-by-line, word-by-word, and syllable-by-syllable timing with a waveform,
+  a spectrogram, millisecond fields, and keyboard shortcuts.
+- Edit lyric text, translations, romanizations, background vocals, duet lines,
+  sections, and song metadata in the same project.
+- Undo and redo across timing, text, and structural changes, plus autosaves and
+  restore points for recovering earlier work.
+- Timing tools for shifting, stretching, and copying timing between lines, with
+  a live timing overview.
 
-## New Editor Features over the Original AMLL TTML Tool
+### Splits and text tools
 
-- **SpotMatch (Alternate Spotify IDs)** — Built-in companion tool to find alternate Spotify recording IDs across singles, albums, deluxe editions, and remasters with zero authentication or API keys, with 1-click export formatted for the Spicy Lyrics bot (`id1,id2,id3`). Adapted from [SpotMatch](https://github.com/TheX24/SpotMatch) by TheX24.
-- **Media Downloader (yt-dlp)** — Optional local Windows desktop builds bundle yt-dlp and FFmpeg to search by artist and song or paste a URL, then save audio or video in a chosen format with progress and cancellation; see [`packaging/downloader`](./packaging/downloader/README.md).
-- **Apple Music TTML Import** — 1-click word-synced and line-synced TTML retrieval directly from Apple Music using Spotify track links or song searches.
-- **Guided Beginner Workflow** — Learn audio import, lyric review, timing, credits, export, and local testing through focused, state-aware steps using your own song; move the guide around the viewport or tuck it into a compact edge tab while working.
-- **Compact Lyric Workspace** — Use edge-to-edge audio and lyric areas, visually connected word and romanization groups, and compact whitespace chips sized by their space count, with an optional legacy label style.
-- **Discord Rich Presence & PreMiD Bridge** — The opt-in Tauri integration shares the current file or track, editor mode, line progress, playback state, and speed-aware timeline with Discord, preserves per-project elapsed time across app restarts, and exposes the same live state to PreMiD on the website while retaining a compatibility fallback for the original editor.
-- **Combine Words Across Lyrics** — Preview a word combination, apply it to matching sequences throughout the project, and optionally ignore case and surrounding punctuation.
-- **Header-Free Timing Tools** — Copy line and word timings onto existing lyrics or snap any selected timing block to the playhead without relying on imported Genius headers.
-- **Remembered Desktop Window** — Restore the previous window size, maximized state, and fullscreen state across desktop app launches without persisting its position or visibility.
-- **Inline Time-Tab Editing** — Double-click a synced word to edit it directly in Time mode, or edit per-word romanizations inline when displayed.
-- **TTML Checklist** — Maintain a persistent local queue of songs to sync with notes, progress tracking, and completed history.
-- **Smarter Lyrics Splitting** — Choose dedicated syllabification engines for English, Polish, Spanish, French, German, Indonesian, Italian, Portuguese, Russian, Japanese, and CJK lyrics; Auto Segment suggests an engine from the lyric language, while legacy fallbacks remain available.
-- **Learned Word Splits** — Remember manual split boundaries and automatically reuse them for future occurrences of the same word.
-- **Persistent Split Options** — The Split Word dialog remembers its last-used options, reducing repeated setup while correcting multiple words.
-- **Spicy Lyrics Preview** — A high-fidelity Spicy Lyrics renderer with animated, custom, and cover-art backgrounds; karaoke, Simple Lyrics, and line-synced layouts; automatic scrolling; and an optional FPS counter.
-- **Time Stretch** — Scale every TTML timestamp to fit a new song duration, with support for reading durations from audio files.
-- **Unified Lyrics Import** — Choose Plain Text, LRCLIB, Lyrically, or Genius from clear cards in the empty editor, then use one consistent preparation, replacement-confirmation, and formatting workflow.
-- **Genius Header Categorization & Section Tools** — Preserve headers such as `[Chorus]` and `[Verse]` as color-coded section metadata, with whole-section timing controls.
-- **Backup & Restore** — Export and restore selected settings, keybindings, appearance assets, projects and history, and plugins in a portable backup file.
-- **Bouncy Word Indicator** — Long-duration syllables in Sync mode get a subtle bouncing dot, making held words easier to spot while timing.
-- **Toxi Lyrics Engine** — High-fidelity jump-down animations, instant-on bloom with smooth fade-out, and adjustable wipe softness.
-- **144Hz+ Rendering** — A dedicated interpolation engine for ultra-high refresh rates that bypasses React bottlenecks.
-- **Millisecond Precision Sync** — Interpolated high-resolution performance markers for frame-accurate timing.
-- **Cinematic Backgrounds** — Hardware-accelerated Mesh Gradient backgrounds running at 60 FPS.
-- **Snap to Playhead** — One-click synchronization that snaps lyric start times directly to the audio playhead position.
-- **Auto-Lyric Sanitizer** — Automatically strips Genius tags and cleans empty lines on import.
-- **Automatic Multilingual Phonetics** — Generate contextual Japanese, Mandarin, and Korean romanization with per-word readings, tone-aware Mandarin mapping, and mixed-language line support.
-- **Pre-Export Validator** — Checks for untimed or overlapping lyrics before saving.
-- **Integrated Audio Bridge** — Built-in FFmpeg.wasm MP3-to-FLAC conversion to reduce decoding drift.
-- **Appearance Editor** — More than 40 visual parameters and theme presets for customizing the editor.
-- **Global Localization** — Full i18n support with community-driven translations.
-- **Community Plugin Store** — Browse and install community-made WASM importers and exporters.
+- A saved split library with previews, proportional timing for words that
+  already have timing, and per-word notes.
+- Syllable splitting, word replacement, line merging, duplicate cleanup, and
+  other text tools that operate on the lyrics you selected.
+- A TTML Checklist for keeping a local queue of songs and their progress.
+- A song-info panel for writers, languages, streaming IDs, version notes, and a
+  copy-ready metadata block.
 
-## Feature-Preserving Updates
+### Live rooms and collaboration
 
-The desktop updater is intentionally pointed at this fork's releases, not the original project's releases. Installing an original-project binary would remove the features listed above.
+- Host, Editor, Commenter, and Viewer roles in a live room.
+- Shared editing, chat, comments, per-line review marks, history, and restore
+  points.
+- An optional shared split dictionary so everyone in a room can reuse the same
+  word splits.
+- Review marks and comments are annotations only: they never change the TTML or
+  the timing data.
 
-When the original project publishes a newer release, the `Sync upstream and publish feature build` workflow merges that release into this fork, builds a signed Windows installer, and publishes it as a fork release. The app checks that feature channel at launch and every six hours. The About tab also shows the latest original-project version; if it is newer than the feature build, the app reports it but does not install it.
+### Preview
 
-The workflow stops and opens an issue if the upstream merge conflicts. No release is published in that case.
+- A live lyric preview with word and line highlighting, background vocals,
+  duet layout, translations, and romanization.
+- Preview options for Simple lyrics, Show Translation, Show Romanization,
+  BG Follows Duet, Album Artwork, Fullscreen, Mask Obscene Words, and Show FPS.
+- Preview quality and frame-rate cap settings for slower machines, plus a
+  Performance mode that reduces interface effects.
+- A smoothed playback clock and a single animation loop keep the current line
+  moving without restarting the whole lyric view.
 
-One-time setup for this repository:
+### Import and export
 
-1. Enable GitHub Actions on the fork.
-2. Add `TAURI_SIGNING_PRIVATE_KEY` as a repository secret using the contents of `.tauri/ttml-feature-updater.key` (the file is gitignored; keep it private).
-3. Push this branch to the fork's `main` branch.
-4. The daily workflow will publish future feature builds automatically; run it manually the first time if needed.
+- Import TTML, LRC, enhanced LRC, SRT, ASS/SSA dialogue, WebVTT, and plain text.
+- A preview before import shows the detected format, the line count, and any
+  lines that could not be read.
+- Imported timing is marked **needs review**; nothing is retimed or merged.
+- Export TTML, LRC, enhanced LRC, SRT, or plain text. The export dialog explains
+  what each format cannot carry, such as per-word timing or background vocals.
+- Drag a lyric file onto the window to open it. The desktop build registers
+  `.ttml`, `.lrc`, and `.srt` files with the operating system.
 
-## Contribution
+### Project and song information
 
-All active code and translation contributions are welcome! We also welcome bug reports and suggestions! See [CONTRIBUTING.md](./CONTRIBUTING.md).
+- Project metadata for title, artists, album, songwriters, language, cover art,
+  and streaming-platform IDs.
+- Local project history, autosaves, and restore points.
+- Optional cloud library and audio storage for signed-in users.
 
-If you want to provide a new language translation, please refer to [`./src/i18n/index.ts`](./src/i18n/index.ts) and [`./locales/zh-CN/translation.json`](./locales/zh-CN/translation.json)!
+### Appearance and performance
+
+- Light and dark appearance, UI density and scale, custom accents, fonts, and
+  background images.
+- Performance mode, preview quality, and a frame-rate cap.
+- Discord Rich Presence with customizable text.
+- A portable settings and project backup.
+- An optional yt-dlp/FFmpeg media downloader on desktop.
+- Community translations.
+
+### Updates and first-run setup
+
+- A built-in updater with a daily check, a non-blocking banner, release notes,
+  download progress, Stable and Beta channels, and a skip-this-version option.
+- A short first-run setup for display name, appearance, audio output, tap key,
+  performance mode, and privacy choices. It can be reopened from Settings.
+
+## What is different in this version
+
+TTML Tool keeps the familiar TTML editing workflow and adds:
+
+- **Live rooms with roles and comments.** Host, Editor, Commenter, and Viewer
+  roles, room chat, comments, review marks, history, and restore points.
+- **Saved personal splits.** A reusable split library with previews and notes,
+  plus optional sharing inside a room.
+- **A redesigned interface with Performance mode.** Density and scale controls,
+  preview quality and frame-rate settings, and a lower-effects mode for slower
+  computers.
+- **A smoother Preview.** One shared playback clock, one animation loop,
+  transform-based scrolling, and less per-frame work on the lyric text.
+- **Extra import and export formats.** LRC, enhanced LRC, SRT, ASS/SSA, WebVTT,
+  plain text, and TTML, with a review step before imported timing is trusted.
+- **First-run setup and an auto-updater.** A short onboarding wizard and update
+  checks that use this repository's GitHub Releases.
+
+## Install
+
+Download the latest release for your system:
+
+| Platform | File |
+| --- | --- |
+| Windows x64 | `TTML-Tool_1.0.0_x64-setup.exe` (NSIS) or `.msi` |
+| macOS Apple Silicon | `TTML-Tool_1.0.0_aarch64.dmg` |
+| macOS Intel | `TTML-Tool_1.0.0_x64.dmg` |
+| Linux x64 | `TTML-Tool_1.0.0_amd64.AppImage`, `.deb`, or `.rpm` |
+
+Each release also publishes `latest.json`, which the built-in updater uses. On
+Linux, the AppImage updates itself; update `.deb` and `.rpm` packages with your
+package manager.
+
+If you are replacing a build that used a different application identifier,
+uninstall that build first and export a settings backup before switching. The
+operating system keeps the old and new WebView profiles separately, so local
+settings are not carried over automatically.
+
+## Build from source
+
+### Requirements
+
+- Node.js 20 LTS or newer and pnpm 10 (`corepack enable`).
+- Rust stable with Cargo.
+- **Windows:** Visual Studio 2022 Build Tools with Desktop development with
+  C++, the Windows SDK, and the WebView2 runtime.
+- **macOS:** Xcode Command Line Tools.
+- **Linux:** the WebKitGTK 4.1 development packages, GTK 3, libappindicator,
+  ALSA headers, `librsvg2`, and `patchelf`.
+
+### Commands
+
+```bash
+git clone https://github.com/rimuruslimetempest/ttml-tool.git
+cd ttml-tool
+pnpm install --frozen-lockfile
+
+pnpm dev          # browser development build
+pnpm tauri dev    # desktop development build
+pnpm build        # production web build
+pnpm tauri build  # production desktop bundles
+```
+
+Desktop bundles are written under `src-tauri/target/release/bundle/`. Unit tests
+run with `pnpm test`.
+
+Cloud features are optional and off until you sign in. For a public deployment,
+create your own Firebase project and set the `VITE_FIREBASE_*` values from
+[`.env.example`](./.env.example). Do not use another person's Firebase project
+without permission.
+
+## Screenshots
+
+Screenshot placeholders — replace these with images from your own build:
+
+- `docs/screenshots/edit.png` — Edit mode with the lyric timeline.
+- `docs/screenshots/time.png` — Time mode with the waveform and spectrogram.
+- `docs/screenshots/preview.png` — Preview mode with album artwork.
+- `docs/screenshots/rooms.png` — A live room with comments and review marks.
+
+```md
+![Edit mode](docs/screenshots/edit.png)
+![Time mode](docs/screenshots/time.png)
+![Preview mode](docs/screenshots/preview.png)
+![Live room](docs/screenshots/rooms.png)
+```
+
+## Privacy
+
+The editor is local-first: projects, timing, settings, autosaves, and cached
+audio stay on your device unless you use a network feature. Live rooms, cloud
+accounts, search and import providers, Discord Rich Presence, and update checks
+each have their own data flow, described in the [Privacy Policy](./PRIVACY.md).
+Crash reports are off by default.
+
+Privacy and legal contact: **rimurusamllttmltool@gmail.com**.
+
+## Credits
+
+TTML Tool is created and maintained by **Rimurulover**
+([GitHub](https://github.com/rimuruslimetempest)).
+
+TTML Tool began from the AMLL TTML Tool codebase; its copyright and license
+notices are retained in [LICENSE](./LICENSE) and the source-file headers.
+Third-party components, including Spicy Lyrics, SpotMatch, and the Prosodic
+syllabification engine, are credited in **Settings → About**.
+
+## License
+
+TTML Tool is distributed under the **GNU Affero General Public License v3.0**.
+See [LICENSE](./LICENSE).

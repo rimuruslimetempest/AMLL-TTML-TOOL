@@ -314,14 +314,14 @@ export const PublicChecklistPage: React.FC<PublicChecklistPageProps> = ({ onNavi
           </p>
           <div style={{ marginTop: 24 }}>
             <a
-              href="https://ttmleditor.com"
+              href="https://github.com/rimuruslimetempest/ttml-tool"
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-primary btn-sm"
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
             >
               <Globe size={14} />
-              <span>Open TTML Editor</span>
+              <span>Open TTML Tool</span>
               <ExternalLink size={12} />
             </a>
           </div>
@@ -515,12 +515,12 @@ export const PublicChecklistPage: React.FC<PublicChecklistPageProps> = ({ onNavi
                   </button>
 
                   <a
-                    href={`https://ttmleditor.com?song=${encodeURIComponent(item.song)}&artist=${encodeURIComponent(item.artist)}`}
+                    href={`https://github.com/rimuruslimetempest/ttml-tool?song=${encodeURIComponent(item.song)}&artist=${encodeURIComponent(item.artist)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-secondary btn-sm"
                     style={{ padding: '4px 8px', height: 28, fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                    title="Open song in TTML Editor"
+                    title="Open song in TTML Tool"
                   >
                     <ExternalLink size={12} />
                     <span>Editor</span>
@@ -564,7 +564,7 @@ export const PublicChecklistPage: React.FC<PublicChecklistPageProps> = ({ onNavi
         <div style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--text-secondary)' }}>
           <strong style={{ color: 'var(--text-primary)' }}>Want your planned songs listed here?</strong>
           <br />
-          Open the <strong style={{ color: 'var(--accent-pink)' }}>TTML Checklist</strong> in the TTML Editor (Tools &rarr; TTML Checklist), and click the <strong style={{ color: '#818cf8' }}>🌐 Public</strong> button on any track to share your progress with the community!
+          Open the <strong style={{ color: 'var(--accent-pink)' }}>TTML Checklist</strong> in the TTML Tool (Tools &rarr; TTML Checklist), and click the <strong style={{ color: '#818cf8' }}>🌐 Public</strong> button on any track to share your progress with the community!
         </div>
       </div>
     </div>

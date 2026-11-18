@@ -2,7 +2,7 @@
 	"app": {
 		"error": {
 			"title": "Ups, der opstod en fejl!",
-			"description": "Der opstod en fejl under kørsel af AMLL TTML Tools",
+			"description": "Der opstod en fejl under kørsel af TTML Tools",
 			"checkDevTools": "Detaljer kan findes i Udviklerværktøjer",
 			"saveLyrics": "Prøv at gemme de aktuelle sangtekster",
 			"tryRestart": "Prøv at genindlæse appen",
@@ -1313,12 +1313,12 @@
 	"aboutModal": {
 		"appName": "Apple Music-lignende Sangtekst TTML Værktøj",
 		"description": "Et ord-for-ord TTML redigerings- og tidslinjeværktøj til Apple Music-lignende sangtekster",
-		"maintainers": "Fork Maintainers",
-		"maintainersDesc": "This fork is maintained and developed by:",
+		"maintainers": "Maintainer",
+		"maintainersDesc": "TTML Tool is designed, developed, and maintained by:",
 		"forkMaintainer": "Fork maintainer & contributor",
 		"visitWebsite": "Visit website",
 		"credits": "Credits & Third-Party Notices",
-		"creditsIntro": "This project includes work adapted from the following open-source projects.",
+		"creditsIntro": "TTML Tool began from the AMLL TTML Tool codebase; its copyright and license notices are retained in LICENSE.",
 		"community": "Community & Contributions",
 		"communityDesc": "Help us make the tool better by contributing code, reporting issues, or providing translations.",
 		"github": "GitHub Repository",

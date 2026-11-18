@@ -2,7 +2,7 @@
 	"app": {
 		"error": {
 			"title": "Ups, wystąpił błąd!",
-			"description": "Wystąpił błąd podczas działania AMLL TTML Tools",
+			"description": "Wystąpił błąd podczas działania TTML Tools",
 			"checkDevTools": "Szczegóły można znaleźć w Narzędziach deweloperskich",
 			"saveLyrics": "Spróbuj zapisać aktualny tekst",
 			"tryRestart": "Spróbuj ponownie załadować aplikację",
@@ -1313,12 +1313,12 @@
 	"aboutModal": {
 		"appName": "Narzędzie TTML dla tekstów w stylu Apple Music",
 		"description": "Narzędzie do edycji i tworzenia osi czasu TTML słowo po słowie dla tekstów w stylu Apple Music",
-		"maintainers": "Fork Maintainers",
-		"maintainersDesc": "This fork is maintained and developed by:",
+		"maintainers": "Maintainer",
+		"maintainersDesc": "TTML Tool is designed, developed, and maintained by:",
 		"forkMaintainer": "Fork maintainer & contributor",
 		"visitWebsite": "Visit website",
 		"credits": "Credits & Third-Party Notices",
-		"creditsIntro": "This project includes work adapted from the following open-source projects.",
+		"creditsIntro": "TTML Tool began from the AMLL TTML Tool codebase; its copyright and license notices are retained in LICENSE.",
 		"community": "Community & Contributions",
 		"communityDesc": "Help us make the tool better by contributing code, reporting issues, or providing translations.",
 		"github": "GitHub Repository",

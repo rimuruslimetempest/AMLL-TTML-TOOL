@@ -1,10 +1,14 @@
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
-import { useAtom, useStore } from "jotai";
+import { useAtom, useAtomValue, useStore } from "jotai";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { valid } from "semver";
 import {
+	autoUpdateCheckAtom,
+	lastUpdateCheckAtom,
+	skippedUpdateVersionAtom,
+	updateChannelAtom,
 	updateDownloadedBytesAtom,
 	updateErrorAtom,
 	updateInfoAtom,
@@ -15,7 +19,7 @@ import {
 } from "$/states/update";
 
 const UPSTREAM_RELEASE_API =
-	"https://api.github.com/repos/bobjoerules/TTML-Editor/releases/latest";
+	"https://api.github.com/repos/rimuruslimetempest/ttml-tool/releases/latest";
 
 function isMissingFeatureChannel(error: unknown) {
 	const message = error instanceof Error ? error.message : String(error);
@@ -32,6 +36,10 @@ export function useAppUpdate() {
 	const [totalBytes, setTotalBytes] = useAtom(updateTotalBytesAtom);
 	const [errorMsg, setErrorMsg] = useAtom(updateErrorAtom);
 	const [upstreamRelease, setUpstreamRelease] = useAtom(upstreamReleaseAtom);
+	const autoCheck = useAtomValue(autoUpdateCheckAtom);
+	const channel = useAtomValue(updateChannelAtom);
+	const skippedVersion = useAtomValue(skippedUpdateVersionAtom);
+	const [, setLastCheck] = useAtom(lastUpdateCheckAtom);
 	const store = useStore();
 
 	const { t } = useTranslation();
@@ -56,7 +64,7 @@ export function useAppUpdate() {
 				version,
 				url:
 					release.html_url ??
-					"https://github.com/bobjoerules/TTML-Editor/releases/latest",
+					"https://github.com/rimuruslimetempest/ttml-tool/releases/latest",
 			});
 		} catch {
 			// The upstream check is informational; the feature update channel is
@@ -70,12 +78,27 @@ export function useAppUpdate() {
 			if (currentStatus === "checking" || currentStatus === "downloading")
 				return;
 
+			const lastCheck = store.get(lastUpdateCheckAtom);
+			if (
+				silent &&
+				(!autoCheck || Date.now() - lastCheck < 24 * 60 * 60 * 1000)
+			)
+				return;
+
+			setLastCheck(Date.now());
 			setStatus("checking");
 			setErrorMsg("");
 
 			try {
 				const updateResult = await check();
-				if (updateResult) {
+				const isPrerelease = !!updateResult?.version.includes("-");
+				const hiddenByChannel =
+					!!updateResult && channel === "stable" && isPrerelease;
+				const hiddenBySkip =
+					silent &&
+					!!updateResult &&
+					updateResult.version === skippedVersion;
+				if (updateResult && !hiddenByChannel && !hiddenBySkip) {
 					setUpdate(updateResult);
 					setStatus("available");
 				} else {
@@ -98,7 +121,17 @@ export function useAppUpdate() {
 
 			void checkUpstream();
 		},
-		[setStatus, setUpdate, setErrorMsg, checkUpstream, store],
+		[
+			setStatus,
+			setUpdate,
+			setErrorMsg,
+			checkUpstream,
+			store,
+			autoCheck,
+			channel,
+			skippedVersion,
+			setLastCheck,
+		],
 	);
 
 	const relaunchApp = useCallback(async () => {
