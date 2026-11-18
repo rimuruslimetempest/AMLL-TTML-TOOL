@@ -20,6 +20,11 @@ import { type CSSProperties, memo } from "react";
 import { useTranslation } from "react-i18next";
 import { uiFallbackNoticeAtom } from "$/design-system/state";
 import { ContrastMode, Density, PerformanceMode } from "$/design-system/types";
+import { ThemeSettingsCard } from "$/modules/themes/ThemeSettings";
+import {
+	resetThemeSelectionAtom,
+	themeAccentOverrideAtom,
+} from "$/modules/themes/state";
 import {
 	askBeforeMatchingWordEditsAtom,
 	contrastAtom,
@@ -52,6 +57,8 @@ export const PresentationSettings = memo(() => {
 	const setFallbackNotice = useSetAtom(uiFallbackNoticeAtom);
 	const [askMatching, setAskMatching] = useAtom(askBeforeMatchingWordEditsAtom);
 	const [newAccent, setNewAccent] = useAtom(newAccentColorAtom);
+	const [, setThemeAccentOverride] = useAtom(themeAccentOverrideAtom);
+	const resetThemeSelection = useSetAtom(resetThemeSelectionAtom);
 	const { t } = useTranslation();
 	const performanceLabel =
 		performancePreference === PerformanceMode.On
@@ -131,6 +138,8 @@ export const PresentationSettings = memo(() => {
 				</Flex>
 			</Card>
 
+			{uiLayer === UiLayer.New ? <ThemeSettingsCard /> : null}
+
 			{uiLayer === UiLayer.New ? (
 				<Card id="appearance-new-accent">
 					<Flex gap="3" align="start">
@@ -152,7 +161,7 @@ export const PresentationSettings = memo(() => {
 									>
 										{t(
 											"settings.appearance.interface.accentDesc",
-											"Sets the accent used by the New interface. Classic keeps its existing colors.",
+											"Themes supply their own accent. Pick a color to override it; Reset returns to the theme accent. Classic keeps its existing colors.",
 										)}
 									</Text>
 								</Box>
@@ -164,7 +173,10 @@ export const PresentationSettings = memo(() => {
 									<input
 										type="color"
 										value={newAccent}
-										onChange={(event) => setNewAccent(event.target.value)}
+										onChange={(event) => {
+											setThemeAccentOverride(true);
+											setNewAccent(event.target.value);
+										}}
 										aria-label={t(
 											"settings.appearance.interface.accent",
 											"Accent color",
@@ -191,11 +203,14 @@ export const PresentationSettings = memo(() => {
 									<Button
 										size="1"
 										variant="soft"
-										onClick={() => setNewAccent(DEFAULT_NEW_ACCENT_COLOR)}
+										onClick={() => {
+											setNewAccent(DEFAULT_NEW_ACCENT_COLOR);
+											setThemeAccentOverride(false);
+										}}
 									>
 										{t(
 											"settings.appearance.interface.accentReset",
-											"Reset",
+											"Use theme accent",
 										)}
 									</Button>
 								</Flex>
@@ -402,26 +417,35 @@ export const PresentationSettings = memo(() => {
 							)}
 						</Text>
 					</Box>
-					<Button
-						variant="soft"
-						color="red"
-						disabled={uiLayer === UiLayer.Classic}
-						style={settingControlStyle}
-						onClick={() => {
-							setFallbackNotice(false);
-							setUiLayer(UiLayer.Classic);
-						}}
-						title={t(
-							"settings.appearance.interface.resetShortcut",
-							"Shortcut: Ctrl+Shift+Alt+C",
-						)}
-					>
-						<ArrowReset24Regular />
-						{t(
-							"settings.appearance.interface.resetAction",
-							"Reset UI to Classic",
-						)}
-					</Button>
+											<Flex gap="2" style={settingControlStyle} wrap="wrap">
+							<Button
+								variant="soft"
+								color="red"
+								disabled={uiLayer === UiLayer.Classic}
+								onClick={() => {
+									setFallbackNotice(false);
+									setUiLayer(UiLayer.Classic);
+								}}
+								title={t(
+									"settings.appearance.interface.resetShortcut",
+									"Shortcut: Ctrl+Shift+Alt+C",
+								)}
+							>
+								<ArrowReset24Regular />
+								{t(
+									"settings.appearance.interface.resetAction",
+									"Reset UI to Classic",
+								)}
+							</Button>
+							<Button
+								variant="soft"
+								disabled={uiLayer === UiLayer.Classic}
+								onClick={resetThemeSelection}
+								title="Shortcut: Ctrl+Shift+Alt+T"
+							>
+								Reset theme
+							</Button>
+						</Flex>
 				</Flex>
 			</Card>
 		</Flex>

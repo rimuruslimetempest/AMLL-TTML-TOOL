@@ -3,6 +3,7 @@ import { type ErrorInfo, type ReactNode, useCallback, useEffect } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { captureDiagnosticException } from "$/modules/privacy/diagnostics";
 import { UiLayer, uiLayerAtom } from "$/modules/settings/states";
+import { resetThemeSelectionAtom } from "$/modules/themes/state";
 import styles from "./design-system.module.css";
 import { uiFallbackNoticeAtom } from "./state";
 
@@ -25,6 +26,7 @@ function NewUiErrorFallback({ error }: FallbackProps) {
 
 function NewUiFallbackBanner() {
 	const [notice, setNotice] = useAtom(uiFallbackNoticeAtom);
+	const resetTheme = useSetAtom(resetThemeSelectionAtom);
 
 	if (!notice) return null;
 
@@ -34,6 +36,16 @@ function NewUiFallbackBanner() {
 				The New interface hit a problem, so Classic is active. Your project
 				state is unchanged.
 			</span>
+			<button
+				type="button"
+				className={styles.fallbackBannerButton}
+				onClick={() => {
+					resetTheme();
+					setNotice(false);
+				}}
+			>
+				Reset theme
+			</button>
 			<button
 				type="button"
 				className={styles.fallbackBannerButton}

@@ -529,7 +529,7 @@
 	position: fixed;
 	inset: 0;
 	z-index: var(--ttml-z-dialog);
-	background: rgba(4, 6, 9, 0.62);
+	background: var(--ttml-scrim);
 }
 
 .dialogContent {

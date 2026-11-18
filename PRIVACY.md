@@ -1,7 +1,7 @@
 # Privacy Policy
 
-**Version:** 2026-11-06  
-**Effective:** November 6, 2026
+**Version:** 2026-11-18
+**Effective:** November 18, 2026
 
 This policy describes the data flows that exist in this build of TTML Tool. It is based on the app's code and configuration. Items marked `[TODO: ...]` are unknown and still need legal or operational confirmation.
 
@@ -12,6 +12,7 @@ The data controller is **Rimurulover**, the author and maintainer of TTML Tool. 
 - The editor is local-first. Projects, timing, settings, autosaves, and cached audio stay on your device unless you choose a network feature.
 - Live rooms send the shared TTML project, edits, names, chat, comments, review marks, history, and any shared media to the host and everyone in the room.
 - Cloud accounts use Firebase for authentication, profile data, lyric documents, and audio storage.
+- Themes are local JSON and CSS. Remote theme images and fonts are off by default; local theme assets stay on your device.
 - AI review sends lyrics to the provider or local model you configure, only when you run a review.
 - Crash reports are off by default. A content-free local copy is written after a crash so you can inspect it; nothing is sent unless you opt in and a destination is configured.
 - There is no advertising, third-party analytics, or data-sale code in this build.
@@ -23,11 +24,12 @@ The app stores the following in your browser profile or desktop webview storage:
 - Project lyrics, timing, metadata, sections, marks, save-file names, audio names and paths, and autosave versions. Autosaves and cached audio use the IndexedDB database `amll-autosave-db`.
 - Project notes kept outside TTML: comments, review marks, restore points, room history relevant to the project, and translation/romanization language codes. These use browser `localStorage` under a project-specific key and are never written into exported TTML.
 - Editor settings, UI preferences, keybindings, project-timer and completion records, ignored words, AI endpoint/model/API keys, Genius and JOOX credentials, and other feature settings. Most use `localStorage`.
+- Installed theme files in the Tauri AppData `themes` folder, plus the selected theme, scheme, effects options, auto-reload choice, remote-content choice, and Custom CSS text in `localStorage`.
 - Custom background images and gradients in the IndexedDB database `amll-custom-background`.
 - A local cache of your cloud profile and cloud lyric list, plus Firebase's local authentication and offline cache. Some of this can remain after sign-out until local data is cleared.
 - At most one local crash report containing an error message, stack trace, component stack, app version, platform, and time.
 
-Local data stays until you delete the project, clear the relevant cache, or use **Settings → Privacy → Clear local data**. That action removes projects, project notes, cached audio, settings, API keys, custom backgrounds, local cloud caches, the saved crash report, and consent state from this installation. It does not delete cloud files.
+Local data stays until you delete the project, clear the relevant cache, or use **Settings → Privacy → Clear local data**. That action removes projects, project notes, cached audio, settings, API keys, custom backgrounds, local cloud caches, the saved crash report, and consent state from this installation. It does not delete cloud files. Installed theme folders live in AppData rather than the browser profile; remove them with **Delete** in the theme manager or by deleting the `themes` folder.
 
 ## 2. Live collaboration rooms
 
@@ -88,15 +90,21 @@ These providers receive your IP address and request metadata and may use cookies
 
 Audio download uses a local yt-dlp/ffmpeg process and contacts the URL you provide. Imported audio, lyric files, and cover images are saved locally as project data unless you upload them to a cloud account or share them in a room.
 
-## 6. Discord Rich Presence
+## 6. Themes
+
+Themes are optional local files made of JSON and CSS. Importing a theme does not execute code and does not upload the theme. Installed themes are read from the AppData `themes` folder; the selected theme and Custom CSS are stored locally.
+
+Theme CSS can normally load only local assets inside its own folder. **Allow remote images and fonts** is off by default. If you turn it on, a theme can request images or fonts from remote hosts; those hosts receive your IP address and request metadata. TTML Tool does not fetch themes from the internet.
+
+## 7. Discord Rich Presence
 
 Discord Rich Presence is optional and must be enabled in settings. When enabled, the app sends activity details to your local Discord client over Discord's IPC connection. Depending on the current activity, this can include editing mode, track title/artist or file name, playback state, elapsed time, and activity images. Discord and people who can see your profile may receive that activity. Lyrics are not sent through Rich Presence.
 
-## 7. Updates and external links
+## 8. Updates and external links
 
 The desktop updater contacts GitHub to check for and download releases. That request can reveal your IP address, app version, platform, and update-check timing. Help, GitHub, wiki, Discord, and other links open in your browser or external app and are governed by those services.
 
-## 8. Diagnostics and crash reports
+## 9. Diagnostics and crash reports
 
 Crash reports are **off by default**. The app writes at most one content-free local crash report after an unhandled error so you can inspect exactly what exists. The report contains the error message, stack trace, React component stack, app version, platform, and time. It does not contain lyrics, TTML, project metadata, audio, file paths chosen by the user, account details, display names, IP addresses, room data, or chat.
 
@@ -108,11 +116,11 @@ A one-time plain-language prompt may ask whether to send the report. Nothing is 
 
 Sentry retention and organization details: **[TODO: name the Sentry organization and retention period]**. If no Sentry DSN or crash destination is configured, nothing leaves the device.
 
-## 9. Cookies, advertising, and analytics
+## 10. Cookies, advertising, and analytics
 
 The app does not use advertising cookies, third-party analytics, cross-site tracking, or data-sale SDKs. It uses browser storage (localStorage, IndexedDB, and Cache Storage) and Firebase's local authentication cache. External pages and providers may set their own cookies under their policies.
 
-## 10. Retention and deletion
+## 11. Retention and deletion
 
 - **Local data:** kept until you delete the project, clear the cache, or use Clear local data. This works without an account.
 - **Project notes:** comments, review marks, restore points, and related history are kept with the local project until the project or local data is deleted. In a room, the host's server keeps its own capped copy for the life of the room.
@@ -122,17 +130,17 @@ The app does not use advertising cookies, third-party analytics, cross-site trac
 - **Avatar fallbacks:** Litterbox is configured for 72 hours; Imgur and other providers retain data under their own policies. **[TODO: Imgur deletion process and provider retention]**
 - **Crash reports:** the local report is kept until you delete it or clear local data. Remote reports, when you opt in and a destination exists, are retained by that destination. **[TODO: remote crash-report retention period]**
 
-## 11. Security
+## 12. Security
 
 The app uses HTTPS/WSS where the provider supports it, including Firebase, AI endpoints, search providers, and Cloudflare-tunneled rooms. A local-network room may use unencrypted HTTP/WebSocket. Live rooms are not end-to-end encrypted; the host and tunnel provider can access room traffic in transit.
 
 No system is perfectly secure. Protect invite links and passwords, account credentials, API keys, exported TTML files, and audio. Treat shared rooms and cloud saves as shareable content. See the access-rule notice in section 3.
 
-## 12. Children
+## 13. Children
 
 The app is not directed to children under 13. In the EEA or UK, you must be at least 16 to use an account or live room without appropriate consent. **[TODO: confirm the minimum age with counsel]**
 
-## 13. Your choices and rights
+## 14. Your choices and rights
 
 Depending on where you live, you may have rights to access, correct, delete, restrict, object to, or port your personal data, and to complain to a data-protection authority. You can exercise many of these directly:
 
@@ -144,11 +152,11 @@ Depending on where you live, you may have rights to access, correct, delete, res
 
 Withdrawing consent stops new live-room and cloud connections in this installation and turns off diagnostics. It does not automatically delete data already stored in Firebase, on another participant's device, or in provider backups.
 
-## 14. International transfers
+## 15. International transfers
 
 Firebase/Google, Sentry, Cloudflare, AI providers, and other services may process data in countries other than yours. **[TODO: identify the controller's transfer mechanism and list relevant subprocessors and regions]**
 
-## 15. Changes and contact
+## 16. Changes and contact
 
 This policy may be updated when data flows change. The version and effective date are shown at the top, and material changes require a new consent decision before the affected feature is used again.
 

@@ -5,11 +5,35 @@ What's New window reads this file.
 
 ## [Unreleased]
 
+### New
+
+- Added installable themes for the New interface, with color schemes, optional
+  CSS and local assets, a theme manager, a token editor, Custom CSS, import and
+  export, and sixteen built-in themes. Themes are JSON and CSS only and never run
+  code.
+- Added glass, Mica, high-contrast, AMOLED, paper, terminal, and other built-in
+  styles, plus a documentation file describing the theme format and safety
+  rules.
+
+### Improved
+
+- Theme changes now flow through the shared design tokens, including dialogs,
+  menus, settings, toasts, timestamp chips, and live-room panels. Accent,
+  density, scale, and the Classic / New UI switch keep working as before.
+- Glass effects are limited to interface chrome and automatically become flat
+  colors in Performance mode, with reduced motion, or without backdrop-filter
+  support.
+
 ### Fixed
 
 - The Preview lyrics display and scrolling were restored to the earlier stable
   version, and the later Preview-only rendering experiments were removed. The
   timeline ruler and blue waveform remain above the transport controls.
+- Preview lyric scrolling no longer restarts its smooth-scroll animation on every
+  frame. A seek jumps immediately, and a new lyric line starts one animation
+  instead of being interrupted throughout playback.
+- User-installed themes now appear in the theme gallery and can be applied
+  without restarting the app.
 
 ## [1.0.0] - 2026-11-17
 

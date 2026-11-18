@@ -45,6 +45,11 @@ import { useTranslation } from "react-i18next";
 import { Slide, ToastContainer, toast } from "react-toastify";
 import saveFile from "save-file";
 import { backgroundGradients } from "$/modules/settings/states/gradients";
+import { ThemeRuntime } from "$/modules/themes/ThemeRuntime";
+import {
+	themeAccentOverrideAtom,
+	themeIdAtom,
+} from "$/modules/themes/state";
 import {
 	accentColorAtom,
 	backgroundModeAtom,
@@ -52,6 +57,7 @@ import {
 	boykisserUnlockedAtom,
 	customAccentColorAtom,
 	newAccentColorAtom,
+	DEFAULT_NEW_ACCENT_COLOR,
 	customGradientAngleAtom,
 	customGradientCenterAtom,
 	customGradientColorsAtom,
@@ -430,6 +436,12 @@ function App() {
 	const useCustomAccent = useAtomValue(useCustomAccentAtom);
 	const customAccentColor = useAtomValue(customAccentColorAtom);
 	const newAccentColor = useAtomValue(newAccentColorAtom);
+	const themeId = useAtomValue(themeIdAtom);
+	const themeAccentOverride = useAtomValue(themeAccentOverrideAtom);
+	const shouldApplyNewAccent =
+		themeId === "default" ||
+		themeAccentOverride ||
+		newAccentColor !== DEFAULT_NEW_ACCENT_COLOR;
 	const resolvedNewAccent = /^#[0-9a-f]{6}$/i.test(newAccentColor)
 		? newAccentColor
 		: "#5b5ef0";
@@ -941,6 +953,9 @@ function App() {
 			font-style: ${appFontStyle} !important;
 			${vars}
 		}
+		${
+			shouldApplyNewAccent
+				? `
 		html[data-ui-layer="new"] {
 			--ttml-accent: ${resolvedNewAccent} !important;
 			--ttml-accent-contrast: ${newAccentContrast} !important;
@@ -963,6 +978,9 @@ function App() {
 		html[data-ui-layer="new"].light .radix-themes {
 			--accent-10: color-mix(in srgb, ${resolvedNewAccent} 84%, black) !important;
 			--accent-11: color-mix(in srgb, ${resolvedNewAccent} 76%, black) !important;
+		}
+		`
+				: ""
 		}
 		`;
 	}, [
@@ -1012,6 +1030,7 @@ function App() {
 		accentColor,
 		useCustomAccent,
 		customAccentColor,
+		shouldApplyNewAccent,
 	]);
 
 	useLayoutEffect(() => {
@@ -1577,6 +1596,7 @@ function App() {
 				<UpdateDialog />
 				<ChecklistBackgroundSync />
 				{customStyleString ? <style>{customStyleString}</style> : null}
+				<ThemeRuntime />
 				{hasCustomBackground && (
 							<div className={styles.customBackgroundLayer} aria-hidden="true">
 								<div

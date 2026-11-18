@@ -426,6 +426,7 @@ export const SpicyLyrics = memo(
 		const slmAnimations = useRef(new Map<string, SlmAnimation>());
 		const scrollPauseUntil = useRef(0);
 		const scrollFollowUntil = useRef(0);
+		const scrollRetryAt = useRef(0);
 		const lastLine = useRef<string | null>(null);
 		const lastTime = useRef(performance.now());
 		const fpsLabelRef = useRef<HTMLDivElement>(null);
@@ -1004,21 +1005,26 @@ export const SpicyLyrics = memo(
 							viewport.getBoundingClientRect().top,
 						) >=
 						5;
-				const followOffscreen =
+				const targetChanged = lastLine.current !== scrollTarget?.id;
+				const followWindow =
+					now < scrollFollowUntil.current && now > scrollPauseUntil.current;
+				// A smooth scroll must be started once per target. Restarting it on
+				// every animation frame makes the lyric list crawl and visibly shake
+				// while the active line is still catching up. Retry at most once per
+				// 700ms if layout settling left the target slightly off-centre.
+				const needsCorrection =
 					!!scrollTarget &&
-					now < scrollFollowUntil.current &&
-					now > scrollPauseUntil.current &&
-					(!visible || lastLine.current !== scrollTarget.id);
-				if (
-					scrollTarget &&
-					scrollNode &&
-					viewport &&
+					followWindow &&
+					(!visible || targetChanged) &&
+					now >= scrollRetryAt.current;
+				const shouldStartScroll =
+					!!scrollTarget &&
+					!!scrollNode &&
+					!!viewport &&
 					(shouldForce ||
-						followOffscreen ||
-						(now > scrollPauseUntil.current &&
-							visible &&
-							lastLine.current !== scrollTarget.id))
-				) {
+						(now > scrollPauseUntil.current && targetChanged) ||
+						needsCorrection);
+				if (shouldStartScroll && scrollTarget && scrollNode && viewport) {
 					const target = Math.max(
 						0,
 						Math.min(
@@ -1030,9 +1036,10 @@ export const SpicyLyrics = memo(
 					);
 					viewport.scrollTo({
 						top: target,
-						behavior: shouldForce ? "auto" : "smooth",
+						behavior: shouldForce ? "instant" : "smooth",
 					});
 					lastLine.current = scrollTarget.id;
+					scrollRetryAt.current = shouldForce ? 0 : now + 700;
 				}
 				previousPosition = time;
 				raf = requestAnimationFrame(animate);

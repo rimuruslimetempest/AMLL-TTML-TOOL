@@ -113,6 +113,7 @@ import {
 } from "./customBackground";
 import { PresentationSettings } from "./presentation";
 import { UIScaleSetting } from "./UIScaleSetting";
+import { ThemeAdvancedCard } from "$/modules/themes/ThemeSettings";
 
 const BUILTIN_PRESETS: AppearancePreset[] = [
 	{
@@ -2790,6 +2791,7 @@ export const SettingsAppearanceTab = () => {
 					</Card>
 				</Flex>
 			)}
+			<ThemeAdvancedCard />
 		</Flex>
 	);
 };

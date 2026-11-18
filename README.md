@@ -91,6 +91,13 @@ editing aids; they never decide when a word should be sung.
 
 - Light and dark appearance, UI density and scale, custom accents, fonts, and
   background images.
+- Installable themes with light and dark color schemes, a theme manager, a
+  token editor, and a separate Custom CSS box. Built-ins include Liquid Glass,
+  Glass Dark, Glass Light, AMOLED Black, Midnight Neon, Sakura, Mocha, Latte,
+  Nord-style, Dracula-style, Solarized-style, Terminal, Paper, High Contrast,
+  and Windows 11 Mica. See [THEMES.md](./THEMES.md).
+- Glass effects stay on interface chrome; Performance mode, reduced motion, and
+  unsupported hardware use the flat version of each theme.
 - Performance mode and appearance controls.
 - Discord Rich Presence with customizable text.
 - A portable settings and project backup.
@@ -112,8 +119,10 @@ TTML Tool keeps the familiar TTML editing workflow and adds:
   roles, room chat, comments, review marks, history, and restore points.
 - **Saved personal splits.** A reusable split library with previews and notes,
   plus optional sharing inside a room.
-- **A redesigned interface with Performance mode.** Density and scale controls
-  plus a lower-effects mode for slower computers.
+- **A redesigned interface with themes and Performance mode.** Install or make
+  a theme with the built-in editor, import and export theme packs, and keep the
+  glass effects on the chrome only. Density and scale controls plus a
+  lower-effects mode for slower computers.
 - **A stable Preview.** Word and line highlighting, transform-based scrolling,
   duet and background-vocal layout, and the Preview options listed above.
 - **Extra import and export formats.** LRC, enhanced LRC, SRT, ASS/SSA, WebVTT,
