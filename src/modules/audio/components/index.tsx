@@ -70,7 +70,6 @@ import {
 import { openFileWithDialog } from "$/utils/fileDialog.ts";
 import { useKeyBindingAtom } from "$/utils/keybindings.ts";
 import { msToTimestamp } from "$/utils/timestamp.ts";
-import { TimelineRuler } from "./TimelineRuler";
 
 const AudioPlaybackKeyBinding = memo(() => {
 	const store = useStore();
@@ -242,14 +241,6 @@ export const AudioControls: FC = memo(() => {
 				<div style={{ display: spectrogramVisible ? "flex" : "none" }}>
 					<AudioSpectrogram />
 				</div>
-				<div style={{ padding: "2px 0 0" }}>
-					<TimelineRuler />
-					<div
-						style={{ height: 42, margin: "0 9px", marginTop: -3 }}
-					>
-						<AudioSlider height="42px" />
-					</div>
-				</div>
 				<Flex align="center" px="2" gapX="2">
 					<HoverCard.Root>
 						<HoverCard.Trigger>
@@ -381,7 +372,9 @@ export const AudioControls: FC = memo(() => {
 						</IconButton>
 					</Tooltip>
 					<CurrentTimeLabel />
-					<Box flexGrow="1" />
+					<Box flexGrow="1" minWidth="0">
+						<AudioSlider height="42px" />
+					</Box>
 					<Text
 						size="2"
 						className="audioTime"
