@@ -8,13 +8,13 @@
 		"email": "rimurusamllttmltool@gmail.com",
 		"url": "https://github.com/rimuruslimetempest"
 	},
-	"homepage": "https://github.com/rimuruslimetempest/ttml-tool#readme",
+	"homepage": "https://github.com/rimuruslimetempest/AMLL-TTML-TOOL#readme",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/rimuruslimetempest/ttml-tool.git"
+		"url": "https://github.com/rimuruslimetempest/AMLL-TTML-TOOL.git"
 	},
 	"bugs": {
-		"url": "https://github.com/rimuruslimetempest/ttml-tool/issues"
+		"url": "https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/issues"
 	},
 	"license": "AGPL-3.0",
 	"type": "module",

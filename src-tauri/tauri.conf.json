@@ -43,7 +43,7 @@
 		"targets": "all",
 		"publisher": "Rimurulover",
 		"copyright": "Copyright © 2026 Rimurulover",
-		"homepage": "https://github.com/rimuruslimetempest/ttml-tool",
+		"homepage": "https://github.com/rimuruslimetempest/AMLL-TTML-TOOL",
 		"category": "Music",
 		"shortDescription": "A word-synced TTML lyric editor for Apple Music-style lyrics.",
 		"longDescription": "TTML Tool is a desktop editor for word-synced TTML lyrics, with manual timing, a smooth live preview, format import and export, live rooms, comments, and collaboration.",
@@ -83,7 +83,7 @@
 		"updater": {
 			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc4MTVGNjc5N0I4MDQzMzUKUldRMVE0QjdlZllWZUdqakZ5ZG9TMDEwWUhUUXUzYjR1R3Y0aXBMeng2bHVTUzE1eDhhYVI5NHoK",
 			"endpoints": [
-				"https://github.com/rimuruslimetempest/ttml-tool/releases/latest/download/latest.json"
+				"https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/releases/latest/download/latest.json"
 			]
 		}
 	}

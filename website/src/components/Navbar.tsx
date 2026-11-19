@@ -102,7 +102,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onSelectTab }) => {
 
           <div className="nav-actions">
             <a
-              href="https://github.com/rimuruslimetempest/ttml-tool"
+              href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL"
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-secondary btn-sm nav-desktop-action"
@@ -114,7 +114,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onSelectTab }) => {
               <ExternalLink size={12} className="nav-desktop-action-label" style={{ opacity: 0.7 }} />
             </a>
             <a
-              href="https://github.com/rimuruslimetempest/ttml-tool"
+              href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL"
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-secondary btn-sm nav-desktop-action"
@@ -124,7 +124,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onSelectTab }) => {
               <span className="nav-desktop-action-label">GitHub</span>
             </a>
             <a
-              href="https://github.com/rimuruslimetempest/ttml-tool/releases/latest"
+              href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/releases/latest"
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-primary btn-sm nav-desktop-action"
@@ -239,7 +239,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onSelectTab }) => {
 
             <div className="nav-mobile-actions">
               <a
-                href="https://github.com/rimuruslimetempest/ttml-tool"
+                href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-secondary btn-sm nav-mobile-action-btn"
@@ -250,7 +250,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onSelectTab }) => {
                 <ExternalLink size={12} style={{ opacity: 0.7 }} />
               </a>
               <a
-                href="https://github.com/rimuruslimetempest/ttml-tool"
+                href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-secondary btn-sm nav-mobile-action-btn"
@@ -260,7 +260,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onSelectTab }) => {
                 <span>GitHub</span>
               </a>
               <a
-                href="https://github.com/rimuruslimetempest/ttml-tool/releases/latest"
+                href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/releases/latest"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-primary btn-sm nav-mobile-action-btn"

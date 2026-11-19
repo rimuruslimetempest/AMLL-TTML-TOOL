@@ -434,7 +434,7 @@ export const SettingsAccountTab = memo(() => {
 										type="button"
 										style={{ cursor: "pointer" }}
 										onClick={() =>
-											openExternal("https://github.com/rimuruslimetempest/ttml-tool")
+											openExternal("https://github.com/rimuruslimetempest/AMLL-TTML-TOOL")
 										}
 									>
 										<Globe16Regular style={{ width: 14, height: 14 }} />
@@ -765,7 +765,7 @@ export const SettingsAccountTab = memo(() => {
 							style={{ cursor: "pointer" }}
 							onClick={() =>
 								openExternal(
-									`https://github.com/rimuruslimetempest/ttml-tool`,
+									`https://github.com/rimuruslimetempest/AMLL-TTML-TOOL`,
 								)
 							}
 						>
@@ -778,7 +778,7 @@ export const SettingsAccountTab = memo(() => {
 							size="2"
 							style={{ cursor: "pointer" }}
 							onClick={() =>
-								openExternal("https://github.com/rimuruslimetempest/ttml-tool")
+								openExternal("https://github.com/rimuruslimetempest/AMLL-TTML-TOOL")
 							}
 						>
 							{t("cloud.viewCommunityStats", "Community Leaderboard")}
@@ -793,7 +793,7 @@ export const SettingsAccountTab = memo(() => {
 								style={{ cursor: "pointer" }}
 								onClick={() => {
 									navigator.clipboard.writeText(
-										`https://github.com/rimuruslimetempest/ttml-tool`,
+										`https://github.com/rimuruslimetempest/AMLL-TTML-TOOL`,
 									);
 									toast.success(
 										t(

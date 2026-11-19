@@ -8,8 +8,8 @@
 
 Made and maintained by **[Rimurulover](https://github.com/rimuruslimetempest)**.
 
-[Download](https://github.com/rimuruslimetempest/ttml-tool/releases/latest) ·
-[Report a problem](https://github.com/rimuruslimetempest/ttml-tool/issues) ·
+[Download](https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/releases/latest) ·
+[Report a problem](https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/issues) ·
 [Privacy Policy](./PRIVACY.md) ·
 [Terms of Use](./TERMS.md)
 
@@ -165,8 +165,8 @@ settings are not carried over automatically.
 ### Commands
 
 ```bash
-git clone https://github.com/rimuruslimetempest/ttml-tool.git
-cd ttml-tool
+git clone https://github.com/rimuruslimetempest/AMLL-TTML-TOOL.git
+cd AMLL-TTML-TOOL
 pnpm install --frozen-lockfile
 
 pnpm dev          # browser development build
@@ -185,19 +185,11 @@ without permission.
 
 ## Screenshots
 
-Screenshot placeholders — replace these with images from your own build:
-
-- `docs/screenshots/edit.png` — Edit mode with the lyric timeline.
-- `docs/screenshots/time.png` — Time mode with the waveform and spectrogram.
-- `docs/screenshots/preview.png` — Preview mode with album artwork.
-- `docs/screenshots/rooms.png` — A live room with comments and review marks.
-
-```md
 ![Edit mode](docs/screenshots/edit.png)
+
 ![Time mode](docs/screenshots/time.png)
+
 ![Preview mode](docs/screenshots/preview.png)
-![Live room](docs/screenshots/rooms.png)
-```
 
 ## Privacy
 

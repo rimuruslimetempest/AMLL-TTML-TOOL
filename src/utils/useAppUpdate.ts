@@ -19,7 +19,7 @@ import {
 } from "$/states/update";
 
 const UPSTREAM_RELEASE_API =
-	"https://api.github.com/repos/rimuruslimetempest/ttml-tool/releases/latest";
+	"https://api.github.com/repos/rimuruslimetempest/AMLL-TTML-TOOL/releases/latest";
 
 function isMissingFeatureChannel(error: unknown) {
 	const message = error instanceof Error ? error.message : String(error);
@@ -64,7 +64,7 @@ export function useAppUpdate() {
 				version,
 				url:
 					release.html_url ??
-					"https://github.com/rimuruslimetempest/ttml-tool/releases/latest",
+					"https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/releases/latest",
 			});
 		} catch {
 			// The upstream check is informational; the feature update channel is

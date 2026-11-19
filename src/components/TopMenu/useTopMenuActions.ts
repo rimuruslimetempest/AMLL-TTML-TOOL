@@ -488,7 +488,7 @@ export const useTopMenuActions = () => {
 	}, [setGeniusLyricsRefreshDialog]);
 
 	const onOpenStatsAndProfiles = useCallback(async () => {
-		await openExternal("https://github.com/rimuruslimetempest/ttml-tool");
+		await openExternal("https://github.com/rimuruslimetempest/AMLL-TTML-TOOL");
 	}, []);
 
 	const onOpenSpotMatch = useCallback(() => {
@@ -496,12 +496,12 @@ export const useTopMenuActions = () => {
 	}, [setSpotMatchDialog]);
 
 	const onOpenGitHub = useCallback(async () => {
-		await openExternal("https://github.com/rimuruslimetempest/ttml-tool");
+		await openExternal("https://github.com/rimuruslimetempest/AMLL-TTML-TOOL");
 	}, []);
 
 	const onOpenWiki = useCallback(async () => {
 		await openExternal(
-			"https://github.com/rimuruslimetempest/ttml-tool#readme",
+			"https://github.com/rimuruslimetempest/AMLL-TTML-TOOL#readme",
 		);
 	}, []);
 

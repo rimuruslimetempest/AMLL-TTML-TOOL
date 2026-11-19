@@ -3,9 +3,9 @@ name = "ttml-tool"
 version = "1.0.0"
 description = "TTML Tool - a word-synced TTML lyric editor for Apple Music-style lyrics"
 authors = ["Rimurulover <rimurusamllttmltool@gmail.com>"]
-homepage = "https://github.com/rimuruslimetempest/ttml-tool"
+homepage = "https://github.com/rimuruslimetempest/AMLL-TTML-TOOL"
 license = "AGPL-3.0"
-repository = "https://github.com/rimuruslimetempest/ttml-tool"
+repository = "https://github.com/rimuruslimetempest/AMLL-TTML-TOOL"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

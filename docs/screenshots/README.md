@@ -1,12 +1,10 @@
 # Screenshots
 
-Add your own TTML Tool screenshots here, then reference them from the README.
+These screenshots are used by the main README:
 
-Suggested captures:
+- `edit.png` — Edit mode with the lyric timeline.
+- `time.png` — Time mode with the waveform and spectrogram.
+- `preview.png` — Preview mode with album artwork.
 
-- `editor.png` — the main editor with a project open.
-- `timing.png` — waveform/spectrogram timing view.
-- `preview.png` — live lyric preview.
-- `checklist.png` — TTML Checklist.
-
-Use images you created yourself. Do not include lyrics, album artwork, or other material you do not have permission to redistribute.
+Use images you created yourself. Do not include lyrics, album artwork, or other
+material you do not have permission to redistribute.

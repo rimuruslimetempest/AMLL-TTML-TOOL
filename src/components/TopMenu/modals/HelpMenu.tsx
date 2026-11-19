@@ -94,7 +94,7 @@ const HelpMenuItems = () => {
 				<DropdownMenu.Item
 					onSelect={() =>
 						window.open(
-							"https://github.com/rimuruslimetempest/ttml-tool/releases/latest",
+							"https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/releases/latest",
 							"_blank",
 							"noopener,noreferrer",
 						)

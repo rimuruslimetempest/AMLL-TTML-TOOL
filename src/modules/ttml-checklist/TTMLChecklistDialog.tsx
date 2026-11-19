@@ -2248,7 +2248,7 @@ export const TTMLChecklistDialog = () => {
 									variant="surface"
 									color="purple"
 									onClick={() =>
-										openExternal("https://github.com/rimuruslimetempest/ttml-tool")
+										openExternal("https://github.com/rimuruslimetempest/AMLL-TTML-TOOL")
 									}
 									style={{
 										height: "32px",

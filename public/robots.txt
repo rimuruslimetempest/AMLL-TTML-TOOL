@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://github.com/rimuruslimetempest/ttml-tool
+Sitemap: https://github.com/rimuruslimetempest/AMLL-TTML-TOOL

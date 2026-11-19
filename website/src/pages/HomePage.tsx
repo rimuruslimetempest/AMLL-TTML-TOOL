@@ -139,7 +139,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
 				<div className="hero-buttons">
 					<a
-						href="https://github.com/rimuruslimetempest/ttml-tool"
+						href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL"
 						target="_blank"
 						rel="noopener noreferrer"
 						className="btn btn-primary"
@@ -151,7 +151,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 					</a>
 
 					<a
-						href="https://github.com/rimuruslimetempest/ttml-tool/releases/latest"
+						href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/releases/latest"
 						target="_blank"
 						rel="noopener noreferrer"
 						className="btn btn-secondary"
@@ -251,7 +251,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 							</p>
 						</div>
 						<a
-							href="https://github.com/rimuruslimetempest/ttml-tool"
+							href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="btn btn-secondary btn-sm"

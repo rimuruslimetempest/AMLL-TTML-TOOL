@@ -314,7 +314,7 @@ export const PublicChecklistPage: React.FC<PublicChecklistPageProps> = ({ onNavi
           </p>
           <div style={{ marginTop: 24 }}>
             <a
-              href="https://github.com/rimuruslimetempest/ttml-tool"
+              href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL"
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-primary btn-sm"
@@ -515,7 +515,7 @@ export const PublicChecklistPage: React.FC<PublicChecklistPageProps> = ({ onNavi
                   </button>
 
                   <a
-                    href={`https://github.com/rimuruslimetempest/ttml-tool?song=${encodeURIComponent(item.song)}&artist=${encodeURIComponent(item.artist)}`}
+                    href={`https://github.com/rimuruslimetempest/AMLL-TTML-TOOL?song=${encodeURIComponent(item.song)}&artist=${encodeURIComponent(item.artist)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-secondary btn-sm"

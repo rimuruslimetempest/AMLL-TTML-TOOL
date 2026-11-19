@@ -12,8 +12,8 @@ use discord_rich_presence::{DiscordIpc, DiscordIpcClient, activity};
 // The current ID is inherited from the upstream project's Discord app.
 const DISCORD_CLIENT_ID: &str = "1564500602854318111";
 const DISCORD_LOGO_URL: &str =
-    "https://raw.githubusercontent.com/rimuruslimetempest/ttml-tool/main/public/logo.png";
-const REPOSITORY_URL: &str = "https://github.com/rimuruslimetempest/ttml-tool";
+    "https://raw.githubusercontent.com/rimuruslimetempest/AMLL-TTML-TOOL/main/public/logo.png";
+const REPOSITORY_URL: &str = "https://github.com/rimuruslimetempest/AMLL-TTML-TOOL";
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]

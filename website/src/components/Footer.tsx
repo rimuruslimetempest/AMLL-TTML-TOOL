@@ -42,7 +42,7 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab }) => {
             Liquid Player
           </button>
           <a
-            href="https://github.com/rimuruslimetempest/ttml-tool"
+            href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL"
             target="_blank"
             rel="noopener noreferrer"
             className="footer-link"
@@ -52,7 +52,7 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab }) => {
             Web App (Browser)
           </a>
           <a
-            href="https://github.com/rimuruslimetempest/ttml-tool"
+            href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL"
             target="_blank"
             rel="noopener noreferrer"
             className="footer-link"

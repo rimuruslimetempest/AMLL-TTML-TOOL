@@ -18,7 +18,7 @@ export function ChangelogDialog() {
 
 	const openGitHub = async () => {
 		await openExternal(
-			"https://github.com/rimuruslimetempest/ttml-tool/commits/main",
+			"https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/commits/main",
 		);
 	};
 

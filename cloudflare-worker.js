@@ -16,9 +16,9 @@ const FIRESTORE_PROJECT_ID = "YOUR_FIREBASE_PROJECT_ID";
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents`;
 // [TODO] Set these to your own deployed website/editor origins before deploying
 // this Worker. They are intentionally not tied to any inherited deployment.
-const SITE_ORIGIN = "https://rimuruslimetempest.github.io/ttml-tool";
+const SITE_ORIGIN = "https://ttmleditor.com";
 const EDITOR_ORIGIN = SITE_ORIGIN;
-const GITHUB_REPO = "https://github.com/rimuruslimetempest/ttml-tool";
+const GITHUB_REPO = "https://github.com/rimuruslimetempest/AMLL-TTML-TOOL";
 const DEFAULT_ICON = `${SITE_ORIGIN}/apple-touch-icon.png`;
 
 export default {
