@@ -206,10 +206,14 @@ Privacy and legal contact: **rimurusamllttmltool@gmail.com**.
 TTML Tool is created and maintained by **Rimurulover**
 ([GitHub](https://github.com/rimuruslimetempest)).
 
+Have permission from bobjoerules
+
 TTML Tool began from the AMLL TTML Tool codebase; its copyright and license
 notices are retained in [LICENSE](./LICENSE) and the source-file headers.
 Third-party components, including Spicy Lyrics, SpotMatch, and the Prosodic
 syllabification engine, are credited in **Settings → About**.
+
+Original TTML TOOL made by Bobjoerules; link here: https://github.com/bobjoerules/TTML-Editor 
 
 ## License
 
