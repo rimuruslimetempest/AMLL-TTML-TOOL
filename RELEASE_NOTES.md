@@ -1,8 +1,8 @@
-# TTML Tool 1.0.0
+# TTML Tool 1.0.1
 
-TTML Tool is a desktop editor for word-synced TTML lyrics. This is the first
-release published from this repository, and it ships for Windows, macOS, and
-Linux.
+TTML Tool is a desktop editor for word-synced TTML lyrics. This release brings
+the Windows, macOS, and Linux builds back onto one release, all from the same
+tagged source.
 
 All timing is manual. The editor, the importers, and the text tools never create,
 move, or retime a timestamp on their own.
@@ -11,26 +11,26 @@ move, or retime a timestamp on their own.
 
 | Platform | File |
 | --- | --- |
-| Windows x64 | `TTML-Tool_1.0.0_x64-setup.exe` or `TTML-Tool_1.0.0_x64.msi` |
-| macOS Apple Silicon | `TTML-Tool_1.0.0_aarch64.dmg` |
-| macOS Intel | `TTML-Tool_1.0.0_x64.dmg` |
-| Linux x64 | `TTML-Tool_1.0.0_amd64.AppImage`, `.deb`, or `.rpm` |
+| Windows x64 | `TTML-Tool_1.0.1_x64-setup.exe` or `TTML-Tool_1.0.1_x64.msi` |
+| macOS Apple Silicon | `TTML-Tool_1.0.1_aarch64.dmg` |
+| macOS Intel | `TTML-Tool_1.0.1_x64.dmg` |
+| Linux x64 | `TTML-Tool_1.0.1_amd64.AppImage`, `.deb`, or `.rpm` |
 
-The release also includes `latest.json` for the built-in updater. On Linux, only
-the AppImage install updates itself; use your package manager for `.deb` and
-`.rpm`.
+When updater metadata is generated, the release also includes `latest.json` for
+the built-in updater. On Linux, the AppImage updates itself; use your package
+manager for `.deb` and `.rpm`.
 
 ## Highlights
 
+- **One release for every desktop platform.** The Windows, macOS Apple Silicon,
+  macOS Intel, and Linux x64 builds are uploaded to the same draft release and
+  checked before the release is published.
 - **Manual TTML editing.** Line, word, and syllable timing with a waveform,
   spectrogram, millisecond fields, keyboard shortcuts, undo and redo, autosaves,
   and restore points.
 - **Live rooms.** Host, Editor, Commenter, and Viewer roles, shared editing,
   chat, comments, review marks, history, restore points, and an optional shared
   split dictionary.
-- **Saved splits and text tools.** A reusable split library with previews and
-  notes, syllable splitting, word replacement, line merging, and duplicate
-  cleanup.
 - **A stable Preview.** Word and line highlighting, a transform-based lyric
   scroller, duet and background-vocal layout, and options for Simple lyrics,
   Translation, Romanization, BG Follows Duet, Album Artwork, Fullscreen, Mask
@@ -39,56 +39,38 @@ the AppImage install updates itself; use your package manager for `.deb` and
   plain text. Export TTML, LRC, enhanced LRC, SRT, and plain text. Every import
   has a preview with line counts and problems, and imported timing is marked for
   review instead of being trusted.
-- **First-run setup and updates.** A short, skippable setup wizard for display
-  name, appearance, audio output and tap key, performance mode, and privacy. The
-  built-in updater checks this repository, shows release notes, and can skip a
-  version.
+- **Themes and the marketplace.** Install a JSON/CSS theme, edit its tokens, or
+  browse the community marketplace. Themes never run code and are not applied
+  without a preview.
+- **A 30-day recycle bin.** Deleted lines, words, saved splits, themes, and
+  projects can be restored for 7, 30, or 90 days, or until the bin is emptied.
 
-## New
+## Release changes
 
-- Built-in updater with a daily check, top-bar banner, release-notes dialog,
-  progress bar, install-and-restart, Help and Settings checks, Stable/Beta
-  channels, and skip-this-version.
-- Import previews with detected format, line count, and per-line warnings;
-  imported lines marked needs review.
-- Export dialog with format picker, inclusion options, preview, filename, and
-  loss warnings.
-- Drag-and-drop for lyric files and desktop file associations for `.ttml`,
-  `.lrc`, and `.srt`.
-- Seven-step setup wizard, reopenable from Settings → General.
-- Live rooms with roles, chat, comments, review marks, history, restore points,
-  and shared splits.
-- Saved split library with previews, proportional timing, and notes.
-- TTML Checklist, song-info metadata, portable backup, Discord Rich Presence,
-  and the optional media downloader.
-- Preview FPS overlay and Performance mode.
-
-## Improved
-
-- Imported files are converted, not retimed. The editor is warned to check the
-  result against the audio.
-- The Preview follows playback with word and line highlighting and keeps
-  translation, romanization, duet lines, background vocals, fullscreen, and
-  album artwork working.
-- Pausing, seeking, and hiding the window stop the Preview animation loop
-  instead of leaving it running.
-- Update checks stay silent when offline, and all update preferences persist
-  across restarts.
-- Metadata, installer naming, the update endpoint, and every project link point
-  at TTML Tool and this repository.
-- The desktop app now uses TTML Tool's own application identifier and executable
-  metadata. Because that creates a new local WebView profile, export a settings
-  backup before switching from an older build.
+- The release workflow now creates a draft first and uploads all platform
+  bundles to it. It verifies the installers and, when updater metadata is
+  available, the update files and `latest.json` before publishing, so a failed
+  platform cannot produce a half-empty public release.
+- The downloader tools are prepared separately for Windows x64, macOS Apple
+  Silicon, macOS Intel, and Linux x64. This keeps yt-dlp, FFmpeg, FFprobe, Deno,
+  and cloudflared matched to the computer that runs the app.
+- Linux releases are built on Ubuntu 22.04 with the Tauri v2 WebKitGTK 4.1
+  packages, and AppImage bundling uses the extract-and-run path on the runner.
+- A separate build check runs the frontend build and `cargo check` on pull
+  requests and pushes to `main` without creating a release.
 
 ## Fixed
 
-- UTF-8 BOM, UTF-16, CRLF, and mixed line endings import correctly.
-- Bad timestamps and unsupported ASS/SSA dialogue lines are reported in the
-  preview instead of aborting the import.
-- Non-TTML exports never modify the open project.
-- Preview lyrics were restored to the earlier stable display and scrolling
-  behavior, and the later Preview-only diagnostics and rendering controls were
-  removed.
+- The workflow validates its release settings once before creating a draft and
+  reports missing updater metadata instead of leaving a half-built public
+  release. Installers are still published when that metadata is unavailable.
+- A published release is never overwritten by the workflow. Use a new patch
+  version for a new build.
+- The Linux job installs the complete Tauri v2 dependency set, including the
+  AppImage runtime support, instead of relying on the runner's default packages.
+- The macOS Intel build explicitly installs the `x86_64-apple-darwin` Rust
+  target and builds with that target, so it is not mistaken for an Apple Silicon
+  build.
 
 ## Credits
 

@@ -3,10 +3,31 @@
 All notable changes to TTML Tool are listed here, newest first. The in-app
 What's New window reads this file.
 
-## [Unreleased]
+## [1.0.1] - 2026-11-21
+
+### Release
+
+- Rebuilt the release pipeline so Windows, macOS (Apple Silicon and Intel), and
+  Linux x64 installers are produced from one tag, uploaded to a draft release,
+  checked together, and published only after every installer and, when
+  available, the updater manifest are present.
+- Added a separate cross-platform build check for pull requests and pushes to
+  `main`, so compile and frontend failures show up before a release tag.
+- Prepared the downloader tools for each release target and pinned the Linux
+  build to Ubuntu 22.04 for the Tauri v2 WebKitGTK 4.1 packages.
 
 ### New
 
+- Added a community theme marketplace at
+  <https://rimuruslimetempest.github.io/AMLL-TTML-TOOL/> with a validated
+  registry, schema, three example themes, and an optional in-app browser that
+  verifies each download's SHA-256 before the normal preview.
+- Added a recycle bin for deleted lines, words, saved splits, themes,
+  and projects. Deletions show an undo toast, and items can be restored for 7,
+  30, or 90 days, or until the bin is emptied.
+- Added yt-dlp version display, a verified updater, ffmpeg repair, custom tool
+  paths, a cookies file option, playlist picking, and plain-language download
+  errors to the desktop media downloader.
 - Added installable themes for the New interface, with color schemes, optional
   CSS and local assets, a theme manager, a token editor, Custom CSS, import and
   export, and sixteen built-in themes. Themes are JSON and CSS only and never run
@@ -26,6 +47,8 @@ What's New window reads this file.
 
 ### Fixed
 
+- The installed app now finds its bundled yt-dlp, ffmpeg, and ffprobe tools, and
+  release builds prepare them for each platform before packaging.
 - The Preview lyrics display and scrolling were restored to the earlier stable
   version, and the later Preview-only rendering experiments were removed. The
   timeline ruler and blue waveform remain above the transport controls.

@@ -31,6 +31,7 @@ import {
 	type BackupFile,
 	BackupValidationError,
 } from "$/modules/settings/backup/types";
+import { RecycleBinSettingsCard } from "$/modules/recycle-bin/RecycleBinSettingsCard";
 
 function useCategoryLabels() {
 	const { t } = useTranslation();
@@ -40,6 +41,7 @@ function useCategoryLabels() {
 		assets: t("settings.backup.category.assets", "Appearance assets"),
 		projects: t("settings.backup.category.projects", "Projects & history"),
 		plugins: t("settings.backup.category.plugins", "Plugins"),
+		recycleBin: t("settings.backup.category.recycleBin", "Recycle bin (optional)"),
 	} satisfies Record<BackupCategoryId, string>;
 }
 
@@ -50,7 +52,7 @@ export const SettingsBackupTab = memo(() => {
 
 	const [counts, setCounts] = useState<BackupCounts | null>(null);
 	const [exportSelected, setExportSelected] = useState<Set<BackupCategoryId>>(
-		() => new Set(BACKUP_CATEGORY_IDS),
+		() => new Set(BACKUP_CATEGORY_IDS.filter((id) => id !== "recycleBin")),
 	);
 	const [exporting, setExporting] = useState(false);
 
@@ -109,6 +111,12 @@ export const SettingsBackupTab = memo(() => {
 					return t("settings.backup.hint.plugins", "{count} plugins", {
 						count: counts.plugins,
 					});
+				case "recycleBin":
+					return t(
+						"settings.backup.hint.recycleBin",
+						"{count} recycle-bin items (off by default)",
+						{ count: counts.recycleBin },
+					);
 			}
 		},
 		[counts, t],
@@ -197,6 +205,7 @@ export const SettingsBackupTab = memo(() => {
 
 	return (
 		<Flex direction="column" gap="4">
+			<RecycleBinSettingsCard />
 			<Box>
 				<Heading size="3" mb="1">
 					{t("settings.backup.exportTitle", "Export")}

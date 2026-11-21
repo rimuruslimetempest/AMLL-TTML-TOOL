@@ -18,6 +18,14 @@ import { getSynchronizableUnits } from "$/modules/lyric-editor/utils/lyric-state
 import { removeWordsFromLine } from "$/modules/lyric-editor/utils/normalize-line-time";
 import { notifySectionIssues } from "$/modules/lyric-editor/utils/notify-section-issues.tsx";
 import { usePrivacyGate } from "$/modules/privacy/usePrivacyGate";
+import {
+	addRecycleItems,
+	buildLineRecycleItem,
+	buildWordRecycleItem,
+	deleteRecycleItem,
+	restoreRecycleItem,
+	showUndoToast,
+} from "$/modules/recycle-bin/actions";
 import exportTTMLText from "$/modules/project/logic/ttml-writer";
 import {
 	segmentationEngineAtom,
@@ -593,6 +601,20 @@ export const useTopMenuActions = () => {
 	const onDeleteSelection = useCallback(() => {
 		const selectedWordIds = store.get(selectedWordsAtom);
 		const selectedLineIds = store.get(selectedLinesAtom);
+		const before = store.get(lyricLinesAtom);
+		const project = {
+			id: store.get(projectIdAtom),
+			name: store.get(saveFileNameAtom) || "Untitled project",
+		};
+		const removed =
+			selectedWordIds.size === 0
+				? buildLineRecycleItem(before, selectedLineIds, project.id, project.name)
+				: buildWordRecycleItem(
+						before,
+						selectedWordIds,
+						project.id,
+						project.name,
+					);
 		log("deleting selections", selectedWordIds, selectedLineIds);
 		if (selectedWordIds.size === 0) {
 			const lines = store.get(lyricLinesAtom).lyricLines;
@@ -623,6 +645,21 @@ export const useTopMenuActions = () => {
 			store.set(selectedLinesAtom, new Set());
 		}
 		store.set(selectedWordsAtom, new Set());
+		if (removed) {
+			void addRecycleItems([removed]);
+			showUndoToast(
+				removed.kind === "line" ? "Line deleted" : "Word deleted",
+				async () => {
+					const result = await restoreRecycleItem(removed);
+					if (!result.ok) {
+						toast.error(result.message);
+						return;
+					}
+					await deleteRecycleItem(removed.id);
+					toast.success(result.message);
+				},
+			);
+		}
 	}, [store, editLyricLines]);
 
 	const onAutoSegment = useCallback(() => {

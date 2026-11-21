@@ -190,8 +190,10 @@ button:focus-visible {
 User CSS is automatically scoped to the New UI. Built-in themes ship their CSS
 with the app, so they can target the same selectors without the scope wrapper.
 
-There is no JavaScript, no HTML injection, no theme-run scripts, and no network
-fetching of themes.
+There is no JavaScript, no HTML injection, and no theme-run scripts. Theme CSS
+loads only local assets unless **Allow remote images and fonts** is turned on.
+The app never fetches a theme on its own; the optional community browser is
+described below.
 
 ## Installing and sharing
 
@@ -218,6 +220,32 @@ Open **Settings → Appearance → Themes → Manage themes**.
 
 A text export is the same JSON that the file importer accepts. A theme pack with
 a separate `theme.css` is preferred for large CSS and local artwork.
+
+## Community marketplace
+
+Community themes are listed at
+<https://rimuruslimetempest.github.io/AMLL-TTML-TOOL/>. The page is built from
+`docs/registry/themes.json`, and each entry includes a preview, a SHA-256, a
+performance level, and the minimum app version. The same repository holds the
+JSON schema and the validator used on pull requests.
+
+In **Settings → Appearance → Themes → Manage themes**, **Open marketplace**
+opens that page in your browser. **Show community themes inside the app** is off
+by default. Turning it on loads the registry and preview images from
+`raw.githubusercontent.com`; the first use shows a notice, and the Privacy
+Policy explains what is requested. A theme is downloaded only when you click
+**Preview & install**. The file is rejected if its size or SHA-256 does not
+match the registry, if it contains remote CSS loads, or if the normal theme
+validation fails. Installation still goes through the same preview and
+confirmation as a local import.
+
+**Verified** means the entry was reviewed when it was added. It is not a
+guarantee that a theme will suit your setup. Every other card is labelled
+“Community theme, not reviewed by the app.” Themes are never installed or
+updated automatically.
+
+To submit a theme, read [CONTRIBUTING.md](./CONTRIBUTING.md) and
+`docs/submit.html`. Nothing is published without a merged pull request.
 
 ## Editor and Custom CSS
 

@@ -1,6 +1,7 @@
 import { savePlugin } from "$/modules/plugins/plugin-store";
 import { restoreProjectsData } from "$/modules/project/autosave/autosave";
 import { writeCustomBackgroundBlob } from "$/modules/settings/modals/customBackground";
+import { saveRecycleBin } from "$/modules/recycle-bin/storage";
 import { base64ToBlob } from "./binary";
 import {
 	type BackupCategoryId,
@@ -48,6 +49,7 @@ export function describeBackup(
 	if (c.assets) result.assets = c.assets.backgroundImage !== null;
 	if (c.projects) result.projects = c.projects.projects.length;
 	if (c.plugins) result.plugins = c.plugins.plugins.length;
+	if (c.recycleBin) result.recycleBin = c.recycleBin.items.length;
 	return result;
 }
 
@@ -97,5 +99,9 @@ export async function applyBackup(
 				blob: base64ToBlob(blobBase64, blobMime),
 			});
 		}
+	}
+
+	if (selected.has("recycleBin") && c.recycleBin) {
+		await saveRecycleBin(c.recycleBin);
 	}
 }

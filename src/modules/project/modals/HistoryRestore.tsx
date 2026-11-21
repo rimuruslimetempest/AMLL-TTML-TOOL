@@ -30,6 +30,13 @@ import {
 	type ProjectInfo,
 	type ProjectVersion,
 } from "$/modules/project/autosave/autosave";
+import {
+	addRecycleItems,
+	buildProjectRecycleItem,
+	deleteRecycleItem,
+	restoreRecycleItem,
+	showUndoToast,
+} from "$/modules/recycle-bin/actions";
 import { confirmDialogAtom, historyRestoreDialogAtom } from "$/states/dialogs";
 import {
 	newLyricLinesAtom,
@@ -185,15 +192,32 @@ export const HistoryRestoreDialog = () => {
 			),
 			description: t(
 				"historyRestoreDialog.deleteProject.description",
-				"Are you sure you want to delete all autosave records for this project? This cannot be undone.",
+				"This project and its autosave history will move to the recycle bin for the retention period. You can restore it from File → Recycle Bin.",
 			),
 			onConfirm: async () => {
+				const project = projects.find((entry) => entry.id === projectId);
+				const removed = project
+					? await buildProjectRecycleItem(project)
+					: null;
+				if (removed) await addRecycleItems([removed]);
 				await deleteProject(projectId);
 				await loadProjects();
 				if (selectedProjectId === projectId) {
 					setSelectedProjectId(null);
 				}
 				toast.success(t("common.deleteSuccess", "Deleted successfully"));
+				if (removed) {
+					showUndoToast("Project moved to the recycle bin", async () => {
+						const result = await restoreRecycleItem(removed);
+						if (!result.ok) {
+							toast.error(result.message);
+							return;
+						}
+						await deleteRecycleItem(removed.id);
+						await loadProjects();
+						toast.success(result.message);
+					});
+				}
 			},
 		});
 	};

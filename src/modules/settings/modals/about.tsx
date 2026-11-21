@@ -29,7 +29,11 @@ import { useAtom } from "jotai";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { gt as semverGt } from "semver";
-import { buildReportProblemUrl, RELEASES_URL } from "$/config/links";
+import {
+	buildReportProblemUrl,
+	MARKETPLACE_URL,
+	RELEASES_URL,
+} from "$/config/links";
 import { APP_VERSION } from "$/modules/changelog/data";
 import { whatsNewAutoOpenAtom } from "$/modules/changelog/states";
 import { PrivacyLinksCard } from "$/modules/privacy/PrivacyDialogs";
@@ -711,6 +715,12 @@ export const SettingsAboutTab = () => {
 							}
 						>
 							{t("aboutModal.github", "GitHub Repository")}
+						</Button>
+						<Button
+							variant="soft"
+							onClick={() => openExternal(MARKETPLACE_URL)}
+						>
+							{t("aboutModal.themeMarketplace", "Theme marketplace")}
 						</Button>
 					</Flex>
 				</Flex>

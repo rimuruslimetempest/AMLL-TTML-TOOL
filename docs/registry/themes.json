@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "updatedAt": "2026-11-19",
+  "themes": [
+    {
+      "id": "midnight-neon",
+      "name": "Midnight Neon",
+      "author": "Rimurulover",
+      "version": "1.0.0",
+      "description": "Deep blue-violet panels with neon pink and violet highlights. A dark theme for late-night timing sessions.",
+      "tags": [
+        "dark",
+        "neon",
+        "purple",
+        "high-contrast"
+      ],
+      "appearance": "dark",
+      "preview": "assets/previews/midnight-neon.svg",
+      "download": "registry/themes/midnight-neon.json",
+      "sha256": "4d2cc6b8067a5dcb3f652e14f8e5e40e69a5dcbf44a0f15d00af53cda78684a8",
+      "size": 2336,
+      "performance": "light",
+      "minAppVersion": "1.0.0",
+      "verified": true
+    },
+    {
+      "id": "sakura",
+      "name": "Sakura",
+      "author": "Rimurulover",
+      "version": "1.0.0",
+      "description": "Soft blossom pink and warm cream, designed for daylight editing. Gentle borders keep the lyric grid calm.",
+      "tags": [
+        "light",
+        "pink",
+        "soft",
+        "daylight"
+      ],
+      "appearance": "light",
+      "preview": "assets/previews/sakura.svg",
+      "download": "registry/themes/sakura.json",
+      "sha256": "fbb28a5fb8b84b1ffe41dae3f785c811a50c5b1b4b3cc7c5fd8636730899ad39",
+      "size": 2036,
+      "performance": "light",
+      "minAppVersion": "1.0.0",
+      "verified": true
+    },
+    {
+      "id": "nord-style",
+      "name": "Nord-style",
+      "author": "Rimurulover",
+      "version": "1.0.0",
+      "description": "Cool blue-gray surfaces and frosty accents inspired by the Nord palette. Quiet contrast for long projects.",
+      "tags": [
+        "dark",
+        "nord",
+        "blue",
+        "calm"
+      ],
+      "appearance": "dark",
+      "preview": "assets/previews/nord-style.svg",
+      "download": "registry/themes/nord-style.json",
+      "sha256": "4ad0bdeb344d399aed06e061595e52350707d963da10a6a8510d2abc2feb3851",
+      "size": 2068,
+      "performance": "light",
+      "minAppVersion": "1.0.0",
+      "verified": true
+    }
+  ]
+}

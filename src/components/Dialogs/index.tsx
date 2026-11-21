@@ -3,6 +3,7 @@ import { LatencyTestDialog } from "$/modules/audio/modals/LatencyTest.tsx";
 import { TimingPasteDialog } from "$/modules/clipboard-timing/components/TimingPasteDialog";
 import { CloudFileManagerModal } from "$/modules/cloud/modals/CloudFileManagerModal.tsx";
 import { DownloaderDialog } from "$/modules/downloader/DownloaderDialog.tsx";
+import { RecycleBinDialog } from "$/modules/recycle-bin/RecycleBinDialog";
 import { GeniusImportLyricsDialog } from "$/modules/genius/modals/GeniusImportLyricsDialog.tsx";
 import { GeniusLyricsRefreshDialog } from "$/modules/genius/modals/GeniusLyricsRefreshDialog.tsx";
 import { GeniusSearchDialog } from "$/modules/genius/modals/GeniusSearchDialog.tsx";
@@ -57,6 +58,7 @@ export const Dialogs = () => {
 			<JooxImportLyricsDialog />
 			<JooxAudioSearchDialog />
 			<DownloaderDialog />
+			<RecycleBinDialog />
 			<ImportAppleTtmlDialog />
 			<MetadataEditor />
 			<SettingsDialog />

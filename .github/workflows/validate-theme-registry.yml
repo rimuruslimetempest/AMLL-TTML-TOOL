@@ -1,0 +1,24 @@
+name: Validate theme submissions
+
+on:
+  pull_request:
+    paths:
+      - "docs/registry/**"
+      - "docs/assets/previews/**"
+      - "scripts/validate-theme-registry.mjs"
+      - ".github/workflows/validate-theme-registry.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate registry entries, hashes, previews, and theme contents
+        run: node scripts/validate-theme-registry.mjs

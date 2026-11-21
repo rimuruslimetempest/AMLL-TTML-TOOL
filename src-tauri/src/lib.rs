@@ -1,5 +1,6 @@
 mod collab;
 mod downloader;
+mod downloader_update;
 mod recorder;
 
 use std::fs;
@@ -878,6 +879,14 @@ pub fn run() {
             downloader::download_media,
             downloader::search_media,
             downloader::cancel_download,
+            downloader::list_playlist,
+            downloader::path_exists,
+            downloader_update::downloader_info,
+            downloader_update::check_ytdlp_update,
+            downloader_update::update_ytdlp,
+            downloader_update::download_ffmpeg,
+            downloader_update::test_downloader,
+            downloader_update::set_tool_paths,
             ai_check_request,
             collab::start_collab_server,
             collab::stop_collab_server,

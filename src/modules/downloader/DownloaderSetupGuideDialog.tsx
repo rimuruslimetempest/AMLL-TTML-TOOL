@@ -101,9 +101,16 @@ export function DownloaderSetupGuideDialog({
 				<Dialog.Description size="2" mb="3">
 					{t(
 						"downloader.setupGuideDesc",
-						"Because official GitHub Actions releases do not bundle yt-dlp and FFmpeg, you can install them once on your system. TTML Tool searches your system PATH automatically.",
+						"The desktop app ships yt-dlp, FFmpeg, FFprobe, and Deno. Open Settings → Audio → Media downloader tools to update yt-dlp, repair FFmpeg, pick your own copies, or run a test. The instructions below are for manual installs and older builds.",
 					)}
 				</Dialog.Description>
+				<Callout.Root color="indigo" size="1" mb="3">
+					<Callout.Text>
+						Most problems are fixed by updating yt-dlp or repairing FFmpeg in
+						Settings → Audio → Media downloader tools. No separate install is
+						needed for the bundled tools.
+					</Callout.Text>
+				</Callout.Root>
 
 				<Tabs.Root defaultValue="mac">
 					<Tabs.List>

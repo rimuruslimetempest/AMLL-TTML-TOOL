@@ -16,14 +16,20 @@ struct ActiveDownload {
 #[derive(Default, Clone)]
 pub struct DownloaderState(Arc<Mutex<Option<ActiveDownload>>>);
 
+/// The tool directory that holds downloaded updates and user-picked tools.
+/// It lives in AppData so updating the app never removes it.
+pub(crate) fn app_tool_dir(app: &tauri::AppHandle) -> Option<PathBuf> {
+    app.path().app_data_dir().ok().map(|dir| dir.join("downloader"))
+}
+
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DownloadError {
-    code: &'static str,
-    detail: String,
+    pub(crate) code: &'static str,
+    pub(crate) detail: String,
 }
 
-fn error(code: &'static str, detail: impl ToString) -> DownloadError {
+pub(crate) fn error(code: &'static str, detail: impl ToString) -> DownloadError {
     DownloadError {
         code,
         detail: detail.to_string(),
@@ -69,6 +75,8 @@ pub struct DownloadRequest {
     destination_dir: Option<PathBuf>,
     #[serde(default)]
     cookies_from_browser: Option<String>,
+    #[serde(default)]
+    cookies_file: Option<PathBuf>,
 }
 
 const COOKIE_BROWSERS: &[&str] = &[
@@ -104,16 +112,41 @@ fn validate_url(value: &str) -> Result<(), DownloadError> {
 }
 
 pub(crate) fn find_tool(app: &tauri::AppHandle, name: &str) -> Option<PathBuf> {
-    if let Ok(tools) = tools_dir(app) {
-        let candidate = tools.join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
+    // A user-picked tool wins, then an updated copy in AppData, then the
+    // copy shipped inside the app, then a system installation.
+    if let Some(custom) = custom_tool_path(app, name) {
+        if custom.is_file() {
+            return Some(custom);
+        }
+    }
+    if let Some(dir) = app_tool_dir(app) {
+        let candidate = dir.join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
         if candidate.is_file() {
             return Some(candidate);
         }
     }
+    if let Some(candidate) = bundled_tool(app, name) {
+        return Some(candidate);
+    }
     find_system_binary(name)
 }
 
-fn find_system_binary(name: &str) -> Option<PathBuf> {
+/// Reads a single custom tool path from `downloader/tools.json`.
+pub(crate) fn custom_tool_path(app: &tauri::AppHandle, name: &str) -> Option<PathBuf> {
+    let dir = app_tool_dir(app)?;
+    let text = std::fs::read_to_string(dir.join("tools.json")).ok()?;
+    let value: serde_json::Value = serde_json::from_str(&text).ok()?;
+    let key = match name {
+        "yt-dlp" => "ytDlp",
+        "ffmpeg" => "ffmpeg",
+        "ffprobe" => "ffprobe",
+        _ => return None,
+    };
+    let path = value.get(key).and_then(serde_json::Value::as_str)?.trim();
+    (!path.is_empty()).then(|| PathBuf::from(path))
+}
+
+pub(crate) fn find_system_binary(name: &str) -> Option<PathBuf> {
     let name_with_ext = format!("{name}{}", std::env::consts::EXE_SUFFIX);
     if let Some(paths) = std::env::var_os("PATH") {
         for path in std::env::split_paths(&paths) {
@@ -133,7 +166,7 @@ fn find_system_binary(name: &str) -> Option<PathBuf> {
     None
 }
 
-fn tools_dir(app: &tauri::AppHandle) -> Result<PathBuf, DownloadError> {
+pub(crate) fn bundled_dirs(app: &tauri::AppHandle) -> Vec<PathBuf> {
     let mut candidate_dirs: Vec<PathBuf> = Vec::new();
 
     // 1. Tauri resource directory (bundled application bundle)
@@ -160,7 +193,32 @@ fn tools_dir(app: &tauri::AppHandle) -> Result<PathBuf, DownloadError> {
         candidate_dirs.push(cwd.join("src-tauri").join("downloader-tools"));
     }
 
-    for dir in candidate_dirs {
+    candidate_dirs
+}
+
+pub(crate) fn bundled_tool(app: &tauri::AppHandle, name: &str) -> Option<PathBuf> {
+    for dir in bundled_dirs(app) {
+        let candidate = dir.join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
+        if candidate.is_file() {
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                if let Ok(meta) = std::fs::metadata(&candidate) {
+                    let mut perms = meta.permissions();
+                    if perms.mode() & 0o111 == 0 {
+                        perms.set_mode(perms.mode() | 0o755);
+                        let _ = std::fs::set_permissions(&candidate, perms);
+                    }
+                }
+            }
+            return Some(candidate);
+        }
+    }
+    None
+}
+
+fn tools_dir(app: &tauri::AppHandle) -> Result<PathBuf, DownloadError> {
+    for dir in bundled_dirs(app) {
         let bundled_yt = dir.join(format!("yt-dlp{}", std::env::consts::EXE_SUFFIX));
         if bundled_yt.is_file() {
             #[cfg(unix)]
@@ -181,14 +239,16 @@ fn tools_dir(app: &tauri::AppHandle) -> Result<PathBuf, DownloadError> {
         }
     }
 
-    // 5. Fallback to system-installed yt-dlp
-    if let Some(sys_yt) = find_system_binary("yt-dlp") {
-        if let Some(parent) = sys_yt.parent() {
-            return Ok(parent.to_path_buf());
+    if let Some(dir) = app_tool_dir(app) {
+        if dir.join(format!("yt-dlp{}", std::env::consts::EXE_SUFFIX)).is_file() {
+            return Ok(dir);
         }
     }
 
-    Err(error("unavailable", ""))
+    // Fallback to system-installed yt-dlp
+    find_system_binary("yt-dlp")
+        .and_then(|path| path.parent().map(Path::to_path_buf))
+        .ok_or_else(|| error("unavailable", ""))
 }
 
 #[cfg(windows)]
@@ -348,6 +408,10 @@ fn arguments(request: &DownloadRequest, dir: &Path, tools: &Path) -> Vec<String>
     if let Some(browser) = request.cookies_from_browser.as_deref() {
         args.extend(["--cookies-from-browser".into(), browser.to_owned()]);
     }
+    if let Some(cookies) = request.cookies_file.as_ref().filter(|path| path.is_file()) {
+        args.push("--cookies".into());
+        args.push(cookies.to_string_lossy().into_owned());
+    }
     let deno_binary = tools.join(format!("deno{}", std::env::consts::EXE_SUFFIX));
     let deno_path = if deno_binary.is_file() {
         Some(deno_binary)
@@ -459,11 +523,12 @@ fn run_download(
     request: &DownloadRequest,
     dir: &Path,
     tools: &Path,
+    yt_dlp: &Path,
     cancelled: &AtomicBool,
     events: &Channel<DownloadEvent>,
 ) -> Result<String, DownloadError> {
     let mut child = spawn_contained(
-        command(tools.join(format!("yt-dlp{}", std::env::consts::EXE_SUFFIX)))
+        command(yt_dlp)
             .args(arguments(request, dir, tools))
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
@@ -627,9 +692,9 @@ fn parse_search(json: &str) -> Result<Vec<SearchResult>, DownloadError> {
         .collect())
 }
 
-fn run_search(query: &str, tools: &Path) -> Result<Vec<SearchResult>, DownloadError> {
+fn run_search(query: &str, tools: &Path, yt_dlp: &Path) -> Result<Vec<SearchResult>, DownloadError> {
     let mut child = spawn_contained(
-        command(tools.join(format!("yt-dlp{}", std::env::consts::EXE_SUFFIX)))
+        command(yt_dlp)
             .args(search_arguments(query, tools))
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
@@ -671,6 +736,151 @@ fn run_search(query: &str, tools: &Path) -> Result<Vec<SearchResult>, DownloadEr
     parse_search(&output)
 }
 
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlaylistItem {
+    url: String,
+    title: String,
+}
+
+fn playlist_arguments(url: &str, tools: &Path) -> Vec<String> {
+    let mut args: Vec<String> = [
+        "--ignore-config",
+        "--no-plugin-dirs",
+        "--no-cache-dir",
+        "--no-colors",
+        "--no-warnings",
+        "--flat-playlist",
+        "--dump-single-json",
+        "--playlist-end",
+        "100",
+        "--socket-timeout",
+        "30",
+        "--no-update",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect();
+    let deno_binary = tools.join(format!("deno{}", std::env::consts::EXE_SUFFIX));
+    let deno_path = if deno_binary.is_file() {
+        Some(deno_binary)
+    } else {
+        find_system_binary("deno")
+    };
+    if let Some(deno) = deno_path {
+        args.extend([
+            "--no-js-runtimes".into(),
+            "--js-runtimes".into(),
+            format!("deno:{}", deno.display()),
+        ]);
+    }
+    args.extend(["--".into(), url.to_owned()]);
+    args
+}
+
+fn parse_playlist(json: &str) -> Vec<PlaylistItem> {
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(json) else {
+        return Vec::new();
+    };
+    let text = |entry: &serde_json::Value, key: &str| {
+        entry
+            .get(key)
+            .and_then(serde_json::Value::as_str)
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(str::to_owned)
+    };
+    let mut items = Vec::new();
+    if let Some(entries) = value.get("entries").and_then(serde_json::Value::as_array) {
+        for entry in entries {
+            let Some(url) = text(entry, "webpage_url").or_else(|| text(entry, "url")) else {
+                continue;
+            };
+            if validate_url(&url).is_err() {
+                continue;
+            }
+            items.push(PlaylistItem {
+                title: text(entry, "title").unwrap_or_else(|| url.clone()),
+                url,
+            });
+        }
+    } else if let Some(url) = text(&value, "webpage_url").or_else(|| text(&value, "url")) {
+        if validate_url(&url).is_ok() {
+            items.push(PlaylistItem {
+                title: text(&value, "title").unwrap_or_else(|| url.clone()),
+                url,
+            });
+        }
+    }
+    items
+}
+
+fn run_playlist(
+    url: &str,
+    tools: &Path,
+    yt_dlp: &Path,
+) -> Result<Vec<PlaylistItem>, DownloadError> {
+    let mut child = spawn_contained(
+        command(yt_dlp)
+            .args(playlist_arguments(url, tools))
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped()),
+    )
+    .map_err(|e| error("failed", e))?;
+    let mut stdout = child.stdout.take().expect("piped stdout");
+    let mut stderr = child.stderr.take().expect("piped stderr");
+    let out = std::thread::spawn(move || {
+        let mut text = String::new();
+        let _ = std::io::Read::read_to_string(&mut stdout, &mut text);
+        text
+    });
+    let err = std::thread::spawn(move || {
+        let mut text = String::new();
+        let _ = std::io::Read::read_to_string(&mut stderr, &mut text);
+        text
+    });
+    let started = Instant::now();
+    let status = loop {
+        match child.try_wait() {
+            Ok(Some(status)) => break status,
+            Ok(None) if started.elapsed() > Duration::from_secs(90) => {
+                terminate(&mut child);
+                return Err(error("timeout", ""));
+            }
+            Ok(None) => std::thread::sleep(Duration::from_millis(50)),
+            Err(e) => {
+                terminate(&mut child);
+                return Err(error("failed", e));
+            }
+        }
+    };
+    let output = out.join().unwrap_or_default();
+    let diagnostics = err.join().unwrap_or_default();
+    if !status.success() {
+        return Err(error("failed", diagnostics));
+    }
+    Ok(parse_playlist(&output))
+}
+
+#[tauri::command]
+pub async fn list_playlist(
+    app: tauri::AppHandle,
+    url: String,
+) -> Result<Vec<PlaylistItem>, DownloadError> {
+    validate_url(&url)?;
+    let tools = tools_dir(&app)?;
+    let yt_dlp = find_tool(&app, "yt-dlp").ok_or_else(|| error("unavailable", ""))?;
+    tauri::async_runtime::spawn_blocking(move || run_playlist(&url, &tools, &yt_dlp))
+        .await
+        .map_err(|e| error("failed", e))?
+}
+
+#[tauri::command]
+pub fn path_exists(path: String) -> bool {
+    !path.trim().is_empty() && Path::new(&path).is_file()
+}
+
 #[tauri::command]
 pub async fn search_media(
     app: tauri::AppHandle,
@@ -678,7 +888,8 @@ pub async fn search_media(
 ) -> Result<Vec<SearchResult>, DownloadError> {
     let query = validate_query(&query)?;
     let tools = tools_dir(&app)?;
-    tauri::async_runtime::spawn_blocking(move || run_search(&query, &tools))
+    let yt_dlp = find_tool(&app, "yt-dlp").ok_or_else(|| error("unavailable", ""))?;
+    tauri::async_runtime::spawn_blocking(move || run_search(&query, &tools, &yt_dlp))
         .await
         .map_err(|e| error("searchFailed", e))?
 }
@@ -694,7 +905,7 @@ impl Drop for ActiveJob {
 
 #[tauri::command]
 pub fn downloader_available(app: tauri::AppHandle) -> bool {
-    tools_dir(&app).is_ok()
+    find_tool(&app, "yt-dlp").is_some()
 }
 
 fn validate_job_id(id: &str) -> Result<(), DownloadError> {
@@ -763,6 +974,18 @@ pub async fn download_media(
         return Err(error("invalidCookies", ""));
     }
     let tools = tools_dir(window.app_handle())?;
+    let yt_dlp = find_tool(window.app_handle(), "yt-dlp")
+        .ok_or_else(|| error("unavailable", ""))?;
+    if find_tool(window.app_handle(), "ffmpeg").is_none() {
+        return Err(error("ffmpegMissing", ""));
+    }
+    if request
+        .cookies_file
+        .as_ref()
+        .is_some_and(|path| !path.is_file())
+    {
+        return Err(error("invalidCookies", ""));
+    }
     let cancelled = claim_job(&state, &job_id)?;
     let guard = ActiveJob(state.inner().clone());
     tauri::async_runtime::spawn_blocking(move || {
@@ -798,7 +1021,7 @@ pub async fn download_media(
         ));
         std::fs::create_dir(&dir).map_err(|e| error("failed", e))?;
         let _ = events.send(DownloadEvent::Preparing);
-        let result = run_download(&request, &dir, &tools, &cancelled, &events);
+        let result = run_download(&request, &dir, &tools, &yt_dlp, &cancelled, &events);
         // Only this job's newly created directory is removed, never the selected folder.
         if result.is_err() {
             if let Err(cleanup) = std::fs::remove_dir_all(&dir) {
@@ -858,6 +1081,7 @@ mod tests {
             max_height: None,
             destination_dir: None,
             cookies_from_browser: None,
+            cookies_file: None,
         };
         let args = arguments(
             &request,
@@ -878,6 +1102,7 @@ mod tests {
             max_height: None,
             destination_dir: None,
             cookies_from_browser: Some("brave".into()),
+            cookies_file: None,
         };
         let args = arguments(&request, Path::new("out"), Path::new("tools"));
         assert!(
@@ -894,6 +1119,7 @@ mod tests {
             max_height: Some(1080),
             destination_dir: None,
             cookies_from_browser: None,
+            cookies_file: None,
         };
         let args = arguments(&request, Path::new("out"), Path::new("tools"));
         assert!(
@@ -1043,7 +1269,8 @@ mod tests {
     #[ignore = "requires prepared downloader tools and network access"]
     fn bundled_tools_search_youtube() {
         let tools = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("downloader-tools");
-        let results = run_search("never gonna give you up", &tools).unwrap();
+        let yt_dlp = tools.join(format!("yt-dlp{}", std::env::consts::EXE_SUFFIX));
+        let results = run_search("never gonna give you up", &tools, &yt_dlp).unwrap();
         assert!(!results.is_empty());
     }
 
@@ -1177,11 +1404,14 @@ mod tests {
                 max_height: Some(1080),
                 destination_dir: None,
                 cookies_from_browser: None,
+                cookies_file: None,
             };
+            let yt_dlp = fixture.tools.join(format!("yt-dlp{}", std::env::consts::EXE_SUFFIX));
             let output = run_download(
                 &request,
                 &dir,
                 &fixture.tools,
+                &yt_dlp,
                 &AtomicBool::new(false),
                 &events,
             )
@@ -1214,8 +1444,17 @@ mod tests {
             max_height: None,
             destination_dir: None,
             cookies_from_browser: None,
+            cookies_file: None,
         };
-        let result = run_download(&request, &fixture.dir, &fixture.tools, &cancelled, &events);
+        let yt_dlp = fixture.tools.join(format!("yt-dlp{}", std::env::consts::EXE_SUFFIX));
+        let result = run_download(
+            &request,
+            &fixture.dir,
+            &fixture.tools,
+            &yt_dlp,
+            &cancelled,
+            &events,
+        );
         assert_eq!(result.unwrap_err().code, "cancelled");
     }
 }

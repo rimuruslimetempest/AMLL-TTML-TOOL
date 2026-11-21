@@ -12,7 +12,9 @@ The data controller is **Rimurulover**, the author and maintainer of TTML Tool. 
 - The editor is local-first. Projects, timing, settings, autosaves, and cached audio stay on your device unless you choose a network feature.
 - Live rooms send the shared TTML project, edits, names, chat, comments, review marks, history, and any shared media to the host and everyone in the room.
 - Cloud accounts use Firebase for authentication, profile data, lyric documents, and audio storage.
-- Themes are local JSON and CSS. Remote theme images and fonts are off by default; local theme assets stay on your device.
+- Deleted lyric content, saved splits, themes, and projects go to a local recycle bin for a limited time instead of being erased immediately.
+- Audio downloads use local yt-dlp and ffmpeg tools and contact only the site you choose. Tool updates are fetched from the official GitHub releases when you ask for them.
+- Themes are local JSON and CSS. Remote theme images and fonts are off by default; local theme assets stay on your device. The in-app community theme list is opt-in and contacts GitHub only for the public registry and previews.
 - AI review sends lyrics to the provider or local model you configure, only when you run a review.
 - Crash reports are off by default. A content-free local copy is written after a crash so you can inspect it; nothing is sent unless you opt in and a destination is configured.
 - There is no advertising, third-party analytics, or data-sale code in this build.
@@ -25,11 +27,13 @@ The app stores the following in your browser profile or desktop webview storage:
 - Project notes kept outside TTML: comments, review marks, restore points, room history relevant to the project, and translation/romanization language codes. These use browser `localStorage` under a project-specific key and are never written into exported TTML.
 - Editor settings, UI preferences, keybindings, project-timer and completion records, ignored words, AI endpoint/model/API keys, Genius and JOOX credentials, and other feature settings. Most use `localStorage`.
 - Installed theme files in the Tauri AppData `themes` folder, plus the selected theme, scheme, effects options, auto-reload choice, remote-content choice, and Custom CSS text in `localStorage`.
+- Deleted lyric lines, words, saved splits, themes, and whole projects in the Tauri AppData `recycle-bin` folder. Deleted projects are stored as compressed copies. The retention choice, size cap, and the rest of the bin index are stored with the bin, with a `localStorage` fallback in the web build. Live-room comments are not copied into this local bin; deleting one is a room operation kept in the room history.
+- Downloaded yt-dlp, ffmpeg, ffprobe, and JavaScript-runtime tools in the Tauri AppData `downloader` folder, the chosen yt-dlp and ffmpeg paths, the cookies-file path, and the download cache index in `localStorage`. The cookies file itself stays where you chose it.
 - Custom background images and gradients in the IndexedDB database `amll-custom-background`.
 - A local cache of your cloud profile and cloud lyric list, plus Firebase's local authentication and offline cache. Some of this can remain after sign-out until local data is cleared.
 - At most one local crash report containing an error message, stack trace, component stack, app version, platform, and time.
 
-Local data stays until you delete the project, clear the relevant cache, or use **Settings → Privacy → Clear local data**. That action removes projects, project notes, cached audio, settings, API keys, custom backgrounds, local cloud caches, the saved crash report, and consent state from this installation. It does not delete cloud files. Installed theme folders live in AppData rather than the browser profile; remove them with **Delete** in the theme manager or by deleting the `themes` folder.
+Local data stays until you delete the project, clear the relevant cache, or use **Settings → Privacy → Clear local data**. That action removes projects, project notes, cached audio, settings, API keys, custom backgrounds, local cloud caches, the saved crash report, and consent state from this installation. It does not delete cloud files. Installed theme folders, the recycle bin, and downloaded yt-dlp/ffmpeg tools live in AppData rather than the browser profile, so Clear local data does not remove them. Remove themes with **Delete** in the theme manager, empty the recycle bin from **File → Recycle Bin**, and delete the `downloader` folder if you want those tools gone.
 
 ## 2. Live collaboration rooms
 
@@ -88,13 +92,17 @@ When you use a search or import feature, the app sends the query, URL, or identi
 
 These providers receive your IP address and request metadata and may use cookies or logs under their own policies. API keys and access tokens you enter are stored locally and sent to the matching provider when you use that feature. You can avoid these requests by not using the corresponding feature.
 
-Audio download uses a local yt-dlp/ffmpeg process and contacts the URL you provide. Imported audio, lyric files, and cover images are saved locally as project data unless you upload them to a cloud account or share them in a room.
+Audio download uses a local yt-dlp/ffmpeg process and contacts the URL you provide. The site you download from, its CDN, and any redirects receive your request, IP address, and request metadata under their own policies. Imported audio, lyric files, and cover images are saved locally as project data unless you upload them to a cloud account or share them in a room. If you choose a cookies file, yt-dlp reads it locally to send the site's own cookies to that site; the app does not upload the file anywhere else.
+
+The downloader can check the official yt-dlp GitHub releases when you click **Check for updates**, or once a day if you turn on the optional daily check. That request contacts GitHub and sends no project data. Downloading an update or ffmpeg fetches the official release asset, verifies its published SHA-256 digest, runs the new binary with `--version`, and keeps the previous yt-dlp binary as a fallback. These downloads go to the AppData `downloader` folder, not the install folder.
 
 ## 6. Themes
 
 Themes are optional local files made of JSON and CSS. Importing a theme does not execute code and does not upload the theme. Installed themes are read from the AppData `themes` folder; the selected theme and Custom CSS are stored locally.
 
-Theme CSS can normally load only local assets inside its own folder. **Allow remote images and fonts** is off by default. If you turn it on, a theme can request images or fonts from remote hosts; those hosts receive your IP address and request metadata. TTML Tool does not fetch themes from the internet.
+Theme CSS can normally load only local assets inside its own folder. **Allow remote images and fonts** is off by default. If you turn it on, a theme can request images or fonts from remote hosts; those hosts receive your IP address and request metadata.
+
+The theme marketplace is optional. **Browse community themes** opens the public marketplace in your normal browser. **Show community themes inside the app** is off by default; when you turn it on, the app requests `raw.githubusercontent.com` for the public registry, and for a preview image when you view a community theme. Nothing about you, your project, or your lyrics is sent, only the request itself. A theme file is downloaded only when you click **Preview & install**, and the app refuses it if its SHA-256 does not match the registry. The marketplace fails quietly when offline.
 
 ## 7. Discord Rich Presence
 
@@ -124,6 +132,7 @@ The app does not use advertising cookies, third-party analytics, cross-site trac
 
 - **Local data:** kept until you delete the project, clear the cache, or use Clear local data. This works without an account.
 - **Project notes:** comments, review marks, restore points, and related history are kept with the local project until the project or local data is deleted. In a room, the host's server keeps its own capped copy for the life of the room.
+- **Recycle bin:** deleted lines, words, saved splits, themes, and projects stay in AppData for the chosen retention period (30 days by default; 7, 90, or never are available) or until you empty the bin. When the size cap is reached, the oldest items are removed first. Deleting a project record removes its compressed copy from the bin when the retention period ends. Room comments remain in the host's room history instead.
 - **Live rooms:** room state, chat, comments, review marks, history, and restore points last until the host stops the room or closes the app. Temporary shared media is removed when the room server stops. Participants may keep their own downloads and local project notes.
 - **Cloud library:** kept in Firebase until you delete the document/audio or request account deletion. Deleted data may remain in provider backups for a limited period. **[TODO: backup retention period]**
 - **Account deletion:** this build has no self-service account-deletion button. Use the instructions in Settings → Privacy or email **rimurusamllttmltool@gmail.com**. Cloud documents can be deleted individually in the cloud library.

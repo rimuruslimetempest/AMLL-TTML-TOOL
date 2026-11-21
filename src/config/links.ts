@@ -8,6 +8,13 @@ export const RELEASES_URL = `${REPOSITORY_URL}/releases`;
 export const ISSUES_URL = `${REPOSITORY_URL}/issues`;
 export const REPORT_EMAIL = "rimurusamllttmltool@gmail.com";
 
+/** Public theme marketplace served by GitHub Pages from this repository. */
+export const MARKETPLACE_URL =
+	"https://rimuruslimetempest.github.io/AMLL-TTML-TOOL/";
+/** Raw registry file used only when the in-app marketplace is opted in. */
+export const THEME_REGISTRY_URL =
+	"https://raw.githubusercontent.com/rimuruslimetempest/AMLL-TTML-TOOL/main/docs/registry/themes.json";
+
 function describeOs(): string {
 	if (typeof navigator === "undefined") return "Unknown OS";
 	const ua = navigator.userAgent;

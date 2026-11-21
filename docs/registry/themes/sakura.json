@@ -1,0 +1,62 @@
+{
+  "format": 1,
+  "id": "sakura",
+  "name": "Sakura",
+  "author": "Rimurulover",
+  "version": "1.0.0",
+  "description": "Soft blossom pink and warm cream, designed for daylight editing. Gentle borders keep the lyric grid calm.",
+  "schemes": [
+    {
+      "id": "day",
+      "name": "Day",
+      "appearance": "light",
+      "tokens": {
+        "bgBase": "#fff4f7",
+        "bgRaised": "#fffafb",
+        "bgOverlay": "#ffffff",
+        "surface": "#fffafb",
+        "surface2": "#ffeef3",
+        "surface3": "#ffdfe9",
+        "surfaceHover": "#ffd6e3",
+        "border": "rgba(122, 47, 74, 0.13)",
+        "borderStrong": "rgba(122, 47, 74, 0.25)",
+        "text": "#41232e",
+        "textSecondary": "#754b5b",
+        "textMuted": "#9b7180",
+        "textDisabled": "#c3a3ad",
+        "accent": "#d94f7d",
+        "accentHover": "#bd3f69",
+        "accentActive": "#9f3156",
+        "accentSubtle": "rgba(217, 79, 125, 0.12)",
+        "accentContrast": "#ffffff",
+        "success": "#2f7d4a",
+        "successSubtle": "rgba(22, 132, 75, 0.1)",
+        "warning": "#936400",
+        "warningSubtle": "rgba(148, 98, 0, 0.1)",
+        "danger": "#b42f43",
+        "dangerSubtle": "rgba(198, 47, 54, 0.09)",
+        "info": "#2f6f9e",
+        "infoSubtle": "rgba(23, 105, 176, 0.09)",
+        "lyricPlaying": "#ad2d5c",
+        "lyricPlayingBg": "rgba(217, 79, 125, 0.1)",
+        "lyricSelectedBg": "rgba(217, 79, 125, 0.14)",
+        "lyricUnsynced": "#8a5a00",
+        "lyricUnsyncedBg": "rgba(141, 97, 0, 0.1)",
+        "lyricSynced": "#2f7d4a",
+        "lyricSyncedBg": "rgba(19, 122, 70, 0.08)",
+        "lyricFlagged": "#b42f43",
+        "lyricFlaggedBg": "rgba(181, 40, 49, 0.09)",
+        "lyricLocked": "#7650a9",
+        "lyricLockedBg": "rgba(105, 65, 198, 0.08)",
+        "timestampBg": "rgba(217, 79, 125, 0.08)",
+        "timestampText": "#10121a",
+        "timestampBorder": "rgba(217, 79, 125, 0.2)"
+      }
+    }
+  ],
+  "effects": {
+    "level": "none",
+    "performance": "light"
+  },
+  "minAppVersion": "1.0.0"
+}

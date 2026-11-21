@@ -121,6 +121,20 @@ export function PrivacyPolicyContent() {
 						<code>amll-custom-background</code>.
 					</Item>
 					<Item>
+						Deleted lyric lines, words, saved splits, themes, and whole projects
+						in the Tauri AppData <code>recycle-bin</code> folder. Room comments
+						stay in the room history instead.
+						Deleted projects are kept as compressed copies. The retention
+						choice and size cap are stored with the bin.
+					</Item>
+					<Item>
+						Downloaded yt-dlp, ffmpeg, ffprobe, and JavaScript-runtime tools in
+						the Tauri AppData <code>downloader</code> folder, plus the chosen tool
+						paths, cookies-file path, and download cache index in browser{" "}
+						<code>localStorage</code>. The cookies file itself stays where you
+						chose it.
+					</Item>
+					<Item>
 						A local cache of your cloud profile and cloud lyric list, and
 						Firebase's local authentication/offline cache. This can remain after
 						you sign out until you clear local data.
@@ -131,7 +145,10 @@ export function PrivacyPolicyContent() {
 					cache, or use <strong>Settings → Privacy → Clear local data</strong>.
 					Clearing local data removes projects, audio caches, settings, API
 					keys, custom backgrounds, and consent state from this installation. It
-					does not delete cloud files.
+					does not delete cloud files, installed theme folders, the recycle bin,
+					or downloaded yt-dlp/ffmpeg tools in AppData. Those are removed with
+					Delete in the theme manager, Empty bin in File → Recycle Bin, or by
+					deleting the AppData folder.
 				</P>
 			</Section>
 
@@ -377,6 +394,22 @@ export function PrivacyPolicyContent() {
 					locally as project data unless you choose to upload them to a cloud
 					account or share them in a room.
 				</P>
+				<P>
+					The downloader checks the official yt-dlp GitHub releases only when
+					you click Check for updates, or once a day if you opt in. Update files
+					are verified against their published SHA-256 digest and tested before
+					they replace the previous binary. A cookies file is read locally and
+					sent only to the site you are downloading from.
+				</P>
+				<P>
+					Community themes are optional. Browse community themes opens the
+					public marketplace in your browser. Show community themes inside the
+					app is off by default; when enabled, the app requests the public
+					registry and preview images from raw.githubusercontent.com. Only the
+					request itself is sent. A theme file is downloaded only after you
+					click Preview &amp; install, and it is refused if its SHA-256 does not
+					match the registry.
+				</P>
 			</Section>
 
 			<Section title="6. Discord Rich Presence">
@@ -466,6 +499,12 @@ export function PrivacyPolicyContent() {
 						stops the room or closes the app. Temporary shared media is removed
 						when the room server stops. Participants may retain their own
 						downloaded copies.
+					</Item>
+					<Item>
+						<strong>Recycle bin:</strong> deleted items stay in AppData for the
+						chosen retention period (30 days by default, or 7, 90, never) or
+						until you empty the bin. The oldest items are removed first when the
+						size cap is reached.
 					</Item>
 					<Item>
 						<strong>Cloud library:</strong> kept in Firebase until you delete
@@ -632,6 +671,11 @@ export function TermsContent() {
 						laws.
 					</Item>
 					<Item>
+						Only download audio you have the right to use. You are responsible
+						for the terms of the site you download from and for any copyright in
+						the audio.
+					</Item>
+					<Item>
 						Do not overload, probe, or interfere with hosting, Firebase,
 						Cloudflare, AI, search, or update services.
 					</Item>
@@ -658,6 +702,12 @@ export function TermsContent() {
 					third-party services. Their availability, terms, and privacy policies
 					are their own. The app is not responsible for their acts, omissions,
 					retention, or outages.
+				</P>
+				<P>
+					Audio download runs yt-dlp and ffmpeg locally. Their official
+					releases and licenses apply. Community themes are made by other people;
+					JSON/CSS checks and a matching SHA-256 do not guarantee quality.
+					Verified only means the entry was reviewed when it was added.
 				</P>
 			</Section>
 

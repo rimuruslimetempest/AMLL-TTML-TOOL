@@ -153,6 +153,7 @@ import { ChangelogAutoOpen } from "$/modules/changelog/ChangelogAutoOpen";
 import { ClipboardHotkeys } from "$/modules/clipboard-timing/components/ClipboardHotkeys";
 import { ClipboardIndicator } from "$/modules/clipboard-timing/components/ClipboardIndicator";
 import { SplitLibraryProvider } from "$/modules/split-library/SplitLibraryProvider";
+import { RecycleBinProvider } from "$/modules/recycle-bin/RecycleBinProvider";
 import { SplitSuggestion } from "$/modules/split-library/components/SplitSuggestion";
 import { EditMatchesPrompt } from "$/modules/edit-matching/EditMatchesPrompt";
 import { CrashReportPrompt } from "$/modules/privacy/CrashReportPrompt";
@@ -1850,6 +1851,7 @@ function App() {
 							<AiCheckPanel />
 					<TtmlUploaderPanel />
 					<SplitLibraryProvider />
+					<RecycleBinProvider />
 					<SplitSuggestion />
 					<ClipboardHotkeys />
 					<ClipboardIndicator />

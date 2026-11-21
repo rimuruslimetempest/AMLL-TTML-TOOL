@@ -1,0 +1,75 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://rimuruslimetempest.github.io/AMLL-TTML-TOOL/registry/theme.schema.json",
+	"title": "TTML Tool community theme registry",
+	"type": "object",
+	"required": ["version", "updatedAt", "themes"],
+	"additionalProperties": false,
+	"properties": {
+		"version": { "const": 1 },
+		"updatedAt": { "type": "string", "minLength": 1 },
+		"themes": {
+			"type": "array",
+			"items": { "$ref": "#/definitions/themeEntry" }
+		}
+	},
+	"definitions": {
+		"themeEntry": {
+			"type": "object",
+			"required": [
+				"id",
+				"name",
+				"author",
+				"version",
+				"description",
+				"tags",
+				"appearance",
+				"preview",
+				"download",
+				"sha256",
+				"performance",
+				"minAppVersion"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"id": {
+					"type": "string",
+					"pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+				},
+				"name": { "type": "string", "minLength": 1, "maxLength": 80 },
+				"author": { "type": "string", "minLength": 1, "maxLength": 120 },
+				"version": {
+					"type": "string",
+					"pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][0-9a-z.-]+)?$"
+				},
+				"description": { "type": "string", "minLength": 1, "maxLength": 600 },
+				"tags": {
+					"type": "array",
+					"minItems": 1,
+					"maxItems": 8,
+					"items": { "type": "string", "minLength": 1, "maxLength": 32 }
+				},
+				"appearance": { "enum": ["dark", "light"] },
+				"preview": {
+					"type": "string",
+					"description": "Path relative to the docs site root, or an https URL."
+				},
+				"download": {
+					"type": "string",
+					"description": "Path relative to the docs site root, or an official release asset URL."
+				},
+				"sha256": {
+					"type": "string",
+					"pattern": "^[a-f0-9]{64}$"
+				},
+				"size": { "type": "number", "minimum": 1, "maximum": 2097152 },
+				"performance": { "enum": ["light", "medium", "heavy"] },
+				"minAppVersion": {
+					"type": "string",
+					"pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][0-9a-z.-]+)?$"
+				},
+				"verified": { "type": "boolean" }
+			}
+		}
+	}
+}

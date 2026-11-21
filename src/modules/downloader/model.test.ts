@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
 	downloadError,
+	explainDownloadError,
 	formatDuration,
+	formatBytes,
+	isPlaylistUrl,
 	metadataQuery,
 	nextSearchQuery,
 	validDownloadUrl,
@@ -69,5 +72,64 @@ describe("downloader URL validation", () => {
 			code: "failed",
 			detail: "IPC failed",
 		});
+	});
+});
+
+describe("downloader error explanations", () => {
+	it("maps the setup and FFmpeg errors to their own next step", () => {
+		expect(explainDownloadError({ code: "ffmpegMissing", detail: "" }).action).toBe(
+			"ffmpeg",
+		);
+		expect(explainDownloadError({ code: "unavailable", detail: "" }).action).toBe(
+			"update",
+		);
+	});
+	it("recognises the common yt-dlp failures", () => {
+		expect(
+			explainDownloadError({
+				code: "failed",
+				detail: "ERROR: Sign in to confirm you're not a bot",
+			}).action,
+		).toBe("cookies");
+		expect(
+			explainDownloadError({
+				code: "failed",
+				detail: "WARNING: Unable to extract nsig; please report this issue",
+			}).action,
+		).toBe("update");
+		expect(
+			explainDownloadError({
+				code: "failed",
+				detail: "HTTP Error 429: Too Many Requests",
+			}).action,
+		).toBe("retry");
+		expect(
+			explainDownloadError({
+				code: "failed",
+				detail: "ERROR: Private video. Sign in if you've been granted access",
+			}).action,
+		).toBe("cookies");
+	});
+	it("always keeps the raw detail", () => {
+		const result = explainDownloadError({
+			code: "failed",
+			detail: "something unexpected",
+		});
+		expect(result.detail).toBe("something unexpected");
+		expect(result.title.length).toBeGreaterThan(0);
+	});
+});
+
+describe("downloader URL helpers", () => {
+	it("detects playlist links without rejecting normal videos", () => {
+		expect(isPlaylistUrl("https://www.youtube.com/watch?v=a&list=PL123")).toBe(true);
+		expect(isPlaylistUrl("https://www.youtube.com/playlist?list=PL123")).toBe(true);
+		expect(isPlaylistUrl("https://www.youtube.com/watch?v=a")).toBe(false);
+		expect(isPlaylistUrl("not a url")).toBe(false);
+	});
+	it("formats sizes for the update card", () => {
+		expect(formatBytes(512)).toBe("512 B");
+		expect(formatBytes(1536)).toBe("1.5 KB");
+		expect(formatBytes(0)).toBe("");
 	});
 });

@@ -3,6 +3,7 @@ import type {
 	ProjectInfo,
 	ProjectVersion,
 } from "$/modules/project/autosave/autosave";
+import type { RecycleBinFile } from "$/modules/recycle-bin/types";
 
 /**
  * @description 备份文件的应用标识，用于拒绝非本应用的文件
@@ -24,7 +25,8 @@ export type BackupCategoryId =
 	| "keybindings"
 	| "assets"
 	| "projects"
-	| "plugins";
+	| "plugins"
+	| "recycleBin";
 
 export const BACKUP_CATEGORY_IDS: BackupCategoryId[] = [
 	"settings",
@@ -32,6 +34,7 @@ export const BACKUP_CATEGORY_IDS: BackupCategoryId[] = [
 	"assets",
 	"projects",
 	"plugins",
+	"recycleBin",
 ];
 
 /**
@@ -68,6 +71,7 @@ export interface BackupFile {
 			versions: Omit<ProjectVersion, "id">[];
 		};
 		plugins?: { plugins: BackupPlugin[] };
+		recycleBin?: RecycleBinFile;
 	};
 }
 
@@ -194,6 +198,22 @@ export function validateBackupFile(data: unknown): asserts data is BackupFile {
 				!isPlainObject(p) ||
 				typeof p.id !== "string" ||
 				typeof p.blobBase64 !== "string"
+			) {
+				throw new BackupValidationError("malformedCategories");
+			}
+		}
+	}
+
+	if (categories.recycleBin !== undefined) {
+		const bin = categories.recycleBin;
+		if (!isPlainObject(bin) || !Array.isArray(bin.items)) {
+			throw new BackupValidationError("malformedCategories");
+		}
+		for (const item of bin.items) {
+			if (
+				!isPlainObject(item) ||
+				typeof item.id !== "string" ||
+				typeof item.deletedAt !== "number"
 			) {
 				throw new BackupValidationError("malformedCategories");
 			}

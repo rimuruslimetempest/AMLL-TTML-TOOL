@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="color-scheme" content="dark" />
+		<meta name="theme-color" content="#07070b" />
+		<title>Submit your theme — TTML Tool Themes</title>
+		<meta
+			name="description"
+			content="How to submit a community theme for TTML Tool with a pull request, a registry entry, and an automatic validation check."
+		/>
+		<link rel="stylesheet" href="./assets/marketplace.css" />
+	</head>
+	<body>
+		<a class="skip" href="#main">Skip to content</a>
+		<header class="site">
+			<div class="wrap nav">
+				<a class="brand" href="./index.html">
+					<span class="brand-mark" aria-hidden="true"></span>
+					TTML Tool Themes
+				</a>
+				<a class="navlink" href="./index.html">Home</a>
+				<a class="navlink" href="./themes.html">Themes</a>
+				<a class="navlink" href="./submit.html" aria-current="page">Submit your theme</a>
+				<a class="navlink" href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL">GitHub</a>
+			</div>
+		</header>
+
+		<main id="main">
+			<div class="wrap page-head">
+				<h1 style="font-size: clamp(30px, 4vw, 44px)">Submit your theme</h1>
+				<p class="lede">
+					Themes are added by pull request. Nothing appears on this page until
+					Rimurulover reviews and merges your change.
+				</p>
+				<div class="actions">
+					<a
+						class="btn primary"
+						href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/compare"
+						>Open a pull request</a
+					>
+					<a
+						class="btn secondary"
+						href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/issues/new?template=theme-submission.yml"
+						>Ask first with an issue</a
+					>
+				</div>
+			</div>
+
+			<section>
+				<div class="wrap">
+					<h2>What to send</h2>
+					<ol class="steps">
+						<li>
+							<h3>Build and test your theme</h3>
+							<p>
+								Export it from <strong>Settings → Appearance → Themes</strong>,
+								or write a <code>theme.json</code> that follows
+								<code>THEMES.md</code>. Test it in the app, in both New and
+								Classic UI, and with Performance mode on.
+							</p>
+						</li>
+						<li>
+							<h3>Add the theme file and a preview</h3>
+							<p>
+								Put the JSON in <code>docs/registry/themes/&lt;id&gt;.json</code>
+								and a 16:9 preview in
+								<code>docs/assets/previews/&lt;id&gt;.svg</code> (or
+								<code>.png</code>). Keep the theme file under 2 MB.
+							</p>
+						</li>
+						<li>
+							<h3>Add a registry entry</h3>
+							<p>
+								Edit <code>docs/registry/themes.json</code> and add your id,
+								name, author, version, description, tags, appearance, preview
+								path, download path, SHA-256, performance level, and minimum app
+								version. The SHA-256 is the hash of the exact JSON file.
+							</p>
+						</li>
+						<li>
+							<h3>Run the checks</h3>
+							<p>
+								<code>node scripts/validate-theme-registry.mjs</code> must pass.
+								The same check runs automatically on your pull request and fails
+								on a bad field, a hash mismatch, a missing preview, or a theme
+								that contains remote URLs or scripts.
+							</p>
+						</li>
+						<li>
+							<h3>Wait for review</h3>
+							<p>
+								Open the pull request and describe the theme in your own words.
+								Merging is the only thing that publishes it. Please do not bump
+								the version for cosmetic edits; use a new version when the
+								palette changes.
+							</p>
+						</li>
+					</ol>
+
+					<h2 style="margin-top: 34px">Registry entry example</h2>
+					<pre><code>{
+  "id": "aurora",
+  "name": "Aurora",
+  "author": "your-github-name",
+  "version": "1.0.0",
+  "description": "A short description in your own words.",
+  "tags": ["dark", "green", "calm"],
+  "appearance": "dark",
+  "preview": "assets/previews/aurora.svg",
+  "download": "registry/themes/aurora.json",
+  "sha256": "&lt;64 lowercase hex characters&gt;",
+  "size": 12345,
+  "performance": "light",
+  "minAppVersion": "1.0.0",
+  "verified": false
+}</code></pre>
+
+					<div class="notice" style="margin-top: 22px">
+						<span aria-hidden="true">!</span>
+						<div>
+							Themes are CSS and JSON only. Do not include JavaScript, remote
+							fonts, <code>@import</code> from another site, or images loaded
+							from the network. Those entries are rejected by the validator and
+							by the app's importer.
+						</div>
+					</div>
+
+					<div class="notice info" style="margin-top: 14px">
+						<span aria-hidden="true">◆</span>
+						<div>
+							<strong>Plugins are not part of this marketplace yet.</strong>
+							TTML Tool has a separate WASM plugin registry. Do not submit
+							plugins here; plugin listings are coming later with their own
+							review process.
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section>
+				<div class="wrap">
+					<h2>Review and removal</h2>
+					<p class="sub">
+						Rimurulover reviews every entry. A theme can be removed if it
+						breaks the app, contains content that does not belong to the author,
+						or stops matching its published hash. Removing an entry does not
+						reach into anyone's installed copy; people can delete a theme in
+						Settings.
+					</p>
+					<div class="actions" style="margin-top: 18px">
+						<a
+							class="btn ghost"
+							href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/blob/main/CONTRIBUTING.md"
+							>Read CONTRIBUTING</a
+						>
+						<a
+							class="btn ghost"
+							href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/blob/main/THEMES.md"
+							>Read THEMES.md</a
+						>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<footer class="site">
+			<div class="wrap footer-row">
+				<span>TTML Tool Themes · made by Rimurulover</span>
+				<span>
+					<a href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL">Repository</a>
+					· <a href="./themes.html">Browse themes</a>
+				</span>
+			</div>
+		</footer>
+	</body>
+</html>

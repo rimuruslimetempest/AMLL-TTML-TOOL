@@ -42,11 +42,11 @@
 		"botCheck": "YouTube is asking for a signed-in session. Select the browser where you're signed in under YouTube sign-in cookies, close that browser, and try again.",
 		"invalidCookies": "Choose a supported browser for cookies.",
 		"details": "Error details",
-		"unavailable": "yt-dlp or FFmpeg was not detected on your system. Follow the setup guide to install them.",
+		"unavailable": "yt-dlp was not found. Open Settings → Audio → Media downloader tools to install or update it, or use the setup guide for a manual install.",
 		"setupGuide": "Setup Guide",
 		"setupGuideTitle": "Media Downloader Setup Guide (yt-dlp & FFmpeg)",
-		"setupGuideDesc": "Because official GitHub Actions release builds do not bundle yt-dlp and FFmpeg, you can install them on your computer once. TTML Tool will detect them automatically.",
-		"recheck": "Recheck Installation",
+		"setupGuideDesc": "The desktop app ships yt-dlp, FFmpeg, FFprobe, and Deno. Open Settings → Audio → Media downloader tools to update yt-dlp, repair FFmpeg, pick your own copies, or run a test. The instructions below are for manual installs and older builds.",
+		"recheck": "Recheck installation",
 		"toolsReady": "yt-dlp Detected & Ready",
 		"toolsNotDetected": "Not Detected Yet",
 		"toolsDetectedSuccess": "yt-dlp and FFmpeg detected successfully!",
@@ -632,7 +632,8 @@
 				"keybindings": "Keybindings",
 				"assets": "Appearance assets",
 				"projects": "Projects & history",
-				"plugins": "Plugins"
+				"plugins": "Plugins",
+				"recycleBin": "Recycle bin (optional)"
 			},
 			"hint": {
 				"settings": "{count} stored values",
@@ -640,7 +641,8 @@
 				"assetsSet": "Custom background image set",
 				"assetsNone": "No custom background image",
 				"projects": "{count} projects",
-				"plugins": "{count} plugins"
+				"plugins": "{count} plugins",
+				"recycleBin": "{count} recycle-bin items (off by default)"
 			},
 			"exportSuccess": "Backup exported",
 			"exportFailed": "Failed to export backup",
@@ -753,6 +755,8 @@
 			"openFromCloud": "Open from Cloud...",
 			"saveToCloud": "Save to Cloud...",
 			"restoreFromHistory": "Restore from history…",
+			"recycleBin": "Recycle Bin…",
+			"themesMarketplace": "Theme marketplace",
 			"saveLyricToClipboard": "Save TTML to clipboard",
 			"uploadToAMLLDB": "Upload to database (CN only)",
 			"file": "File",
@@ -1704,6 +1708,7 @@
 		"community": "Community & Contributions",
 		"communityDesc": "Help us make the tool better by contributing code, reporting issues, or providing translations.",
 		"github": "GitHub Repository",
+		"themeMarketplace": "Theme marketplace",
 		"crowdin": "Help Translate in Crowdin",
 		"buildDate": "Build Date: {date}",
 		"gitCommit": "Git Commit: {commit}"

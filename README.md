@@ -96,12 +96,21 @@ editing aids; they never decide when a word should be sung.
   Glass Dark, Glass Light, AMOLED Black, Midnight Neon, Sakura, Mocha, Latte,
   Nord-style, Dracula-style, Solarized-style, Terminal, Paper, High Contrast,
   and Windows 11 Mica. See [THEMES.md](./THEMES.md).
+- A community theme marketplace at
+  <https://rimuruslimetempest.github.io/AMLL-TTML-TOOL/>. Browse it in the
+  theme manager, or opt in to load the registry inside the app; downloads are
+  checked against a published SHA-256 and go through the normal preview.
 - Glass effects stay on interface chrome; Performance mode, reduced motion, and
   unsupported hardware use the flat version of each theme.
 - Performance mode and appearance controls.
 - Discord Rich Presence with customizable text.
 - A portable settings and project backup.
-- An optional yt-dlp/FFmpeg media downloader on desktop.
+- An optional yt-dlp/FFmpeg media downloader on desktop, with a tool version
+  check, verified updates, a one-click ffmpeg repair, playlist picking, and
+  plain-language errors.
+- A 30-day recycle bin for deleted lines, words, saved splits, themes,
+  and projects, with restore, restore into another project, and a configurable
+  retention period.
 - Community translations.
 
 ### Updates and first-run setup
@@ -110,6 +119,17 @@ editing aids; they never decide when a word should be sung.
   download progress, Stable and Beta channels, and a skip-this-version option.
 - A short first-run setup for display name, appearance, audio output, tap key,
   performance mode, and privacy choices. It can be reopened from Settings.
+
+## Theme marketplace
+
+Community themes are listed at
+<https://rimuruslimetempest.github.io/AMLL-TTML-TOOL/>. The page is built from
+`docs/registry/themes.json`, and every entry has a preview, a SHA-256, a
+performance level, and a minimum app version. In the app, **Settings →
+Appearance → Themes → Manage themes** can open the page or, if you opt in, show
+the same list inside the app. Downloads are checked against the published hash
+and still go through the normal theme preview. See [THEMES.md](./THEMES.md) and
+[CONTRIBUTING.md](./CONTRIBUTING.md) to submit a theme.
 
 ## What is different in this version
 
@@ -136,14 +156,41 @@ Download the latest release for your system:
 
 | Platform | File |
 | --- | --- |
-| Windows x64 | `TTML-Tool_1.0.0_x64-setup.exe` (NSIS) or `.msi` |
-| macOS Apple Silicon | `TTML-Tool_1.0.0_aarch64.dmg` |
-| macOS Intel | `TTML-Tool_1.0.0_x64.dmg` |
-| Linux x64 | `TTML-Tool_1.0.0_amd64.AppImage`, `.deb`, or `.rpm` |
+| Windows x64 | `TTML-Tool_1.0.1_x64-setup.exe` (NSIS) or `.msi` |
+| macOS Apple Silicon | `TTML-Tool_1.0.1_aarch64.dmg` |
+| macOS Intel | `TTML-Tool_1.0.1_x64.dmg` |
+| Linux x64 | `TTML-Tool_1.0.1_amd64.AppImage`, `.deb`, or `.rpm` |
 
-Each release also publishes `latest.json`, which the built-in updater uses. On
-Linux, the AppImage updates itself; update `.deb` and `.rpm` packages with your
-package manager.
+Releases built with updater metadata also publish `latest.json`, which the
+built-in updater uses. If a release has no updater metadata, installations are
+still fully usable and the updater stays quiet. On Linux, the AppImage updates
+itself; update `.deb` and `.rpm` packages with your package manager.
+
+### Windows
+
+Run the `.exe` installer, or open the `.msi` with Windows Installer. The
+installer creates Start menu and desktop shortcuts and registers `.ttml`,
+`.lrc`, and `.srt` files with TTML Tool.
+
+### macOS
+
+Open the `.dmg` for your Mac, drag **TTML Tool** into **Applications**, then
+open it from Applications. Choose the Apple Silicon download for an M-series
+Mac and the Intel download for an older Intel Mac.
+
+### Linux
+
+The AppImage is a single portable file. Make it executable once, then run it:
+
+```bash
+chmod +x TTML-Tool_1.0.1_amd64.AppImage
+./TTML-Tool_1.0.1_amd64.AppImage
+```
+
+On Debian or Ubuntu, install the `.deb` with `sudo apt install ./TTML-Tool_1.0.1_amd64.deb`.
+On Fedora or another RPM-based distribution, use
+`sudo dnf install ./TTML-Tool_1.0.1_x86_64.rpm`. The package manager keeps
+those installations up to date.
 
 If you are replacing a build that used a different application identifier,
 uninstall that build first and export a settings backup before switching. The

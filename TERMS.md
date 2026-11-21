@@ -25,6 +25,7 @@ Cloud saves are not a private vault in this build. Published items and cloud lib
 - Do not use live rooms to harass, threaten, impersonate, spam, or distribute unlawful material.
 - Do not attempt to access another person's account, room, cloud library, credentials, invite, or private project notes.
 - Do not use the app to break copyright, privacy, or other applicable laws.
+- Only download audio you have the right to use. You are responsible for following the terms of the site you download from and for any copyright or other rights in the audio.
 - Do not overload, probe, or interfere with hosting, Firebase, Cloudflare, AI, search, or update services.
 
 ## 5. Live rooms
@@ -34,6 +35,10 @@ The host controls the room and its lifetime. The host can set roles, create or r
 ## 6. Cloud and third-party services
 
 Cloud features depend on Firebase. Search, import, AI, Discord, Cloudflare, crash-report destinations, avatar fallback, and update features depend on third-party services. Their availability, terms, and privacy policies are their own. The app is not responsible for their acts, omissions, retention, or outages.
+
+Audio download runs yt-dlp and ffmpeg locally. Those tools and their updates are downloaded from their official release pages when you ask for them, and their own licenses and terms apply. The app does not host or provide the audio you download, and it does not grant rights to it.
+
+Community themes are made by other people. When you install from the in-app marketplace, the app checks that a theme is JSON and CSS, that it contains no remote loads, and that its SHA-256 matches the listing. That is not a guarantee of quality or suitability. Verified only means the entry was reviewed when it was added. Install a theme only if you trust its author, and remove it in Settings if you no longer want it.
 
 ## 7. AI output
 

@@ -16,12 +16,14 @@ import {
 	TextField,
 } from "@radix-ui/themes";
 import { Channel, invoke, isTauri } from "@tauri-apps/api/core";
-import { useAtom, useStore } from "jotai";
+import { useAtom, useSetAtom, useStore } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { audioEngine } from "$/modules/audio/audio-engine";
+import { termsDialogAtom } from "$/modules/privacy/states";
 import { lyricLinesAtom } from "$/states/main";
+import { settingsDialogAtom, settingsTabAtom } from "$/states/dialogs";
 import { DownloaderSetupGuideDialog } from "./DownloaderSetupGuideDialog";
 import { loadAudioFromPath } from "./download-helper";
 import styles from "./downloader.module.css";
@@ -31,8 +33,11 @@ import {
 	type CookieBrowser,
 	type DownloadEvent,
 	type DownloadFormat,
+	type DownloadErrorInfo,
 	downloadError,
+	explainDownloadError,
 	formatDuration,
+	isPlaylistUrl,
 	metadataQuery,
 	nextSearchQuery,
 	type SearchResult,
@@ -40,11 +45,14 @@ import {
 	validDownloadUrl,
 } from "./model";
 import {
+	downloaderCacheAtom,
+	downloaderCookiesFileAtom,
 	downloaderCookieBrowserAtom,
 	downloaderInitialFormatAtom,
 	downloaderInitialQueryAtom,
 	downloaderInitialTrackAtom,
 	downloaderInitialUrlAtom,
+	downloaderLegalNoticeAtom,
 	downloaderOpenAtom,
 } from "./states";
 
@@ -74,14 +82,20 @@ export function DownloaderDialog() {
 	const [cookieBrowser, setCookieBrowser] = useAtom(
 		downloaderCookieBrowserAtom,
 	);
+	const [cookiesFile] = useAtom(downloaderCookiesFileAtom);
+	const [cache, setCache] = useAtom(downloaderCacheAtom);
+	const [noticeSeen, setNoticeSeen] = useAtom(downloaderLegalNoticeAtom);
+	const setSettingsOpen = useSetAtom(settingsDialogAtom);
+	const setSettingsTab = useSetAtom(settingsTabAtom);
+	const setTermsOpen = useSetAtom(termsDialogAtom);
 	const [height, setHeight] = useState("1080");
 	const [busy, setBusy] = useState(false);
 	const [cancelling, setCancelling] = useState(false);
 	const [event, setEvent] = useState<DownloadEvent | null>(null);
-	const [failure, setFailure] = useState<{
-		code: string;
-		detail: string;
-	} | null>(null);
+	const [failure, setFailure] = useState<DownloadErrorInfo | null>(null);
+	const [actionBusy, setActionBusy] = useState(false);
+	const [playlist, setPlaylist] = useState<SearchResult[] | null>(null);
+	const [playlistIndex, setPlaylistIndex] = useState("0");
 	const [result, setResult] = useState<string | null>(null);
 	const running = useRef(false);
 	const [guideOpen, setGuideOpen] = useState(false);
@@ -217,8 +231,53 @@ export function DownloaderDialog() {
 		}
 	}, [open, available, query, results, searching, url, search]);
 
-	async function start() {
-		if (running.current || !available || !validDownloadUrl(url.trim())) return;
+	async function loadIntoEditor(path: string) {
+		try {
+			const file = await loadAudioFromPath(path, format);
+			await audioEngine.loadMusic(file, false, true);
+			toast.success(
+				t("downloader.loadedIntoEditor", 'Loaded "{title}" into editor', {
+					title: file.name,
+				}),
+			);
+		} catch (loadErr) {
+			console.warn("Failed to auto-load audio into editor:", loadErr);
+			toast.error(
+				t(
+					"downloader.loadFailed",
+					"Download saved, but it could not be loaded into the editor.",
+				),
+			);
+		}
+	}
+
+	async function download(target: string) {
+		if (
+			running.current ||
+			!available ||
+			!noticeSeen ||
+			!validDownloadUrl(target)
+		) {
+			return;
+		}
+		// Never fetch the same audio twice when the saved copy is still there.
+		const cached = cache[target];
+		if (
+			mode === "audio" &&
+			cached &&
+			cached.format === format &&
+			Date.now() - cached.at < 7 * 24 * 60 * 60 * 1000
+		) {
+			const stillThere = await invoke<boolean>("path_exists", {
+				path: cached.path,
+			}).catch(() => false);
+			if (stillThere) {
+				setResult(cached.path);
+				await loadIntoEditor(cached.path);
+				toast.info("This link was already downloaded. Using the saved file.");
+				return;
+			}
+		}
 		running.current = true;
 		setBusy(true);
 		setCancelling(false);
@@ -232,43 +291,108 @@ export function DownloaderDialog() {
 		try {
 			const downloadedPath = await invoke<string | null>("download_media", {
 				request: {
-					url: url.trim(),
+					url: target,
 					format,
 					maxHeight:
 						mode === "video" && height !== "best" ? Number(height) : null,
 					cookiesFromBrowser: cookieBrowser === "none" ? null : cookieBrowser,
+					cookiesFile: cookiesFile.trim() || null,
 				},
 				jobId: id,
 				events,
 			});
 			setResult(downloadedPath);
-			if (downloadedPath && mode === "audio") {
-				try {
-					const file = await loadAudioFromPath(downloadedPath, format);
-					await audioEngine.loadMusic(file, false, true);
-					toast.success(
-						t("downloader.loadedIntoEditor", 'Loaded "{title}" into editor', {
-							title: file.name,
-						}),
-					);
-				} catch (loadErr) {
-					console.warn("Failed to auto-load audio into editor:", loadErr);
-					toast.error(
-						t(
-							"downloader.loadFailed",
-							"Download saved, but it could not be loaded into the editor.",
+			if (downloadedPath) {
+				setCache((previous) => {
+					const now = Date.now();
+					const next = Object.fromEntries(
+						Object.entries(previous).filter(
+							([, entry]) => now - entry.at < 30 * 24 * 60 * 60 * 1000,
 						),
 					);
-				}
+					next[target] = {
+						path: downloadedPath,
+						title: downloadedPath.split(/[/\\]/).pop() ?? target,
+						format,
+						at: now,
+					};
+					return next;
+				});
 			}
+			if (downloadedPath && mode === "audio") await loadIntoEditor(downloadedPath);
 		} catch (error) {
-			setFailure(downloadError(error));
+			setFailure(explainDownloadError(error));
 		} finally {
 			jobId.current = null;
 			running.current = false;
 			setBusy(false);
 			setCancelling(false);
 			setEvent(null);
+		}
+	}
+
+	async function start() {
+		const target = url.trim();
+		if (!target || !validDownloadUrl(target) || !noticeSeen) return;
+		if (isPlaylistUrl(target) && playlist === null) {
+			setActionBusy(true);
+			setFailure(null);
+			try {
+				const items = await invoke<SearchResult[]>("list_playlist", {
+					url: target,
+				});
+				if (items.length > 1) {
+					setPlaylist(items);
+					setPlaylistIndex("0");
+					return;
+				}
+				if (items.length === 1) {
+					setUrl(items[0].url);
+					void download(items[0].url);
+					return;
+				}
+				setFailure(
+					explainDownloadError({
+						code: "failed",
+						detail: "The playlist had no downloadable items.",
+					}),
+				);
+			} catch (error) {
+				setFailure(explainDownloadError(error));
+			} finally {
+				setActionBusy(false);
+			}
+			return;
+		}
+		void download(target);
+	}
+
+	async function handleFailureAction() {
+		const action = failure?.action;
+		if (!action) return;
+		if (action === "retry") {
+			void download(url.trim());
+			return;
+		}
+		if (action === "settings" || action === "cookies") {
+			setSettingsTab("audio");
+			setSettingsOpen(true);
+			return;
+		}
+		setActionBusy(true);
+		try {
+			await invoke(action === "update" ? "update_ytdlp" : "download_ffmpeg");
+			toast.success(
+				action === "update"
+					? "yt-dlp was updated and verified."
+					: "FFmpeg was downloaded and verified.",
+			);
+			setFailure(null);
+			checkAvailability();
+		} catch (error) {
+			setFailure(explainDownloadError(error));
+		} finally {
+			setActionBusy(false);
 		}
 	}
 
@@ -279,7 +403,7 @@ export function DownloaderDialog() {
 		try {
 			await invoke("cancel_download", { jobId: id });
 		} catch (error) {
-			setFailure(downloadError(error));
+			setFailure(explainDownloadError(error));
 			setCancelling(false);
 		}
 	}
@@ -294,21 +418,17 @@ export function DownloaderDialog() {
 				: event?.kind === "preparing"
 					? t("downloader.preparing")
 					: t("downloader.pickFolder");
-	const botCheck = failure?.detail.toLowerCase().includes("not a bot") ?? false;
-	const errorText =
-		failure?.code === "invalidCookies"
-			? t("downloader.invalidCookies")
-			: botCheck
-				? t("downloader.botCheck")
-				: failure?.code === "invalidUrl"
-					? t("downloader.invalidUrl")
-					: failure?.code === "cancelled"
-						? t("downloader.cancelled")
-						: failure?.code === "timeout"
-							? t("downloader.timeout")
-							: failure?.code === "busy"
-								? t("downloader.busy")
-								: t("downloader.failed");
+	const errorText = failure ? `${failure.title}. ${failure.message}` : "";
+	const actionLabel =
+		failure?.action === "update"
+			? "Update yt-dlp"
+			: failure?.action === "ffmpeg"
+				? "Download FFmpeg"
+				: failure?.action === "cookies" || failure?.action === "settings"
+					? "Open Audio sources"
+					: failure?.action === "retry"
+						? "Try again"
+						: null;
 	const cookieBrowserLabels: Record<(typeof COOKIE_BROWSERS)[number], string> = {
 		brave: t("downloader.cookiesBrave"),
 		chrome: t("downloader.cookiesChrome"),
@@ -340,6 +460,29 @@ export function DownloaderDialog() {
 						</Button>
 					</Flex>
 					<Flex direction="column" gap="3">
+						{!noticeSeen && (
+							<Callout.Root color="amber">
+								<Callout.Text>
+									Only download audio you have the right to use. You are
+									responsible for following the terms of the site and for
+									copyright. TTML Tool runs yt-dlp on this computer and does
+									not upload the link or the file anywhere.
+								</Callout.Text>
+								<Flex gap="2" mt="2" wrap="wrap">
+									<Button size="1" onClick={() => setNoticeSeen(true)}>
+										I understand
+									</Button>
+									<Button
+										size="1"
+										variant="soft"
+										color="gray"
+										onClick={() => setTermsOpen(true)}
+									>
+										Terms of Use
+									</Button>
+								</Flex>
+							</Callout.Root>
+						)}
 						{available === false && (
 							<Callout.Root color="amber">
 								<Flex
@@ -357,6 +500,17 @@ export function DownloaderDialog() {
 										)}
 									</Callout.Text>
 									<Flex gap="2">
+										<Button
+											type="button"
+											size="1"
+											variant="surface"
+											onClick={() => {
+												setSettingsTab("audio");
+												setSettingsOpen(true);
+											}}
+										>
+											Audio sources
+										</Button>
 										<Button
 											type="button"
 											size="1"
@@ -524,6 +678,51 @@ export function DownloaderDialog() {
 											{t("downloader.invalidUrl")}
 										</Text>
 									)}
+									{playlist && playlist.length > 1 && (
+										<Callout.Root color="amber">
+											<Callout.Text>
+												This link is a playlist. Choose one item to download:
+											</Callout.Text>
+											<Select.Root
+												value={playlistIndex}
+												onValueChange={setPlaylistIndex}
+											>
+												<Select.Trigger
+													aria-label="Playlist item"
+													style={{ width: "100%" }}
+												/>
+												<Select.Content>
+													{playlist.map((item, index) => (
+														<Select.Item key={item.url} value={String(index)}>
+															{item.title}
+														</Select.Item>
+													))}
+												</Select.Content>
+											</Select.Root>
+											<Flex gap="2" mt="2" wrap="wrap">
+												<Button
+													size="1"
+													onClick={() => {
+														const item = playlist[Number(playlistIndex)];
+														if (!item) return;
+														setUrl(item.url);
+														setPlaylist(null);
+														void download(item.url);
+													}}
+												>
+													Download selected item
+												</Button>
+												<Button
+													size="1"
+													variant="soft"
+													color="gray"
+													onClick={() => setPlaylist(null)}
+												>
+													Cancel
+												</Button>
+											</Flex>
+										</Callout.Root>
+									)}
 									<SegmentedControl.Root
 										aria-label={t("downloader.mediaType")}
 										value={mode}
@@ -660,6 +859,17 @@ export function DownloaderDialog() {
 											role="alert"
 										>
 											<Callout.Text>{errorText}</Callout.Text>
+											{actionLabel && (
+												<Button
+													size="1"
+													mt="2"
+													onClick={() => void handleFailureAction()}
+													loading={actionBusy}
+													disabled={busy || actionBusy}
+												>
+													{actionLabel}
+												</Button>
+											)}
 											{failure.detail && (
 												<details className={styles.details}>
 													<summary>{t("downloader.details")}</summary>
@@ -738,7 +948,11 @@ export function DownloaderDialog() {
 										) : (
 											<Button
 												type="submit"
-												disabled={!available || !validDownloadUrl(url.trim())}
+												disabled={
+													!available ||
+													!noticeSeen ||
+													!validDownloadUrl(url.trim())
+												}
 											>
 												{t(
 													available === null

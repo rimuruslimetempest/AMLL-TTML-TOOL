@@ -20,6 +20,7 @@ import {
 import { useAtom } from "jotai";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { DownloaderSettings } from "$/modules/downloader/DownloaderSettings";
 import { audioEngine } from "$/modules/audio/audio-engine";
 import {
 	customEqualizerPresetsAtom,
@@ -507,6 +508,8 @@ export const AudioSettingsTab = () => {
 					</Flex>
 				</Flex>
 			</Card>
+
+			<DownloaderSettings />
 		</Flex>
 	);
 };

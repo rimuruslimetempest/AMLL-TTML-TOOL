@@ -1,5 +1,6 @@
 import { Button, DropdownMenu, Flex } from "@radix-ui/themes";
 import {
+	ArrowCounterclockwise20Regular,
 	Clipboard20Regular,
 	ClipboardPaste20Regular,
 	CloudArrowDown20Regular,
@@ -16,6 +17,8 @@ import { Toolbar } from "radix-ui";
 import type { CSSProperties } from "react";
 import { Trans } from "react-i18next";
 import { ImportExportLyric } from "$/modules/project/modals/ImportExportLyric";
+import { recycleBinDialogAtom } from "$/modules/recycle-bin/state";
+import { useSetAtom } from "jotai";
 import { formatKeyBindings } from "$/utils/keybindings";
 import { NewMenuIcon } from "../NewMenuIcon";
 import { useTopMenuActions } from "../useTopMenuActions";
@@ -27,6 +30,7 @@ type FileMenuProps = {
 
 const FileMenuItems = () => {
 	const menu = useTopMenuActions();
+	const setRecycleBinOpen = useSetAtom(recycleBinDialogAtom);
 
 	const getShortcut = (key: string[] | undefined) =>
 		key ? formatKeyBindings(key) : undefined;
@@ -102,6 +106,12 @@ const FileMenuItems = () => {
 				<Trans i18nKey="topBar.menu.restoreFromHistory">
 					Auto-Saves…
 				</Trans>
+			</DropdownMenu.Item>
+			<DropdownMenu.Item onSelect={() => setRecycleBinOpen(true)}>
+				<NewMenuIcon>
+					<ArrowCounterclockwise20Regular />
+				</NewMenuIcon>
+				<Trans i18nKey="topBar.menu.recycleBin">Recycle Bin…</Trans>
 			</DropdownMenu.Item>
 			<DropdownMenu.Separator />
 			<DropdownMenu.Item onSelect={menu.onSaveFileToClipboard}>

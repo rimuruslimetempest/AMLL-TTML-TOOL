@@ -1,0 +1,103 @@
+name: Theme marketplace submission
+description: Propose a community theme before opening a pull request.
+title: "[Theme]: "
+labels: ["theme"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for making a theme for TTML Tool. This issue is for discussion first; the marketplace is updated only by a merged pull request.
+
+        **Do not attach audio, lyrics, private project files, or anything you do not have the right to share.** A preview image and the theme JSON are enough.
+
+  - type: input
+    id: theme_name
+    attributes:
+      label: Theme name
+      placeholder: "Aurora"
+    validations:
+      required: true
+
+  - type: input
+    id: theme_id
+    attributes:
+      label: Theme id
+      description: Lowercase letters, numbers, and dashes. This must match theme.json.
+      placeholder: "aurora"
+    validations:
+      required: true
+
+  - type: input
+    id: author
+    attributes:
+      label: Author name
+      description: The name that should appear on the card.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Theme version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Short description
+      description: One or two sentences in your own words.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: appearance
+    attributes:
+      label: Appearance
+      options:
+        - Dark
+        - Light
+        - Both (two schemes)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: performance
+    attributes:
+      label: Performance level
+      options:
+        - Light
+        - Medium
+        - Heavy
+    validations:
+      required: true
+
+  - type: input
+    id: min_version
+    attributes:
+      label: Minimum TTML Tool version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: pull_request
+    attributes:
+      label: Pull request or fork
+      description: Link the pull request that adds the theme folder and registry entry, if you have opened one.
+      placeholder: "https://github.com/..."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmations
+      options:
+        - label: The theme is CSS and JSON only. It contains no JavaScript, remote fonts, or remote images.
+          required: true
+        - label: I made this theme or have permission to share it, and the preview is mine to publish.
+          required: true
+        - label: I understand that a maintainer reviews the entry and nothing is published without a merge.
+          required: true

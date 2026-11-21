@@ -4,6 +4,7 @@ import {
 	BookOpen20Regular,
 	Code20Regular,
 	DocumentText20Regular,
+	Globe20Regular,
 	History20Regular,
 	Shield20Regular,
 	Sparkle20Regular,
@@ -13,7 +14,11 @@ import { useSetAtom } from "jotai";
 import { Toolbar } from "radix-ui";
 import type { CSSProperties } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { buildReportProblemUrl, RELEASES_URL } from "$/config/links";
+import {
+	buildReportProblemUrl,
+	MARKETPLACE_URL,
+	RELEASES_URL,
+} from "$/config/links";
 import { APP_VERSION } from "$/modules/changelog/data";
 import {
 	guideExportedAtom,
@@ -89,6 +94,12 @@ const HelpMenuItems = () => {
 					<BookOpen20Regular />
 				</NewMenuIcon>
 				{t("topBar.menu.helpDoc", "Documentation")}
+			</DropdownMenu.Item>
+			<DropdownMenu.Item onSelect={() => openExternal(MARKETPLACE_URL)}>
+				<NewMenuIcon>
+					<Globe20Regular />
+				</NewMenuIcon>
+				{t("topBar.menu.themesMarketplace", "Theme marketplace")}
 			</DropdownMenu.Item>
 			{isWebsite && (
 				<DropdownMenu.Item

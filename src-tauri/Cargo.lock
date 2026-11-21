@@ -5294,15 +5294,17 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "ttml-tool"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "axum",
  "discord-rich-presence",
+ "flate2",
  "futures-util",
  "log",
  "reqwest 0.13.4",
  "serde",
  "serde_json",
+ "sha2",
  "tao",
  "tauri",
  "tauri-build",

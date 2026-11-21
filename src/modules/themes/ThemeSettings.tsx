@@ -25,6 +25,13 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { Dialog } from "$/design-system";
+import {
+	addRecycleItems,
+	buildThemeRecycleItem,
+	deleteRecycleItem,
+	restoreRecycleItem,
+	showUndoToast,
+} from "$/modules/recycle-bin/actions";
 import { isDarkThemeAtom } from "$/states/main";
 import { BUILTIN_THEMES } from "./builtins";
 import { sanitizeThemeCss } from "./css";
@@ -67,6 +74,7 @@ import {
 	type ThemeTokenValues,
 } from "./types";
 import { parseTheme, sanitizeThemeId } from "./validate";
+import { CommunityThemesPanel } from "./CommunityThemesPanel";
 
 function supportsBackdrop(): boolean {
 	return (
@@ -714,6 +722,17 @@ export function ThemeManagerDialog({
 		setReloadToken((value) => value + 1);
 	};
 
+	useEffect(() => {
+		const refresh = () => {
+			void loadUserThemes().then((themes) => {
+				setUserThemes(themes);
+				setReloadToken((value) => value + 1);
+			});
+		};
+		window.addEventListener("ttml:themes-changed", refresh);
+		return () => window.removeEventListener("ttml:themes-changed", refresh);
+	}, [setUserThemes, setReloadToken]);
+
 	const applyTheme = (theme: ThemePack, nextScheme = DEFAULT_SCHEME_ID) => {
 		setThemeId(theme.id);
 		setSchemeId(nextScheme);
@@ -746,8 +765,15 @@ export function ThemeManagerDialog({
 
 	const removeTheme = async (theme: ThemePack) => {
 		if (theme.builtin) return;
-		if (!window.confirm(`Delete “${theme.name}”? This cannot be undone.`)) return;
+		if (
+			!window.confirm(
+				`Delete “${theme.name}”? It will stay in the recycle bin for the retention period.`,
+			)
+		)
+			return;
 		try {
+			const removed = buildThemeRecycleItem(theme);
+			await addRecycleItems([removed]);
 			await deleteUserTheme(theme.id);
 			await refreshThemes();
 			if (themeId === theme.id) {
@@ -755,6 +781,16 @@ export function ThemeManagerDialog({
 				setSchemeId(DEFAULT_SCHEME_ID);
 			}
 			toast.success(`Deleted “${theme.name}”.`);
+			showUndoToast("Theme deleted", async () => {
+				const result = await restoreRecycleItem(removed);
+				if (!result.ok) {
+					toast.error(result.message);
+					return;
+				}
+				await deleteRecycleItem(removed.id);
+				await refreshThemes();
+				toast.success(result.message);
+			});
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : String(error));
 		}
@@ -1077,6 +1113,12 @@ export function ThemeManagerDialog({
 								</Flex>
 							</Flex>
 						</Card>
+
+						<CommunityThemesPanel
+							onPreview={(theme, css) =>
+								setPending({ theme, css, assets: [] })
+							}
+						/>
 
 						{importError ? (
 							<Card style={{ borderColor: "var(--red-8)" }}>

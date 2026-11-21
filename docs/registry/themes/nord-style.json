@@ -1,0 +1,62 @@
+{
+  "format": 1,
+  "id": "nord-style",
+  "name": "Nord-style",
+  "author": "Rimurulover",
+  "version": "1.0.0",
+  "description": "Cool blue-gray surfaces and frosty accents inspired by the Nord palette. Quiet contrast for long projects.",
+  "schemes": [
+    {
+      "id": "night",
+      "name": "Night",
+      "appearance": "dark",
+      "tokens": {
+        "bgBase": "#2e3440",
+        "bgRaised": "#3b4252",
+        "bgOverlay": "#434c5e",
+        "surface": "#343b48",
+        "surface2": "#3f4756",
+        "surface3": "#4c566a",
+        "surfaceHover": "#566176",
+        "border": "rgba(216, 222, 233, 0.14)",
+        "borderStrong": "rgba(216, 222, 233, 0.28)",
+        "text": "#eceff4",
+        "textSecondary": "#d8dee9",
+        "textMuted": "#a8b2c3",
+        "textDisabled": "#7c879b",
+        "accent": "#88c0d0",
+        "accentHover": "#9ed0dd",
+        "accentActive": "#6fa8b8",
+        "accentSubtle": "rgba(136, 192, 208, 0.16)",
+        "accentContrast": "#1b222c",
+        "success": "#a3be8c",
+        "successSubtle": "rgba(85, 214, 139, 0.12)",
+        "warning": "#ebcb8b",
+        "warningSubtle": "rgba(242, 189, 92, 0.12)",
+        "danger": "#bf616a",
+        "dangerSubtle": "rgba(240, 116, 118, 0.12)",
+        "info": "#81a1c1",
+        "infoSubtle": "rgba(113, 183, 255, 0.12)",
+        "lyricPlaying": "#b8dce6",
+        "lyricPlayingBg": "rgba(136, 192, 208, 0.14)",
+        "lyricSelectedBg": "rgba(91, 94, 240, 0.19)",
+        "lyricUnsynced": "#ebcb8b",
+        "lyricUnsyncedBg": "rgba(242, 189, 92, 0.1)",
+        "lyricSynced": "#a3be8c",
+        "lyricSyncedBg": "rgba(85, 214, 139, 0.09)",
+        "lyricFlagged": "#bf616a",
+        "lyricFlaggedBg": "rgba(240, 116, 118, 0.1)",
+        "lyricLocked": "#b48ead",
+        "lyricLockedBg": "rgba(184, 156, 255, 0.1)",
+        "timestampBg": "rgba(136, 192, 208, 0.1)",
+        "timestampText": "#f4f6fb",
+        "timestampBorder": "rgba(136, 192, 208, 0.24)"
+      }
+    }
+  ],
+  "effects": {
+    "level": "none",
+    "performance": "light"
+  },
+  "minAppVersion": "1.0.0"
+}

@@ -1,7 +1,7 @@
 {
 	"name": "ttml-tool",
 	"private": true,
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "A word-synced TTML lyric editor for Apple Music-style lyrics, built with React, TypeScript, and Tauri.",
 	"author": {
 		"name": "Rimurulover",
@@ -24,6 +24,10 @@
 		"build": "vite build",
 		"build:collab-web": "node scripts/build-collab-web.mjs",
 		"tauri:build": "tauri build --no-bundle && for app in \"src-tauri/target/release/bundle/macos/\"*.app; do [ -d \"$app\" ] || continue; cp -f src-tauri/target/release/ttml-tool \"$app/Contents/MacOS/ttml-tool\"; [ -d src-tauri/downloader-tools ] && mkdir -p \"$app/Contents/Resources/downloader-tools\" && cp -RP src-tauri/downloader-tools/* \"$app/Contents/Resources/downloader-tools/\"; touch \"$app\"; done",
+		"downloader:prepare": "node scripts/prepare-downloader.mjs",
+		"themes:build": "node scripts/build-example-themes.mjs",
+		"themes:validate": "node scripts/validate-theme-registry.mjs",
+		"tauri:build:release": "node scripts/prepare-downloader.mjs && tauri build",
 		"version:bump": "node scripts/bump-version.mjs",
 		"version:set": "node scripts/set-version.mjs",
 		"test:versioning": "node --test scripts/version-utils.test.mjs",

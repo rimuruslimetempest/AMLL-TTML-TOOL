@@ -7,12 +7,12 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to build and publish, for example v1.0.0"
+        description: "Existing tag to build and publish, for example v1.0.1"
         required: true
         type: string
 
 concurrency:
-  group: release-${{ github.event.inputs.tag || github.ref }}
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 permissions:
@@ -24,54 +24,70 @@ env:
 
 jobs:
   prepare:
-    name: Validate release and prepare notes
+    name: Prepare draft release
     runs-on: ubuntu-latest
     outputs:
-      release_body: ${{ steps.notes.outputs.body }}
+      release_id: ${{ steps.release.outputs.release_id }}
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - name: Check out the release tag
+        uses: actions/checkout@v7
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: ${{ github.event.inputs.tag || github.ref_name }}
           persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: lts/*
+          node-version: 22
 
-      - name: Verify tag matches every version file
+      - name: Verify tag and version files
+        shell: bash
         run: node scripts/validate-release-version.mjs --tag "$RELEASE_TAG"
 
       - name: Generate release notes
-        id: notes
         shell: bash
-        run: |
-          node scripts/generate-changelog-notes.mjs \
-            --version "${RELEASE_TAG#v}" \
-            --output release-notes.md
-          {
-            echo "body<<RELEASE_NOTES_EOF"
-            cat release-notes.md
-            echo "RELEASE_NOTES_EOF"
-          } >> "$GITHUB_OUTPUT"
+        run: >-
+          node scripts/generate-changelog-notes.mjs
+          --version "${RELEASE_TAG#v}"
+          --output release-notes.md
 
-      - name: Check updater signing secret
-        shell: bash
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-        run: |
-          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            echo "::error::Add TAURI_SIGNING_PRIVATE_KEY under Settings → Secrets and variables → Actions before tagging a release."
-            exit 1
-          fi
-
-      - name: Upload prepared notes
+      - name: Upload release notes
         uses: actions/upload-artifact@v4
         with:
           name: release-notes
           path: release-notes.md
           if-no-files-found: error
+
+      - name: Create or reuse the draft release
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if gh release view "$RELEASE_TAG" --json id,isDraft \
+            --jq '(.id | tostring) + " " + (.isDraft | tostring)' > release-state.txt 2>/dev/null; then
+            read -r release_id is_draft < release-state.txt
+            if [ "$is_draft" != "true" ]; then
+              echo "::error::Release $RELEASE_TAG is already published. Do not overwrite it; bump the patch version and push a new tag."
+              exit 1
+            fi
+            gh release edit "$RELEASE_TAG" \
+              --title "TTML Tool ${RELEASE_TAG#v}" \
+              --notes-file release-notes.md
+          else
+            gh release create "$RELEASE_TAG" \
+              --draft \
+              --verify-tag \
+              --title "TTML Tool ${RELEASE_TAG#v}" \
+              --notes-file release-notes.md
+            release_id=$(gh release view "$RELEASE_TAG" --json id --jq .id)
+          fi
+
+          test -n "$release_id"
+          echo "release_id=$release_id" >> "$GITHUB_OUTPUT"
+          echo "Using draft release $RELEASE_TAG (id $release_id)."
 
   build:
     name: Build ${{ matrix.name }}
@@ -83,34 +99,42 @@ jobs:
           - name: windows-x64
             platform: windows-latest
             rust_targets: ""
+            download_target: win32-x64
             args: "--bundles nsis,msi"
           - name: macos-arm64
             platform: macos-latest
-            rust_targets: "aarch64-apple-darwin"
+            rust_targets: aarch64-apple-darwin
+            download_target: darwin-arm64
             args: "--target aarch64-apple-darwin --bundles dmg"
           - name: macos-x64
             platform: macos-latest
-            rust_targets: "x86_64-apple-darwin"
+            rust_targets: x86_64-apple-darwin
+            download_target: darwin-x64
             args: "--target x86_64-apple-darwin --bundles dmg"
           - name: linux-x64
             platform: ubuntu-22.04
             rust_targets: ""
+            download_target: linux-x64
             args: "--bundles appimage,deb,rpm"
     runs-on: ${{ matrix.platform }}
+    env:
+      APPIMAGE_EXTRACT_AND_RUN: "1"
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - name: Check out the release tag
+        uses: actions/checkout@v7
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: ${{ github.event.inputs.tag || github.ref_name }}
           persist-credentials: false
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: lts/*
+          node-version: 22
           cache: pnpm
 
       - name: Set up Rust
@@ -126,101 +150,199 @@ jobs:
       - name: Add wasm target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: Install LLVM and Clang on macOS
-        if: matrix.platform == 'macos-latest'
-        uses: KyleMayes/install-llvm-action@v2
-        with:
-          version: "15"
-
       - name: Install Linux system dependencies
         if: matrix.platform == 'ubuntu-22.04'
+        shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            libasound2-dev \
-            patchelf \
-            rpm \
+          sudo apt-get install -y --no-install-recommends \
             build-essential \
             curl \
             file \
+            libasound2-dev \
+            libayatana-appindicator3-dev \
+            libfuse2 \
+            libgtk-3-dev \
             libssl-dev \
-            libxdo-dev
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            librsvg2-dev \
+            patchelf \
+            rpm \
+            unzip \
+            wget \
+            xdg-utils
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build bundles and publish release
-        uses: tauri-apps/tauri-action@v0
+      - name: Prepare platform downloader tools
+        run: node scripts/prepare-downloader.mjs --target ${{ matrix.download_target }}
+
+      - name: Confirm platform downloader tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          suffix=""
+          if [ "${{ matrix.platform }}" = "windows-latest" ]; then
+            suffix=".exe"
+          fi
+          test -d src-tauri/downloader-tools
+          for tool in yt-dlp ffmpeg ffprobe deno cloudflared; do
+            test -f "src-tauri/downloader-tools/${tool}${suffix}"
+          done
+          ls -l src-tauri/downloader-tools
+
+      - name: Report updater build mode
+        shell: bash
+        run: |
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "::notice::Updater private key found. Building updater artifacts."
+          else
+            echo "::notice::Updater private key not found. Building installers only; updater artifacts and latest.json will be skipped."
+          fi
+
+      - name: Build and upload updater bundles to the draft
+        if: env.TAURI_SIGNING_PRIVATE_KEY != ''
+        uses: tauri-apps/tauri-action@v1
         with:
+          releaseId: ${{ needs.prepare.outputs.release_id }}
           tagName: ${{ env.RELEASE_TAG }}
-          releaseName: TTML Tool ${{ env.RELEASE_TAG }}
-          releaseBody: ${{ needs.prepare.outputs.release_body }}
+          releaseDraft: true
           releaseAssetNamePattern: "TTML-Tool_[version]_[arch][setup][ext]"
-          uploadUpdaterJson: true
-          updaterJsonPreferNsis: true
+          uploadUpdaterJson: false
+          uploadUpdaterSignatures: true
           retryAttempts: 3
           args: ${{ matrix.args }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
-  verify:
-    name: Verify published assets and latest.json
+      - name: Build and upload installers to the draft
+        if: env.TAURI_SIGNING_PRIVATE_KEY == ''
+        uses: tauri-apps/tauri-action@v1
+        with:
+          releaseId: ${{ needs.prepare.outputs.release_id }}
+          tagName: ${{ env.RELEASE_TAG }}
+          releaseDraft: true
+          releaseAssetNamePattern: "TTML-Tool_[version]_[arch][setup][ext]"
+          uploadUpdaterJson: false
+          uploadUpdaterSignatures: false
+          retryAttempts: 3
+          args: ${{ matrix.args }} --config src-tauri/tauri.installers-only.conf.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  finalize:
+    name: Verify and publish release
     needs: [prepare, build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - name: Check out the release tag
+        uses: actions/checkout@v7
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: ${{ github.event.inputs.tag || github.ref_name }}
           persist-credentials: false
 
-      - name: List release assets
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
-            --json assets --jq '.assets[].name' | tee assets.txt
+      - name: Download release notes
+        uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes
 
-      - name: Require Windows, macOS, Linux, and updater assets
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Remove stale updater assets from an installers-only draft
+        if: env.TAURI_SIGNING_PRIVATE_KEY == ''
         shell: bash
-        run: |
-          fail=0
-          for pattern in 'setup.exe' '.msi' 'aarch64.dmg' 'x64.dmg' '.AppImage' '.deb' '.rpm' 'latest.json'; do
-            if ! grep -q -- "$pattern" assets.txt; then
-              echo "::error::Missing release asset matching $pattern"
-              fail=1
-            fi
-          done
-          exit $fail
-
-      - name: Download and inspect latest.json
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release download "$RELEASE_TAG" \
-            --repo "$GITHUB_REPOSITORY" \
-            --pattern latest.json \
-            --dir updater \
-            --clobber
-          node -e '
-            const fs = require("node:fs");
-            const json = JSON.parse(fs.readFileSync("updater/latest.json", "utf8"));
-            const required = ["windows-x86_64", "darwin-aarch64", "darwin-x86_64", "linux-x86_64"];
-            const missing = required.filter((key) => !json.platforms?.[key]?.url);
-            if (missing.length) {
-              console.error(`latest.json is missing: ${missing.join(", ")}`);
-              process.exit(1);
-            }
-            for (const [key, entry] of Object.entries(json.platforms)) {
-              if (!entry.signature) {
-                console.error(`latest.json entry ${key} has no signature`);
-                process.exit(1);
-              }
-            }
-            console.log(`latest.json covers ${Object.keys(json.platforms).join(", ")}`);
-          '
+          set -euo pipefail
+
+          release_id="${{ needs.prepare.outputs.release_id }}"
+          test -n "$release_id"
+
+          gh api --paginate "repos/$GITHUB_REPOSITORY/releases/$release_id/assets?per_page=100" \
+            --jq '.[] | [.id, .name] | @tsv' > assets.tsv
+
+          while IFS=$'\t' read -r asset_id asset_name; do
+            [ -n "$asset_id" ] || continue
+            case "$asset_name" in
+              latest.json|*.sig|*.app.tar.gz|*.AppImage.tar.gz|*.nsis.zip)
+                echo "Removing stale updater asset: $asset_name"
+                gh api --method DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$asset_id" >/dev/null
+                ;;
+            esac
+          done < assets.tsv
+
+      - name: Generate and verify updater manifest
+        if: env.TAURI_SIGNING_PRIVATE_KEY != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          release_id="${{ needs.prepare.outputs.release_id }}"
+          test -n "$release_id"
+
+          gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets?per_page=100" > assets.json
+          node scripts/generate-latest-json.mjs \
+            --tag "$RELEASE_TAG" \
+            --version "${RELEASE_TAG#v}" \
+            --notes-file release-notes/release-notes.md \
+            --assets-file assets.json \
+            --output latest.json
+
+          gh release upload "$RELEASE_TAG" latest.json --clobber
+
+          gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets?per_page=100" > assets.json
+          node scripts/verify-release-assets.mjs \
+            --assets-file assets.json \
+            --updater-file latest.json \
+            --version "${RELEASE_TAG#v}"
+
+      - name: Verify installers without updater manifest
+        if: env.TAURI_SIGNING_PRIVATE_KEY == ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          release_id="${{ needs.prepare.outputs.release_id }}"
+          test -n "$release_id"
+
+          gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets?per_page=100" > assets.json
+          node scripts/verify-release-assets.mjs \
+            --assets-file assets.json \
+            --version "${RELEASE_TAG#v}" \
+            --without-updater
+          echo "::notice::No updater private key is configured. Publishing installers only; latest.json was skipped."
+
+      - name: Publish the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          release_id="${{ needs.prepare.outputs.release_id }}"
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" \
+            -F draft=false \
+            -F prerelease=false \
+            -F name="TTML Tool ${RELEASE_TAG#v}" \
+            -F body=@release-notes/release-notes.md
+
+          published="$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)"
+          test "$published" = "false"
+          echo "Published $RELEASE_TAG."

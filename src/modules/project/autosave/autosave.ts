@@ -481,3 +481,37 @@ export async function deleteProject(projectId: string): Promise<void> {
 
 	await tx.done;
 }
+
+/**
+ * Applies a lyric change to a saved project without opening it. Used by the
+ * recycle bin when a line or word is restored into another project.
+ */
+export async function updateProjectLyrics(
+	projectId: string,
+	update: (lyrics: TTMLLyric) => TTMLLyric,
+): Promise<boolean> {
+	const db = await getDB();
+	const tx = db.transaction(["projects", "versions"], "readwrite");
+	const projectStore = tx.objectStore("projects");
+	const project = await projectStore.get(projectId);
+	if (!project) {
+		await tx.done;
+		return false;
+	}
+	const nextState = update(project.latestState);
+	await projectStore.put({
+		...project,
+		latestState: nextState,
+		lastModified: Date.now(),
+	});
+	await tx.objectStore("versions").add({
+		projectId,
+		timestamp: Date.now(),
+		data: nextState,
+		saveFileName: project.saveFileName,
+		audioFileName: project.audioFileName,
+		audioPath: project.audioPath,
+	});
+	await tx.done;
+	return true;
+}

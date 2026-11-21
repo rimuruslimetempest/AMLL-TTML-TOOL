@@ -2,6 +2,7 @@ import { BUILD_TIME, GIT_COMMIT } from "virtual:buildmeta";
 import { getAllPlugins } from "$/modules/plugins/plugin-store";
 import { exportAllProjectsData } from "$/modules/project/autosave/autosave";
 import { readCustomBackgroundBlob } from "$/modules/settings/modals/customBackground";
+import { loadRecycleBin } from "$/modules/recycle-bin/storage";
 import { saveFile } from "$/utils/fileSystem";
 import { blobToBase64 } from "./binary";
 import {
@@ -63,14 +64,16 @@ export interface BackupCounts {
 	assets: boolean;
 	projects: number;
 	plugins: number;
+	recycleBin: number;
 }
 
 export async function getBackupCounts(): Promise<BackupCounts> {
 	const { settings, keybindings } = partitionLocalStorage();
-	const [background, projectsData, plugins] = await Promise.all([
+	const [background, projectsData, plugins, recycleBin] = await Promise.all([
 		readCustomBackgroundBlob(),
 		exportAllProjectsData(),
 		getAllPlugins(),
+		loadRecycleBin(),
 	]);
 	return {
 		settings: Object.keys(settings).length,
@@ -78,6 +81,7 @@ export async function getBackupCounts(): Promise<BackupCounts> {
 		assets: background !== null,
 		projects: projectsData.projects.length,
 		plugins: plugins.length,
+		recycleBin: recycleBin.items.length,
 	};
 }
 
@@ -137,6 +141,10 @@ export async function buildBackup(
 				})),
 			),
 		};
+	}
+
+	if (selected.has("recycleBin")) {
+		backup.categories.recycleBin = await loadRecycleBin();
 	}
 
 	return backup;

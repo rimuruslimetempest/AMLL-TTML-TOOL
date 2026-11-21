@@ -1,0 +1,63 @@
+{
+  "format": 1,
+  "id": "midnight-neon",
+  "name": "Midnight Neon",
+  "author": "Rimurulover",
+  "version": "1.0.0",
+  "description": "Deep blue-violet panels with neon pink and violet highlights. A dark theme for late-night timing sessions.",
+  "schemes": [
+    {
+      "id": "night",
+      "name": "Night",
+      "appearance": "dark",
+      "tokens": {
+        "bgBase": "#05030d",
+        "bgRaised": "#0b0718",
+        "bgOverlay": "#120b25",
+        "surface": "#0e0820",
+        "surface2": "#160d2e",
+        "surface3": "#21123f",
+        "surfaceHover": "#2c1853",
+        "border": "rgba(208, 166, 255, 0.15)",
+        "borderStrong": "rgba(224, 192, 255, 0.34)",
+        "text": "#f8f1ff",
+        "textSecondary": "#cdb9e8",
+        "textMuted": "#9a82bc",
+        "textDisabled": "#5e6473",
+        "accent": "#b06bff",
+        "accentHover": "#c795ff",
+        "accentActive": "#9648e8",
+        "accentSubtle": "rgba(176, 107, 255, 0.18)",
+        "accentContrast": "#12041f",
+        "success": "#5ef2c5",
+        "successSubtle": "rgba(85, 214, 139, 0.12)",
+        "warning": "#ffd166",
+        "warningSubtle": "rgba(242, 189, 92, 0.12)",
+        "danger": "#ff5e9c",
+        "dangerSubtle": "rgba(240, 116, 118, 0.12)",
+        "info": "#6ecbff",
+        "infoSubtle": "rgba(113, 183, 255, 0.12)",
+        "lyricPlaying": "#d6b6ff",
+        "lyricPlayingBg": "rgba(176, 107, 255, 0.18)",
+        "lyricSelectedBg": "rgba(91, 94, 240, 0.19)",
+        "lyricUnsynced": "#ffd166",
+        "lyricUnsyncedBg": "rgba(242, 189, 92, 0.1)",
+        "lyricSynced": "#5ef2c5",
+        "lyricSyncedBg": "rgba(85, 214, 139, 0.09)",
+        "lyricFlagged": "#ff5e9c",
+        "lyricFlaggedBg": "rgba(240, 116, 118, 0.1)",
+        "lyricLocked": "#8eb8ff",
+        "lyricLockedBg": "rgba(184, 156, 255, 0.1)",
+        "timestampBg": "rgba(255, 94, 196, 0.1)",
+        "timestampText": "#f4f6fb",
+        "timestampBorder": "rgba(255, 94, 196, 0.28)"
+      }
+    }
+  ],
+  "effects": {
+    "level": "none",
+    "performance": "light"
+  },
+  "minAppVersion": "1.0.0",
+  "css": "html[data-ui-layer=\"new\"][data-theme=\"midnight-neon\"] [data-ui-chrome=\"audiobar\"],\nhtml[data-ui-layer=\"new\"][data-theme=\"midnight-neon\"] .rt-BaseButton:not(.rt-ghost) {\n\tbox-shadow: 0 0 20px -10px rgba(176, 107, 255, 0.7) !important;\n}\n"
+}

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="color-scheme" content="dark" />
+		<meta name="theme-color" content="#07070b" />
+		<title>Themes — TTML Tool Themes</title>
+		<meta
+			name="description"
+			content="Browse community themes for TTML Tool. Filter by tag and light or dark appearance, then download and import a theme."
+		/>
+		<link rel="stylesheet" href="./assets/marketplace.css" />
+	</head>
+	<body>
+		<a class="skip" href="#main">Skip to content</a>
+		<header class="site">
+			<div class="wrap nav">
+				<a class="brand" href="./index.html">
+					<span class="brand-mark" aria-hidden="true"></span>
+					TTML Tool Themes
+				</a>
+				<a class="navlink" href="./index.html">Home</a>
+				<a class="navlink" href="./themes.html" aria-current="page">Themes</a>
+				<a class="navlink" href="./submit.html">Submit your theme</a>
+				<a class="navlink" href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL">GitHub</a>
+			</div>
+		</header>
+
+		<main id="main">
+			<div class="wrap page-head">
+				<h1 style="font-size: clamp(30px, 4vw, 44px)">Community themes</h1>
+				<p class="lede">
+					Pick a palette, check the performance badge, and download the JSON.
+					Every entry here has a published SHA-256 hash and a preview image.
+				</p>
+				<div class="notice info">
+					<span aria-hidden="true">i</span>
+					<div>
+						Community theme, not reviewed by the app. Verified means the entry
+						was checked when it was added, not that it is made by the app
+						author.
+					</div>
+				</div>
+
+				<div class="toolbar" role="search">
+					<div class="field search">
+						<label for="theme-search">Search</label>
+						<input
+							type="search"
+							id="theme-search"
+							placeholder="Name, author, description, or tag"
+							autocomplete="off"
+						/>
+					</div>
+					<div class="field">
+						<label for="appearance-filter">Appearance</label>
+						<select id="appearance-filter">
+							<option value="all">Light and dark</option>
+							<option value="dark">Dark</option>
+							<option value="light">Light</option>
+						</select>
+					</div>
+					<div class="field">
+						<label for="tag-filter">Tag</label>
+						<select id="tag-filter">
+							<option value="all">All tags</option>
+						</select>
+					</div>
+					<div class="field">
+						<label for="sort-filter">Sort</label>
+						<select id="sort-filter">
+							<option value="name">Name</option>
+							<option value="newest">Recently added</option>
+						</select>
+					</div>
+				</div>
+
+				<p id="result-count" class="byline" aria-live="polite"></p>
+			</div>
+
+			<div class="wrap">
+				<div id="theme-grid" class="theme-grid"></div>
+				<noscript>
+					<div class="empty">
+						JavaScript is needed to read the theme registry. You can still open
+						<a href="./registry/themes.json">registry/themes.json</a> directly
+						and download a theme file.
+					</div>
+				</noscript>
+			</div>
+		</main>
+
+		<footer class="site">
+			<div class="wrap footer-row">
+				<span>TTML Tool Themes · made by Rimurulover</span>
+				<span>
+					<a href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/blob/main/CONTRIBUTING.md">Contributing</a>
+					· <a href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/blob/main/THEMES.md">Theme guide</a>
+					· <a href="./submit.html">Submit a theme</a>
+				</span>
+			</div>
+		</footer>
+		<script src="./assets/marketplace.js" defer></script>
+	</body>
+</html>

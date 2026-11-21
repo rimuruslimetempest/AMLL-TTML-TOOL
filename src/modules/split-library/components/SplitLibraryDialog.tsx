@@ -28,6 +28,13 @@ import { ManualWordSplitter } from "$/modules/segmentation/components/ManualWord
 import { getLearnedWordParts } from "$/modules/segmentation/utils/learned-rules";
 import { saveFile } from "$/utils/fileSystem";
 import {
+	addRecycleItems,
+	buildSplitRecycleItem,
+	deleteRecycleItem,
+	restoreRecycleItem,
+	showUndoToast,
+} from "$/modules/recycle-bin/actions";
+import {
 	createSplitPattern,
 	parseSplitLibraryJson,
 	partsForPattern,
@@ -147,6 +154,17 @@ export function SplitLibraryDialog() {
 				if (replacement) replacement.isDefault = true;
 			}
 			return { ...current, patterns };
+		});
+		const removed = buildSplitRecycleItem(pattern);
+		void addRecycleItems([removed]);
+		showUndoToast("Saved split deleted", async () => {
+			const result = await restoreRecycleItem(removed);
+			if (!result.ok) {
+				toast.error(result.message);
+				return;
+			}
+			await deleteRecycleItem(removed.id);
+			toast.success(result.message);
 		});
 		if (editingId === pattern.id) cancelEditing();
 	};
