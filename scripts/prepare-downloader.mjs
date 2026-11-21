@@ -60,7 +60,7 @@ function unzip(archive, output) {
 				"-NoProfile",
 				"-NonInteractive",
 				"-Command",
-				"Expand-Archive -LiteralPath $env:DOWNLOADER_ARCHIVE -DestinationPath $env:DOWNLOADER_EXTRACT",
+				"$ErrorActionPreference = 'Stop'; Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory($env:DOWNLOADER_ARCHIVE, $env:DOWNLOADER_EXTRACT)",
 			],
 			{
 				env: {
