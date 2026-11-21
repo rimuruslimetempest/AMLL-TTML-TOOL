@@ -213,7 +213,7 @@ notices are retained in [LICENSE](./LICENSE) and the source-file headers.
 Third-party components, including Spicy Lyrics, SpotMatch, and the Prosodic
 syllabification engine, are credited in **Settings → About**.
 
-Original TTML TOOL made by Bobjoerules; link here: https://github.com/bobjoerules/TTML-Editor 
+Original version of this TTML TOOL made by Bobjoerules; link here: https://github.com/bobjoerules/TTML-Editor 
 
 ## License
 
