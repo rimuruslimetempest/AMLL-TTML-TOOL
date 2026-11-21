@@ -67,8 +67,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          if gh release view "$RELEASE_TAG" --json id,isDraft \
-            --jq '(.id | tostring) + " " + (.isDraft | tostring)' > release-state.txt 2>/dev/null; then
+          if gh release view "$RELEASE_TAG" --json databaseId,isDraft \
+            --jq '(.databaseId | tostring) + " " + (.isDraft | tostring)' > release-state.txt 2>/dev/null; then
             read -r release_id is_draft < release-state.txt
             if [ "$is_draft" != "true" ]; then
               echo "::error::Release $RELEASE_TAG is already published. Do not overwrite it; bump the patch version and push a new tag."
@@ -83,7 +83,7 @@ jobs:
               --verify-tag \
               --title "TTML Tool ${RELEASE_TAG#v}" \
               --notes-file release-notes.md
-            release_id=$(gh release view "$RELEASE_TAG" --json id --jq .id)
+            release_id=$(gh release view "$RELEASE_TAG" --json databaseId --jq .databaseId)
           fi
 
           test -n "$release_id"
