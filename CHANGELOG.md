@@ -3,6 +3,38 @@
 All notable changes to TTML Tool are listed here, newest first. The in-app
 What's New window reads this file.
 
+## [1.0.3] - 2026-11-23
+
+### New
+
+- Moved the fork onto the upstream TTML Editor 6.0.0 release while keeping the
+  local feature set. Upstream additions include the Review workspace, censor
+  words and clean TTML export, platform icons in the import dialog, and the
+  updated surface and dialog theming.
+- Added Tools → Review TTML and `Ctrl/Cmd+Shift+R`. The Review workspace pairs
+  the editor with a live preview, syllable playback, word and section flags,
+  writer credit checks, and Discord Markdown export.
+- Added Tools → Search Bad Words & Clean Version, File → Save clean version, and
+  Save clean TTML to clipboard. Clean exports preserve timestamps while
+  replacing configured words.
+- Added the 6.0.0 Review and censor actions to the native desktop menu and the
+  keyboard command list.
+
+### Improved
+
+- Kept Mouse-free mode, the dyslexia-friendly font, Hand-off Summary, themes,
+  the split library, the recycle bin, live rooms, the updater channel, and the
+  fork's website and release pipeline.
+- Merged the 6.0.0 translation keys with the fork's English and Chinese locale
+  strings.
+- Kept the Intel macOS runners for both macOS bundles so releases do not depend
+  on the arm64 hosted runner pool.
+
+### Fixed
+
+- Resolved the merge conflicts across the app shell, menus, settings, audio
+  controls, theme tokens, and website while preserving both feature sets.
+
 ## [1.0.2] - 2026-11-23
 
 ### New

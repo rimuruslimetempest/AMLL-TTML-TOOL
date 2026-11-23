@@ -1,98 +1,75 @@
-# TTML Tool 1.0.2
+# TTML Tool 1.0.3
 
-TTML Tool is a desktop editor for word-synced TTML lyrics. This release adds a
-keyboard-only navigation mode, a dyslexia-friendly font option, and a hand-off
-summary for collaborators.
+TTML Tool is a desktop editor for word-synced TTML lyrics. This release moves
+the fork onto the upstream TTML Editor 6.0.0 codebase while keeping the fork's
+accessibility, collaboration, theme, and release features.
 
 All timing is manual. The editor, the importers, and the text tools never create,
 move, or retime a timestamp on their own.
 
-## What's new in 1.0.2
+## What's new in 1.0.3
 
-- **Mouse-free mode.** Turn it on in Settings → General → Accessibility. Arrow
-  keys move focus through the interface in reading order, Enter or Space
-  activates the focused control, and Escape clears focus. Text fields, sliders,
-  menus, and other widgets that use arrow keys keep them. A small status pill
-  stays visible and can turn the mode off without a mouse.
-- **Dyslexia-friendly font.** The same Accessibility section can switch the
-  interface and lyric editor to Atkinson Hyperlegible — bundled with the app so
-  it works offline — with extra letter and word spacing. Preview lyrics keep
-  their own designed font.
-- **Hand-off summary.** Tools → Hand-off Summary creates a Markdown snapshot of
-  the open project: title and artist, file and audio, timing coverage, song
-  span, sections, open timing or metadata items, notes, and links. Copy it or
-  save it as a `.md` file. It is generated locally and nothing is uploaded.
+- **Review workspace.** Open Tools → Review TTML or press `Ctrl/Cmd+Shift+R`.
+  Review pairs the editor with a live preview, syllable-accurate playback, word
+  and section flags, writer credit checks, and one-click Discord Markdown
+  export. This is the upstream 6.0.0 Review mode, not the old fork reviewer.
+- **Censor words and clean TTML export.** Tools → Search Bad Words & Clean
+  Version configures the word list. File → Save clean version and Save clean
+  TTML to clipboard export the project with timestamps intact. The native
+  desktop menu exposes the same actions.
+- **Platform icons in Import.** Apple Music, Genius, Spotify, QQ Music, NetEase,
+  Kugou, Kuwo, JOOX, Musixmatch, and LRCLIB now use dedicated vector marks in
+  the import dialog.
+- **Updated 6.0.0 visual system.** Surface and dialog color harmonization,
+  spectrogram visibility handling, and the rest of the upstream theme polish are
+  included. The fork's installable theme system continues to apply to the New
+  interface.
+- **Everything from 1.0.2.** Mouse-free mode, the bundled Atkinson Hyperlegible
+  dyslexia-friendly font, and the local Hand-off Summary are still available.
 
 ## Downloads
 
 | Platform | File |
 | --- | --- |
-| Windows x64 | `TTML-Tool_1.0.2_x64-setup.exe` or `TTML-Tool_1.0.2_x64.msi` |
-| macOS Apple Silicon | `TTML-Tool_1.0.2_aarch64.dmg` |
-| macOS Intel | `TTML-Tool_1.0.2_x64.dmg` |
-| Linux x64 | `TTML-Tool_1.0.2_amd64.AppImage`, `.deb`, or `.rpm` |
+| Windows x64 | `TTML-Tool_1.0.3_x64-setup.exe` or `TTML-Tool_1.0.3_x64.msi` |
+| macOS Apple Silicon | `TTML-Tool_1.0.3_aarch64.dmg` |
+| macOS Intel | `TTML-Tool_1.0.3_x64.dmg` |
+| Linux x64 | `TTML-Tool_1.0.3_amd64.AppImage`, `.deb`, or `.rpm` |
 
-When updater metadata is generated, the release also includes `latest.json` for
-the built-in updater. On Linux, the AppImage updates itself; use your package
-manager for `.deb` and `.rpm`.
+The Windows, macOS Apple Silicon, macOS Intel, and Linux x64 builds are uploaded
+to the same draft release and checked before publication. On Linux, the AppImage
+updates itself; use your package manager for `.deb` and `.rpm`.
 
 ## Highlights
 
-- **One release for every desktop platform.** The Windows, macOS Apple Silicon,
-  macOS Intel, and Linux x64 builds are uploaded to the same draft release and
-  checked before the release is published.
-- **Manual TTML editing.** Line, word, and syllable timing with a waveform,
-  spectrogram, millisecond fields, keyboard shortcuts, undo and redo, autosaves,
-  and restore points.
-- **Live rooms.** Host, Editor, Commenter, and Viewer roles, shared editing,
-  chat, comments, review marks, history, restore points, and an optional shared
-  split dictionary.
-- **A stable Preview.** Word and line highlighting, a transform-based lyric
-  scroller, duet and background-vocal layout, and options for Simple lyrics,
-  Translation, Romanization, BG Follows Duet, Album Artwork, Fullscreen, Mask
-  Obscene Words, and Show FPS.
-- **More formats.** Import TTML, LRC, enhanced LRC, SRT, ASS/SSA, WebVTT, and
-  plain text. Export TTML, LRC, enhanced LRC, SRT, and plain text. Every import
-  has a preview with line counts and problems, and imported timing is marked for
-  review instead of being trusted.
-- **Themes and the marketplace.** Install a JSON/CSS theme, edit its tokens, or
-  browse the community marketplace. Themes never run code and are not applied
-  without a preview.
-- **A 30-day recycle bin.** Deleted lines, words, saved splits, themes, and
-  projects can be restored for 7, 30, or 90 days, or until the bin is emptied.
-
-## Release changes
-
-- The release workflow now creates a draft first and uploads all platform
-  bundles to it. It verifies the installers and, when updater metadata is
-  available, the update files and `latest.json` before publishing, so a failed
-  platform cannot produce a half-empty public release.
-- The downloader tools are prepared separately for Windows x64, macOS Apple
-  Silicon, macOS Intel, and Linux x64. This keeps yt-dlp, FFmpeg, FFprobe, Deno,
-  and cloudflared matched to the computer that runs the app.
-- Linux releases are built on Ubuntu 22.04 with the Tauri v2 WebKitGTK 4.1
-  packages, and AppImage bundling uses the extract-and-run path on the runner.
-- A separate build check runs the frontend build and `cargo check` on pull
-  requests and pushes to `main` without creating a release.
+- **One release for every desktop platform.** Windows x64 NSIS and MSI, macOS
+  Apple Silicon and Intel DMGs, and Linux AppImage, DEB, and RPM packages are
+  built from the same tag.
+- **Upstream 6.0.0 plus the fork.** The Review workspace, censor tools, clean
+  export, platform icons, and theme updates are combined with Mouse-free mode,
+  the dyslexia-friendly font, Hand-off Summary, themes and marketplace, the
+  split library, the recycle bin, live rooms, the custom updater channel, and
+  the fork's branding.
+- **Manual editing stays manual.** Line, word, and syllable timing, waveform and
+  spectrogram tools, undo and redo, autosaves, restore points, and the stable
+  Preview are unchanged.
+- **The existing release pipeline.** Both macOS bundles run on Intel hosted
+  runners and cross-compile their targets, avoiding the arm64 runner queue.
 
 ## Fixed
 
-- The workflow validates its release settings once before creating a draft and
-  reports missing updater metadata instead of leaving a half-built public
-  release. Installers are still published when that metadata is unavailable.
-- A published release is never overwritten by the workflow. Use a new patch
-  version for a new build.
-- The Linux job installs the complete Tauri v2 dependency set, including the
-  AppImage runtime support, instead of relying on the runner's default packages.
-- The macOS Intel build explicitly installs the `x86_64-apple-darwin` Rust
-  target and builds with that target, so it is not mistaken for an Apple Silicon
-  build.
+- The merge conflicts across the app shell, menus, settings, audio controls,
+  theme tokens, translations, and website were resolved so both feature sets
+  remain available.
+- The review workspace is included in the app shell, keyboard commands, native
+  menu, settings search, and English locale.
 
 ## Credits
 
 Made by **Rimurulover** — https://github.com/rimuruslimetempest
 
 TTML Tool began from the AMLL TTML Tool codebase; its copyright and license
-notices are retained in `LICENSE` and the source-file headers. Spicy Lyrics,
+notices are retained in `LICENSE` and the source-file headers. The upstream
+TTML Editor 6.0.0 work is by Miles Chase and contributors. Spicy Lyrics,
 SpotMatch, and the Prosodic syllabification engine are credited in Settings →
 About.
