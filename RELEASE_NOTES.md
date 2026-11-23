@@ -1,68 +1,46 @@
-# TTML Tool 1.0.3
+# TTML Tool 1.0.4
 
-TTML Tool is a desktop editor for word-synced TTML lyrics. This release moves
-the fork onto the upstream TTML Editor 6.0.0 codebase while keeping the fork's
-accessibility, collaboration, theme, and release features.
+TTML Tool 1.0.4 is a patch release for the startup crash in 1.0.3.
 
-All timing is manual. The editor, the importers, and the text tools never create,
-move, or retime a timestamp on their own.
+## Fixed
 
-## What's new in 1.0.3
+- **The app opens again.** The 1.0.3 audio waveform referenced
+  `spectrogramVisibleAtom` without importing it, so the app stopped at
+  "Oops, an error occurred" before the editor appeared. The waveform now uses
+  the shared spectrogram visibility context.
+- **Review mode keeps its own spectrogram toggle.** Expanding or collapsing the
+  spectrogram in Review no longer changes the main editor's audio panel, and
+  the main editor's toggle stays independent.
+- **No project or setting changes.** 1.0.4 uses the same project format,
+  settings, themes, and local data as 1.0.3. Installing it over 1.0.3 keeps
+  everything in place.
 
-- **Review workspace.** Open Tools → Review TTML or press `Ctrl/Cmd+Shift+R`.
-  Review pairs the editor with a live preview, syllable-accurate playback, word
-  and section flags, writer credit checks, and one-click Discord Markdown
-  export. This is the upstream 6.0.0 Review mode, not the old fork reviewer.
-- **Censor words and clean TTML export.** Tools → Search Bad Words & Clean
-  Version configures the word list. File → Save clean version and Save clean
-  TTML to clipboard export the project with timestamps intact. The native
-  desktop menu exposes the same actions.
-- **Platform icons in Import.** Apple Music, Genius, Spotify, QQ Music, NetEase,
-  Kugou, Kuwo, JOOX, Musixmatch, and LRCLIB now use dedicated vector marks in
-  the import dialog.
-- **Updated 6.0.0 visual system.** Surface and dialog color harmonization,
-  spectrogram visibility handling, and the rest of the upstream theme polish are
-  included. The fork's installable theme system continues to apply to the New
-  interface.
-- **Everything from 1.0.2.** Mouse-free mode, the bundled Atkinson Hyperlegible
-  dyslexia-friendly font, and the local Hand-off Summary are still available.
+If 1.0.3 closes immediately on launch, download the 1.0.4 installer for your
+platform. The in-app updater cannot help when the app cannot start.
 
 ## Downloads
 
 | Platform | File |
 | --- | --- |
-| Windows x64 | `TTML-Tool_1.0.3_x64-setup.exe` or `TTML-Tool_1.0.3_x64.msi` |
-| macOS Apple Silicon | `TTML-Tool_1.0.3_aarch64.dmg` |
-| macOS Intel | `TTML-Tool_1.0.3_x64.dmg` |
-| Linux x64 | `TTML-Tool_1.0.3_amd64.AppImage`, `.deb`, or `.rpm` |
+| Windows x64 | `TTML-Tool_1.0.4_x64-setup.exe` or `TTML-Tool_1.0.4_x64.msi` |
+| macOS Apple Silicon | `TTML-Tool_1.0.4_aarch64.dmg` |
+| macOS Intel | `TTML-Tool_1.0.4_x64.dmg` |
+| Linux x64 | `TTML-Tool_1.0.4_amd64.AppImage`, `.deb`, or `.rpm` |
 
 The Windows, macOS Apple Silicon, macOS Intel, and Linux x64 builds are uploaded
 to the same draft release and checked before publication. On Linux, the AppImage
 updates itself; use your package manager for `.deb` and `.rpm`.
 
-## Highlights
+## Everything from 1.0.3
 
-- **One release for every desktop platform.** Windows x64 NSIS and MSI, macOS
-  Apple Silicon and Intel DMGs, and Linux AppImage, DEB, and RPM packages are
-  built from the same tag.
-- **Upstream 6.0.0 plus the fork.** The Review workspace, censor tools, clean
-  export, platform icons, and theme updates are combined with Mouse-free mode,
-  the dyslexia-friendly font, Hand-off Summary, themes and marketplace, the
-  split library, the recycle bin, live rooms, the custom updater channel, and
-  the fork's branding.
-- **Manual editing stays manual.** Line, word, and syllable timing, waveform and
-  spectrogram tools, undo and redo, autosaves, restore points, and the stable
-  Preview are unchanged.
-- **The existing release pipeline.** Both macOS bundles run on Intel hosted
-  runners and cross-compile their targets, avoiding the arm64 runner queue.
+1.0.4 keeps the upstream TTML Editor 6.0.0 integration: the Review workspace,
+censor words and clean TTML export, platform icons in Import, and the updated
+theme surfaces. It also keeps the fork's Mouse-free mode, dyslexia-friendly
+font, Hand-off Summary, themes and marketplace, split library, recycle bin, live
+rooms, custom updater channel, and branding.
 
-## Fixed
-
-- The merge conflicts across the app shell, menus, settings, audio controls,
-  theme tokens, translations, and website were resolved so both feature sets
-  remain available.
-- The review workspace is included in the app shell, keyboard commands, native
-  menu, settings search, and English locale.
+All timing remains manual. The editor, importers, and text tools never create,
+move, or retime a timestamp on their own.
 
 ## Credits
 

@@ -72,7 +72,7 @@ Releases are maintainer-only and use stable Semantic Versioning (`X.Y.Z`).
 2. Add the matching `CHANGELOG.md` section and update the in-app changelog if needed.
 3. Run the relevant tests, `pnpm exec biome check <changed files>`, and `pnpm build`.
 4. Commit and push the version and changelog changes.
-5. Create and push one matching tag: `git tag -a v1.0.3 -m "Release v1.0.3"` then `git push origin v1.0.3`.
+5. Create and push one matching tag: `git tag -a v1.0.4 -m "Release v1.0.4"` then `git push origin v1.0.4`.
 6. Wait for the **Release** workflow. It builds Windows (NSIS and MSI), macOS (Apple Silicon and Intel), and Linux (AppImage, deb, and rpm), uploads them to a draft release, checks every installer and, when updater metadata is available, `latest.json`, and only then publishes. If the updater key is not configured, the workflow publishes the installers without updater metadata. Check the **Verify and publish release** job before announcing the release.
 7. If a draft release is incomplete after a transient failure, run the **Release** workflow manually with that tag or use **Re-run failed jobs**. A release that is already published cannot be overwritten; publish a new patch version instead. The **Build check** workflow runs the frontend and Rust checks on pull requests and `main` without creating a release.
 

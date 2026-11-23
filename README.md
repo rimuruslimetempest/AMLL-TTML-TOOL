@@ -156,10 +156,10 @@ Download the latest release for your system:
 
 | Platform | File |
 | --- | --- |
-| Windows x64 | `TTML-Tool_1.0.3_x64-setup.exe` (NSIS) or `.msi` |
-| macOS Apple Silicon | `TTML-Tool_1.0.3_aarch64.dmg` |
-| macOS Intel | `TTML-Tool_1.0.3_x64.dmg` |
-| Linux x64 | `TTML-Tool_1.0.3_amd64.AppImage`, `.deb`, or `.rpm` |
+| Windows x64 | `TTML-Tool_1.0.4_x64-setup.exe` (NSIS) or `.msi` |
+| macOS Apple Silicon | `TTML-Tool_1.0.4_aarch64.dmg` |
+| macOS Intel | `TTML-Tool_1.0.4_x64.dmg` |
+| Linux x64 | `TTML-Tool_1.0.4_amd64.AppImage`, `.deb`, or `.rpm` |
 
 Releases built with updater metadata also publish `latest.json`, which the
 built-in updater uses. If a release has no updater metadata, installations are
@@ -183,13 +183,13 @@ Mac and the Intel download for an older Intel Mac.
 The AppImage is a single portable file. Make it executable once, then run it:
 
 ```bash
-chmod +x TTML-Tool_1.0.3_amd64.AppImage
-./TTML-Tool_1.0.3_amd64.AppImage
+chmod +x TTML-Tool_1.0.4_amd64.AppImage
+./TTML-Tool_1.0.4_amd64.AppImage
 ```
 
-On Debian or Ubuntu, install the `.deb` with `sudo apt install ./TTML-Tool_1.0.3_amd64.deb`.
+On Debian or Ubuntu, install the `.deb` with `sudo apt install ./TTML-Tool_1.0.4_amd64.deb`.
 On Fedora or another RPM-based distribution, use
-`sudo dnf install ./TTML-Tool_1.0.3_x86_64.rpm`. The package manager keeps
+`sudo dnf install ./TTML-Tool_1.0.4_x86_64.rpm`. The package manager keeps
 those installations up to date.
 
 If you are replacing a build that used a different application identifier,

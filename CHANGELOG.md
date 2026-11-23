@@ -3,6 +3,16 @@
 All notable changes to TTML Tool are listed here, newest first. The in-app
 What's New window reads this file.
 
+## [1.0.4] - 2026-11-23
+
+### Fixed
+
+- Fixed the 1.0.3 startup crash where the audio waveform read
+  `spectrogramVisibleAtom` without importing it, so the app stopped at "Oops, an
+  error occurred" before the editor opened. The waveform now uses the shared
+  spectrogram visibility context, which also keeps Review mode's spectrogram
+  toggle separate from the main editor.
+
 ## [1.0.3] - 2026-11-23
 
 ### New

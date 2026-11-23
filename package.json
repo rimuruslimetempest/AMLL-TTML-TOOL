@@ -1,7 +1,7 @@
 {
 	"name": "ttml-tool",
 	"private": true,
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"description": "A word-synced TTML lyric editor for Apple Music-style lyrics, built with React, TypeScript, and Tauri.",
 	"author": {
 		"name": "Rimurulover",

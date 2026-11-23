@@ -44,6 +44,7 @@ import { clampScroll, useHoverGuide } from "../hooks";
 import { AudioRegion } from "./AudioRegion";
 import styles from "./AudioSlider.module.css";
 import { HoverGuide } from "./HoverGuide";
+import { SpectrogramVisibilityContext } from "./SpectrogramVisibilityContext";
 
 const WaveformMarkers = memo(
 	({
@@ -225,7 +226,8 @@ export const AudioSlider = memo(({ height = "2.5em" }: AudioSliderProps) => {
 	const advWaveformProgress = useAtomValue(advancedWaveformProgressColorAtom);
 	const activePresetId = useAtomValue(activePresetIdAtom);
 
-	const spectrogramVisible = useAtomValue(spectrogramVisibleAtom);
+	const spectrogramAtom = useContext(SpectrogramVisibilityContext);
+	const spectrogramVisible = useAtomValue(spectrogramAtom);
 	const setScrollLeft = useSetAtom(spectrogramScrollLeftAtom);
 	const zoom = useAtomValue(spectrogramZoomAtom);
 	const containerWidth = useAtomValue(spectrogramContainerWidthAtom);
