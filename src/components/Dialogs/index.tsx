@@ -9,6 +9,7 @@ import { GeniusLyricsRefreshDialog } from "$/modules/genius/modals/GeniusLyricsR
 import { GeniusSearchDialog } from "$/modules/genius/modals/GeniusSearchDialog.tsx";
 import { ImportFromLRCLIB } from "$/modules/lrclib/modals/ImportDialog.tsx";
 import { GrammarCheckDialog } from "$/modules/lyric-editor/modals/GrammarCheckDialog.tsx";
+import { CensorWordsDialog } from "$/modules/lyric-editor/modals/CensorWordsDialog.tsx";
 import { UrbanDictionaryDialog } from "$/modules/lyric-editor/modals/UrbanDictionaryDialog.tsx";
 import { CombineWordsDialog } from "$/modules/lyric-editor/tools/CombineWordsDialog.tsx";
 import { FindReplaceBar } from "$/modules/lyric-editor/tools/FindReplaceBar.tsx";
@@ -57,7 +58,6 @@ export const Dialogs = () => {
 			<ImportFromLRCLIB />
 			<ImportLyricsDialog />
 			<JooxImportLyricsDialog />
-			<JooxAudioSearchDialog />
 			<DownloaderDialog />
 			<RecycleBinDialog />
 			<ImportAppleTtmlDialog />
@@ -75,6 +75,7 @@ export const Dialogs = () => {
 			<TimingPasteDialog />
 			<LatencyTestDialog />
 			<TTMLChecklistDialog />
+			<JooxAudioSearchDialog />
 			<SpotMatchDialog />
 			<ConfirmationDialog />
 			<Mp3ConversionDialog />
@@ -86,6 +87,7 @@ export const Dialogs = () => {
 			<TimeShiftDialog />
 			<TimeStretchDialog />
 			<GrammarCheckDialog />
+			<CensorWordsDialog />
 			<CloudFileManagerModal />
 
 			<GeniusSearchDialog />

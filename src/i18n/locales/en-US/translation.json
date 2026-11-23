@@ -17,13 +17,6 @@
 		"quality": "Maximum resolution",
 		"best": "Best available",
 		"folderHint": "Choose a destination when downloading. Each download gets its own subfolder. Downloads continue when this dialog is closed.",
-		"cookies": "YouTube sign-in cookies",
-		"cookiesHint": "If YouTube asks you to confirm you're not a bot, select the browser where you're signed in and close that browser before downloading.",
-		"cookiesNone": "Do not use browser cookies",
-		"cookiesBrave": "Brave",
-		"cookiesChrome": "Chrome",
-		"cookiesEdge": "Edge",
-		"cookiesFirefox": "Firefox",
 		"download": "Download",
 		"cancel": "Cancel download",
 		"close": "Close",
@@ -39,8 +32,6 @@
 		"timeout": "The download timed out. Try again.",
 		"busy": "Another download is running. Wait for it or cancel it first.",
 		"failed": "Download failed. Check the URL, connection and source availability, then try again.",
-		"botCheck": "YouTube is asking for a signed-in session. Select the browser where you're signed in under YouTube sign-in cookies, close that browser, and try again.",
-		"invalidCookies": "Choose a supported browser for cookies.",
 		"details": "Error details",
 		"unavailable": "yt-dlp was not found. Open Settings → Audio → Media downloader tools to install or update it, or use the setup guide for a manual install.",
 		"setupGuide": "Setup Guide",
@@ -59,6 +50,15 @@
 		"loadIntoEditor": "Load into Editor",
 		"loadedIntoEditor": "Loaded \"{title}\" into editor",
 		"openedForTrack": "Opening Media Downloader for \"{title}\"...",
+		"cookies": "YouTube sign-in cookies",
+		"cookiesHint": "If YouTube asks you to confirm you're not a bot, select the browser where you're signed in and close that browser before downloading.",
+		"cookiesNone": "Do not use browser cookies",
+		"cookiesBrave": "Brave",
+		"cookiesChrome": "Chrome",
+		"cookiesEdge": "Edge",
+		"cookiesFirefox": "Firefox",
+		"botCheck": "YouTube is asking for a signed-in session. Select the browser where you're signed in under YouTube sign-in cookies, close that browser, and try again.",
+		"invalidCookies": "Choose a supported browser for cookies.",
 		"loadFailed": "Download saved, but it could not be loaded into the editor."
 	},
 	"app": {
@@ -574,7 +574,8 @@
 			"timingHighlight": "Visual Timing Cue (Sync)",
 			"playback": "Playback",
 			"autosave": "Auto Save",
-			"cloud": "Cloud Saves"
+			"cloud": "Cloud Saves",
+			"editorTools": "Tools & Review"
 		},
 		"assistant": {
 			"quickFixes": "Quick Fixes (Grammar)",
@@ -705,6 +706,10 @@
 			"idleSmallImageDesc": "Choose the small badge shown when no song or file is loaded.",
 			"idleBottomText": "Third Line (Nothing Loaded)",
 			"idleBottomTextDesc": "Text displayed on the third line (large image hover text) when no song is loaded."
+		},
+		"editor": {
+			"showReviewInEmptyState": "Show 'Review TTML' button when no lyrics",
+			"showReviewInEmptyStateDesc": "Display the Review TTML shortcut on the empty editor screen."
 		}
 	},
 	"timingOverview": {
@@ -752,11 +757,11 @@
 			"openLyric": "Open lyrics",
 			"openFromClipboard": "Open TTML from clipboard",
 			"saveLyric": "Save lyrics",
+			"saveCleanLyric": "Save clean version…",
+			"saveCleanLyricToClipboard": "Save clean TTML to clipboard",
 			"openFromCloud": "Open from Cloud...",
 			"saveToCloud": "Save to Cloud...",
 			"restoreFromHistory": "Restore from history…",
-			"recycleBin": "Recycle Bin…",
-			"themesMarketplace": "Theme marketplace",
 			"saveLyricToClipboard": "Save TTML to clipboard",
 			"uploadToAMLLDB": "Upload to database (CN only)",
 			"file": "File",
@@ -774,6 +779,7 @@
 			"autoDuetNotEnoughSingers": "At least two distinct singers/vocalists are required to auto-duet.",
 			"ttmlChecklist": "TTML Checklist",
 			"grammarCheck": "Grammar and Spelling Check...",
+			"censorWords": "Search Bad Words & Clean Version...",
 			"statsAndProfiles": "User Profiles & Stats...",
 			"spotMatch": "SpotMatch (Alternate Spotify IDs)...",
 			"downloadAudio": "Download Audio...",
@@ -803,9 +809,14 @@
 				"toQRC": "Export to QRC",
 				"toYRC": "Export to YRC",
 				"toLrcfySylb": "Export to Lyricify Syllable",
-				"toASS": "Export to ASS subtitles"
+				"toASS": "Export to ASS subtitles",
+				"toCleanTtml": "Export Clean Version (TTML)…",
+				"toCleanLrc": "Export Clean to LyRiC (.lrc)"
 			},
-			"refreshGeniusLyrics": "Refresh Lyrics from Genius..."
+			"recycleBin": "Recycle Bin…",
+			"themesMarketplace": "Theme marketplace",
+			"refreshGeniusLyrics": "Refresh Lyrics from Genius...",
+			"ttmlReview": "Review TTML..."
 		}
 	},
 	"header": {
@@ -830,6 +841,8 @@
 		"combineLine": "Combine lines",
 		"deleteLine": "Delete {count} line(s)",
 		"splitWord": "Split word…",
+		"markBadWord": "Mark as Bad Word",
+		"unmarkBadWord": "Unmark as Bad Word",
 		"noSyllablesFound": "No multiple syllables found.",
 		"splitIntoSyllables": "Split into Syllables (Romanized)",
 		"replaceWord": "Replace word…",
@@ -936,7 +949,15 @@
 			"cancelTimelineEditing": "Spectrogram - Cancel timeline editing",
 			"autoSegmentDialog": "Auto segment…",
 			"redoAlternate": "Redo (alternate shortcut)",
-			"addCueAtPlayhead": "Timing - Add cue at playhead"
+			"find": "Find",
+			"replace": "Replace",
+			"locateActiveLine": "Locate active line",
+			"interfaceScaleUp": "Increase UI scale",
+			"interfaceScaleUpAlternate": "Increase UI scale (alternate shortcut)",
+			"interfaceScaleDown": "Decrease UI scale",
+			"interfaceScaleReset": "Reset UI scale",
+			"addCueAtPlayhead": "Timing - Add cue at playhead",
+			"ttmlReview": "Tools - Review TTML"
 		},
 		"tab": {
 			"common": "General",
@@ -1214,6 +1235,44 @@
 	"touchSyncPanel": {
 		"prevWord": "Jump Previous Word",
 		"nextWord": "Jump Next Word"
+	},
+	"cleanLyrics": {
+		"dialogTitle": "Search Bad Words & Clean Version",
+		"dialogDesc": "Find, review, and mark explicit words to replace with **** before saving or exporting a clean version.",
+		"detectedCount": "{{count}} detected",
+		"noneDetectedBadge": "Clean",
+		"tabDetected": "Detected Words ({{count}})",
+		"tabCustom": "Custom Bad Words ({{count}})",
+		"searchPlaceholder": "Filter detected words...",
+		"markAllTooltip": "Mark all detected words as obscene in the project",
+		"markAllBtn": "Mark All in Editor",
+		"addWordPlaceholder": "Mark new word as bad...",
+		"addWordBtn": "Add Bad Word",
+		"allCleanTitle": "No bad words detected!",
+		"allCleanDesc": "No commonly censored words or marked explicit words were found in this song.",
+		"uncheckedTooltip": "Unchecked: will NOT be censored",
+		"checkedTooltip": "Checked: will be replaced with ****",
+		"jumpToWord": "Locate in Editor",
+		"ignoreWordTooltip": "Ignore this word everywhere",
+		"customWordsDesc": "Manage custom words that should always be identified as bad words and censored across all songs.",
+		"addCustomWordInput": "Enter word to always censor...",
+		"addBtn": "Add Word",
+		"noCustomWords": "No custom bad words added yet. You can add words here or right-click any word in the editor to mark it as bad.",
+		"copyCleanTtml": "Copy Clean TTML",
+		"applyToEditor": "Apply **** in Editor",
+		"saveCleanTtml": "Save Clean TTML...",
+		"addedBadWord": "Added \"{{word}}\" to bad words list",
+		"wordAlreadyInList": "Word \"{{word}}\" is already in list",
+		"removedBadWord": "Removed \"{{word}}\" from bad words list",
+		"ignoredWord": "Ignored \"{{word}}\" for this song",
+		"markedWord": "Marked \"{{word}}\" as bad word",
+		"unmarkedWord": "Unmarked \"{{word}}\" as bad word",
+		"markedAllAsObscene": "Marked {{count}} words as bad in project",
+		"appliedToEditor": "Replaced bad words with **** in editor",
+		"savedCleanFile": "Saved clean version as \"{{name}}\"",
+		"saveFailed": "Failed to save clean version",
+		"copiedToClipboard": "Clean TTML lyrics copied to clipboard!",
+		"copyFailed": "Failed to copy to clipboard"
 	},
 	"grammarCheck": {
 		"ambiguous": "Possible grammar issue",
@@ -1708,10 +1767,10 @@
 		"community": "Community & Contributions",
 		"communityDesc": "Help us make the tool better by contributing code, reporting issues, or providing translations.",
 		"github": "GitHub Repository",
-		"themeMarketplace": "Theme marketplace",
 		"crowdin": "Help Translate in Crowdin",
 		"buildDate": "Build Date: {date}",
-		"gitCommit": "Git Commit: {commit}"
+		"gitCommit": "Git Commit: {commit}",
+		"themeMarketplace": "Theme marketplace"
 	},
 	"spectrogram": {
 		"invalidEndTime": "Cannot select this end time",
@@ -1771,6 +1830,10 @@
 		"copyLink": "Copy Link",
 		"browseOnlineStats": "Explore Community Stats & Leaderboard",
 		"accountDetails": "Account Information",
+		"storageManagement": "Cloud Storage Management",
+		"storageManagementDesc": "Manage your online TTML backups, download existing projects, or sync your current TTML document to your account.",
+		"openCloudLibrary": "Open Cloud Library",
+		"saveCurrentTTML": "Save Current TTML to Cloud",
 		"stats": {
 			"savedSongs": "Saved TTML Lyrics",
 			"song": "song",

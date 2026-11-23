@@ -9,7 +9,7 @@ import {
 	TextField,
 } from "@radix-ui/themes";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import WaveSurfer from "wavesurfer.js";
 import { audioEngine } from "$/modules/audio/audio-engine";
@@ -18,7 +18,6 @@ import {
 	audioPlayingAtom,
 	currentDurationAtom,
 	currentTimeAtom,
-	spectrogramVisibleAtom,
 } from "$/modules/audio/states";
 import { toggleMarkAt, updateMarkAt } from "$/modules/project/logic/marks";
 import {

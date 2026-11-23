@@ -44,6 +44,7 @@ import {
 	ToolMode,
 	toolModeAtom,
 } from "$/states/main.ts";
+import { ttmlReviewShowPreviewAtom } from "$/modules/ttml-review/states.ts";
 import { useKeyBindingAtom } from "$/utils/keybindings.ts";
 import { openExternal } from "$/utils/openExternal";
 import { TopMenu } from "../TopMenu/index.tsx";
@@ -56,7 +57,21 @@ import styles from "./index.module.css";
 
 export const TitleBar: FC = () => {
 	const [toolMode, setToolMode] = useAtom(toolModeAtom);
+	const isReviewMode = toolMode === ToolMode.Review;
 	const [showPreviewPanel, setShowPreviewPanel] = useAtom(showPreviewPanelAtom);
+	const [showReviewPreview, setShowReviewPreview] = useAtom(
+		ttmlReviewShowPreviewAtom,
+	);
+	const isSidePreviewVisible = isReviewMode
+		? showReviewPreview
+		: showPreviewPanel;
+	const handleTogglePreviewPanel = () => {
+		if (isReviewMode) {
+			setShowReviewPreview((prev) => !prev);
+		} else {
+			setShowPreviewPanel((prev) => !prev);
+		}
+	};
 	const setSelectedLines = useSetImmerAtom(selectedLinesAtom);
 	const setSelectedWords = useSetImmerAtom(selectedWordsAtom);
 	const { t } = useTranslation();
@@ -257,7 +272,7 @@ export const TitleBar: FC = () => {
 					{toolMode !== ToolMode.Preview && (
 						<Tooltip
 							content={
-								showPreviewPanel
+								isSidePreviewVisible
 									? t("topBar.menu.hidePreviewPanel", "Hide Side Preview Panel")
 									: t("topBar.menu.showPreviewPanel", "Show Side Preview Panel")
 							}
@@ -265,12 +280,12 @@ export const TitleBar: FC = () => {
 							<Button
 								className={styles.previewToggle}
 								size="2"
-								variant={showPreviewPanel ? "solid" : "soft"}
-								color={showPreviewPanel ? undefined : "gray"}
-								onClick={() => setShowPreviewPanel((prev) => !prev)}
+								variant={isSidePreviewVisible ? "solid" : "soft"}
+								color={isSidePreviewVisible ? undefined : "gray"}
+								onClick={handleTogglePreviewPanel}
 								style={{ cursor: "pointer", fontWeight: 500 }}
 								aria-label={
-									showPreviewPanel
+									isSidePreviewVisible
 										? t(
 												"topBar.menu.hidePreviewPanel",
 												"Hide Side Preview Panel",
@@ -281,7 +296,7 @@ export const TitleBar: FC = () => {
 											)
 								}
 							>
-								{showPreviewPanel ? (
+								{isSidePreviewVisible ? (
 									<PanelRight24Filled
 										style={{ width: "16px", height: "16px" }}
 									/>

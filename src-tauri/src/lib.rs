@@ -740,6 +740,13 @@ pub fn run() {
                     true,
                     Some("CmdOrCtrl+Shift+C"),
                 )?;
+                let review_item = MenuItem::with_id(
+                    app,
+                    "menu-review",
+                    "Review TTML...",
+                    true,
+                    Some("CmdOrCtrl+Shift+R"),
+                )?;
                 let grammar_check_item = MenuItem::with_id(
                     app,
                     "menu-grammar-check",
@@ -778,6 +785,7 @@ pub fn run() {
                 tools_menu.append(&time_stretch_item)?;
                 tools_menu.append(&PredefinedMenuItem::separator(app)?)?;
                 tools_menu.append(&checklist_item)?;
+                tools_menu.append(&review_item)?;
                 tools_menu.append(&grammar_check_item)?;
                 tools_menu.append(&spotmatch_item)?;
                 tools_menu.append(&download_audio_item)?;

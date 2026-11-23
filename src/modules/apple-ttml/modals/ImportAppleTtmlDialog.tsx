@@ -23,6 +23,7 @@ import {
 	TextField,
 } from "@radix-ui/themes";
 import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai";
+import { useSetImmerAtom } from "jotai-immer";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
@@ -34,6 +35,7 @@ import { audioCoverArtAtom } from "$/modules/audio/states";
 import { GeniusResolver, isGeniusSongUrl } from "$/modules/genius/api/client";
 import { JooxApi } from "$/modules/joox/api/client";
 import { parseLyric as parseTTML } from "$/modules/project/logic/ttml-parser";
+import { AppleMusicLogo } from "$/modules/project/modals/PlatformIcons.tsx";
 import {
 	autoLoadCloudAudioAtom,
 	downloadAudioOnLyricImportAtom,
@@ -93,7 +95,7 @@ export const ImportAppleTtmlDialog = () => {
 
 	const isDirty = useAtomValue(isDirtyAtom);
 	const setNewLyricLines = useSetAtom(newLyricLinesAtom);
-	const setLyricLines = useSetAtom(lyricLinesAtom);
+	const editLyricLines = useSetImmerAtom(lyricLinesAtom);
 	const setProjectId = useSetAtom(projectIdAtom);
 	const setSaveFileName = useSetAtom(saveFileNameAtom);
 	const setConfirmDialog = useSetAtom(confirmDialogAtom);
@@ -361,20 +363,31 @@ export const ImportAppleTtmlDialog = () => {
 				void fetchGeniusSongwritersByQuery(query, {
 					geniusApiKey,
 					findRealNames: true,
-				}).then((writers) => {
-					if (writers && writers.length > 0) {
-						setLyricLines((prev) => {
-							const existing = prev.metadata.find(
-								(m) => m.key === "songwriter",
-							);
-							if (existing) {
-								existing.value = writers;
-							} else {
-								prev.metadata.push({ key: "songwriter", value: writers });
-							}
-						});
-					}
-				});
+				})
+					.then((writers) => {
+						if (writers && writers.length > 0) {
+							editLyricLines((prev) => {
+								if (!prev) return;
+								if (!prev.metadata) {
+									prev.metadata = [];
+								}
+								const existing = prev.metadata.find(
+									(m) => m.key === "songwriter",
+								);
+								if (existing) {
+									existing.value = writers;
+								} else {
+									prev.metadata.push({ key: "songwriter", value: writers });
+								}
+							});
+						}
+					})
+					.catch((err) => {
+						console.warn(
+							"Failed to fetch Genius songwriters on Apple import:",
+							err,
+						);
+					});
 			}
 
 			// Update artwork if provided
@@ -398,16 +411,19 @@ export const ImportAppleTtmlDialog = () => {
 				),
 			);
 
-			// Automatically load matching audio from computer or JOOX API
+			// Automatically load matching audio from computer or online sources
 			if (autoLoadCloudAudio || downloadAudio) {
 				void (async () => {
-					let audioLoaded = await tryReloadAudioFromComputer({
-						title: safeTitle,
-						artist: safeArtist,
-					});
+					let audioLoaded = false;
+					if (autoLoadCloudAudio) {
+						audioLoaded = await tryReloadAudioFromComputer({
+							title: safeTitle,
+							artist: safeArtist,
+						});
+					}
 
-					if (!audioLoaded && (safeTitle || safeArtist)) {
-						if (downloadAudio && effectiveAudioSource === "ytdlp") {
+					if (downloadAudio && !audioLoaded && (safeTitle || safeArtist)) {
+						if (effectiveAudioSource === "ytdlp") {
 							const query =
 								[safeArtist, safeTitle].filter(Boolean).join(" - ").trim() ||
 								safeTitle;
@@ -549,19 +565,18 @@ export const ImportAppleTtmlDialog = () => {
 					<Flex align="center" gap="3">
 						<Box
 							style={{
-								width: 36,
-								height: 36,
-								borderRadius: 8,
-								background:
-									"linear-gradient(135deg, var(--crimson-9, #e54666), var(--plum-9, #ab4aba))",
-								color: "#fff",
+								width: 40,
+								height: 40,
+								borderRadius: 9,
+								overflow: "hidden",
+								boxShadow: "0 2px 6px rgba(0, 0, 0, 0.12)",
 								display: "flex",
 								alignItems: "center",
 								justifyContent: "center",
 								flexShrink: 0,
 							}}
 						>
-							<MusicNote2Filled style={{ width: 22, height: 22 }} />
+							<AppleMusicLogo style={{ width: "100%", height: "100%" }} />
 						</Box>
 						<Box>
 							<Dialog.Title mb="1">
@@ -1099,12 +1114,13 @@ export const ImportAppleTtmlDialog = () => {
 								border: "1px dashed var(--gray-6)",
 							}}
 						>
-							<MusicNote2Filled
+							<AppleMusicLogo
 								style={{
-									width: 32,
-									height: 32,
-									color: "var(--crimson-9, #e54666)",
+									width: 44,
+									height: 44,
+									borderRadius: 10,
 									marginBottom: 8,
+									boxShadow: "0 2px 6px rgba(0, 0, 0, 0.12)",
 								}}
 							/>
 							<Text size="2" weight="bold" as="div" mb="1">

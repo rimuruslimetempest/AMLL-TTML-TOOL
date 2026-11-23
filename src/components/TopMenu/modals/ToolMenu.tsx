@@ -1,10 +1,12 @@
-import { Button, DropdownMenu } from "@radix-ui/themes";
+import { Button, DropdownMenu, Flex } from "@radix-ui/themes";
 import {
 	ArrowAutofitWidth20Regular,
 	ArrowDownload20Regular,
+	Broom20Regular,
 	CheckmarkCircle20Regular,
 	Clock20Regular,
 	DocumentText20Regular,
+	Flag20Regular,
 	History20Regular,
 	People20Regular,
 	Target20Regular,
@@ -178,6 +180,15 @@ const ToolMenuItems = () => {
 				</NewMenuIcon>
 				{t("topBar.menu.ttmlChecklist", "TTML Checklist...")}
 			</DropdownMenu.Item>
+			<DropdownMenu.Item
+				onSelect={menu.onOpenTTMLReview}
+				shortcut={getShortcut(menu.ttmlReviewKey)}
+			>
+				<Flex align="center" gap="2">
+					<Flag20Regular style={{ width: 15, height: 15, flexShrink: 0 }} />
+					{t("topBar.menu.ttmlReview", "Review TTML...")}
+				</Flex>
+			</DropdownMenu.Item>
 			<DropdownMenu.Item onSelect={menu.onOpenGrammarCheck}>
 				<NewMenuIcon>
 					<TextGrammarCheckmark20Regular />
@@ -195,6 +206,14 @@ const ToolMenuItems = () => {
 					"topBar.menu.refreshGeniusLyrics",
 					"Refresh Lyrics from Genius...",
 				)}
+			</DropdownMenu.Item>
+			<DropdownMenu.Item onSelect={menu.onOpenCensorWords}>
+				<Flex align="center" gap="2">
+					<Broom20Regular
+						style={{ width: 15, height: 15, flexShrink: 0 }}
+					/>
+					{t("topBar.menu.censorWords", "Search Bad Words & Clean Version…")}
+				</Flex>
 			</DropdownMenu.Item>
 			<DropdownMenu.Item onSelect={menu.onOpenStatsAndProfiles}>
 				<NewMenuIcon>

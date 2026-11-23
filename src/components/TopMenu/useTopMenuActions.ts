@@ -12,6 +12,11 @@ import {
 	cloudFileManagerOpenAtom,
 } from "$/modules/cloud/states";
 import { getNearestRemainingLineId } from "$/modules/lyric-editor/components/selection-scroll";
+import {
+	censorWordsDialogAtom,
+	customBadWordsAtom,
+} from "$/modules/lyric-editor/states/censor-words";
+import { censorTTMLLyric } from "$/modules/lyric-editor/utils/censor-words";
 import { grammarCheckDialogAtom } from "$/modules/lyric-editor/modals/GrammarCheckDialog.tsx";
 import { applyAutoDuetBySinger } from "$/modules/lyric-editor/utils/auto-duet.ts";
 import { getSynchronizableUnits } from "$/modules/lyric-editor/utils/lyric-states.ts";
@@ -61,6 +66,7 @@ import {
 	timeShiftDialogAtom,
 	timeStretchDialogAtom,
 	ttmlChecklistDialogAtom,
+	ttmlReviewDialogAtom,
 } from "$/states/dialogs.ts";
 import {
 	keyAutoSegmentAtom,
@@ -77,6 +83,7 @@ import {
 	keySelectWordsOfMatchedSelectionAtom,
 	keySpotMatchAtom,
 	keyTtmlChecklistAtom,
+	keyTtmlReviewAtom,
 	keyUndoAtom,
 } from "$/states/keybindings.ts";
 import {
@@ -111,7 +118,7 @@ export const useTopMenuActions = () => {
 	const undoLyricLines = useAtomValue(undoableLyricLinesAtom);
 	const store = useStore();
 	const isDirty = useAtomValue(isDirtyAtom);
-	const toolMode = useAtomValue(toolModeAtom);
+	const [toolMode, setToolMode] = useAtom(toolModeAtom);
 	const setConfirmDialog = useSetAtom(confirmDialogAtom);
 	const setHistoryRestoreDialog = useSetAtom(historyRestoreDialogAtom);
 	const setAdvancedSegmentationDialog = useSetAtom(
@@ -124,11 +131,13 @@ export const useTopMenuActions = () => {
 	const setTimeShiftDialog = useSetAtom(timeShiftDialogAtom);
 	const setTimeStretchDialog = useSetAtom(timeStretchDialogAtom);
 	const setTTMLChecklistDialog = useSetAtom(ttmlChecklistDialogAtom);
+	const setTTMLReviewDialog = useSetAtom(ttmlReviewDialogAtom);
 	const setGrammarCheckDialog = useSetAtom(grammarCheckDialogAtom);
 	const requestPrivacyConsent = usePrivacyGate();
 	const setGeniusLyricsRefreshDialog = useSetAtom(
 		geniusLyricsRefreshDialogAtom,
 	);
+	const setCensorWordsDialog = useSetAtom(censorWordsDialogAtom);
 	const setSpotMatchDialog = useSetAtom(spotMatchDialogAtom);
 	const { openFile } = useFileOpener();
 	const setProjectId = useSetAtom(projectIdAtom);
@@ -151,6 +160,7 @@ export const useTopMenuActions = () => {
 	const autoSegmentKey = useAtomValue(keyAutoSegmentAtom);
 	const spotMatchKey = useAtomValue(keySpotMatchAtom);
 	const ttmlChecklistKey = useAtomValue(keyTtmlChecklistAtom);
+	const ttmlReviewKey = useAtomValue(keyTtmlReviewAtom);
 	const runHistoryAction = useMemo(
 		() => createHistoryActionGate(requestAnimationFrame),
 		[],
@@ -487,6 +497,10 @@ export const useTopMenuActions = () => {
 		setTTMLChecklistDialog(true);
 	}, [setTTMLChecklistDialog]);
 
+	const onOpenTTMLReview = useCallback(() => {
+		setToolMode(ToolMode.Review);
+	}, [setToolMode]);
+
 	const onOpenGrammarCheck = useCallback(() => {
 		setGrammarCheckDialog(true);
 	}, [setGrammarCheckDialog]);
@@ -494,6 +508,100 @@ export const useTopMenuActions = () => {
 	const onOpenGeniusLyricsRefresh = useCallback(() => {
 		setGeniusLyricsRefreshDialog(true);
 	}, [setGeniusLyricsRefreshDialog]);
+	const onOpenCensorWords = useCallback(() => {
+		setCensorWordsDialog(true);
+	}, [setCensorWordsDialog]);
+
+	const onSaveCleanFile = useCallback(async () => {
+		try {
+			const rawLyrics = store.get(lyricLinesAtom);
+			const customBadWords = store.get(customBadWordsAtom);
+			const cleanLyrics = censorTTMLLyric(rawLyrics, customBadWords);
+			notifySectionIssues(cleanLyrics);
+			const ttmlText = exportTTMLText(
+				cleanLyrics,
+				store.get(lyricTextNormalizationOptionsAtom),
+				{
+					allowConsecutiveBackgroundLines: store.get(
+						allowConsecutiveBackgroundLinesAtom,
+					),
+				},
+			);
+
+			const baseName = saveFileName.replace(/\.[^.]*$/, "");
+			const cleanSuggestedName = `${baseName} (Clean).ttml`;
+
+			const savedName = await saveFile(ttmlText, {
+				suggestedName: cleanSuggestedName,
+				types: [
+					{
+						description: "TTML Files",
+						accept: { "application/ttml+xml": [".ttml"] },
+					},
+				],
+			});
+
+			if (savedName) {
+				toast.success(
+					t("cleanLyrics.savedCleanFile", 'Saved clean version as "{{name}}"', {
+						name: savedName,
+					}),
+				);
+				try {
+					const { recordTTMLCompletion } = await import(
+						"$/modules/project/timer/project-timer"
+					);
+					const metadata = cleanLyrics.metadata || [];
+					const title =
+						metadata.find((m) => (m.key || "").toLowerCase() === "title")
+							?.value[0] || savedName.replace(/\.[^.]*$/, "");
+					const artist =
+						metadata.find((m) => (m.key || "").toLowerCase() === "artist")
+							?.value[0] || "";
+					const projectId = store.get(projectIdAtom);
+					await recordTTMLCompletion({
+						projectId,
+						title: `${title} (Clean)`,
+						artist,
+						lineCount: cleanLyrics.lyricLines.length,
+					});
+				} catch {
+					// ignore
+				}
+			}
+		} catch (e) {
+			error("Failed to save clean TTML file", e);
+			toast.error(t("cleanLyrics.saveFailed", "Failed to save clean version"));
+		}
+	}, [saveFileName, store, t]);
+
+	const onSaveCleanFileToClipboard = useCallback(async () => {
+		try {
+			const rawLyrics = store.get(lyricLinesAtom);
+			const customBadWords = store.get(customBadWordsAtom);
+			const cleanLyrics = censorTTMLLyric(rawLyrics, customBadWords);
+			notifySectionIssues(cleanLyrics);
+			const ttmlText = exportTTMLText(
+				cleanLyrics,
+				store.get(lyricTextNormalizationOptionsAtom),
+				{
+					allowConsecutiveBackgroundLines: store.get(
+						allowConsecutiveBackgroundLinesAtom,
+					),
+				},
+			);
+			await navigator.clipboard.writeText(ttmlText);
+			toast.success(
+				t(
+					"cleanLyrics.copiedToClipboard",
+					"Clean TTML lyrics copied to clipboard!",
+				),
+			);
+		} catch (e) {
+			error("Failed to copy clean TTML file into clipboard", e);
+			toast.error(t("cleanLyrics.copyFailed", "Failed to copy to clipboard"));
+		}
+	}, [store, t]);
 
 	const onOpenStatsAndProfiles = useCallback(async () => {
 		await openExternal("https://github.com/rimuruslimetempest/AMLL-TTML-TOOL");
@@ -916,6 +1024,7 @@ export const useTopMenuActions = () => {
 		replaceKey,
 		spotMatchKey,
 		ttmlChecklistKey,
+		ttmlReviewKey,
 		undoDisabled: !undoLyricLines.canUndo,
 		redoDisabled: !undoLyricLines.canRedo,
 		onNewFile,
@@ -923,6 +1032,8 @@ export const useTopMenuActions = () => {
 		onOpenFile,
 		onOpenFileFromClipboard,
 		onSaveFile,
+		onSaveCleanFile,
+		onSaveCleanFileToClipboard,
 		onOpenFromCloud,
 		onSaveToCloud,
 		onOpenCloudAuth,
@@ -950,8 +1061,10 @@ export const useTopMenuActions = () => {
 		onAutoDuetBySinger,
 		onOpenLatencyTest,
 		onOpenTTMLChecklist,
+		onOpenTTMLReview,
 		onOpenGrammarCheck,
 		onOpenGeniusLyricsRefresh,
+		onOpenCensorWords,
 		onOpenStatsAndProfiles,
 		onOpenSpotMatch,
 		onDownloadAudio,

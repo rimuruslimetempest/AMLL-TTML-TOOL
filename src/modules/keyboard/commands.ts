@@ -548,6 +548,13 @@ export const cmdSongInfo = registerCommand(
 	"Tools",
 );
 
+export const cmdTtmlReview = registerCommand(
+	"ttmlReview",
+	[CONTROL_KEY, "Shift", "KeyR"],
+	t("settingsDialog.keybindings.ttmlReview"),
+	"Tools",
+);
+
 if (import.meta.env.DEV) {
 	t("settingsDialog.keybindings.category.File");
 	t("settingsDialog.keybindings.category.Edit");

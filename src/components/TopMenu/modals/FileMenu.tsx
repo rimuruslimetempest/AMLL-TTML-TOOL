@@ -1,6 +1,7 @@
 import { Button, DropdownMenu, Flex } from "@radix-ui/themes";
 import {
 	ArrowCounterclockwise20Regular,
+	Broom20Regular,
 	Clipboard20Regular,
 	ClipboardPaste20Regular,
 	CloudArrowDown20Regular,
@@ -81,6 +82,14 @@ const FileMenuItems = () => {
 				</NewMenuIcon>
 				<Trans i18nKey="topBar.menu.saveLyric">Save lyrics</Trans>
 			</DropdownMenu.Item>
+			<DropdownMenu.Item onSelect={menu.onSaveCleanFile}>
+				<Flex align="center" gap="2">
+					<Broom20Regular
+						style={{ width: 15, height: 15, flexShrink: 0 }}
+					/>
+					<Trans i18nKey="topBar.menu.saveCleanLyric">Save clean version…</Trans>
+				</Flex>
+			</DropdownMenu.Item>
 			<DropdownMenu.Separator />
 			<DropdownMenu.Item onSelect={menu.onOpenFromCloud}>
 				<Flex align="center" gap="2">
@@ -120,6 +129,11 @@ const FileMenuItems = () => {
 				</NewMenuIcon>
 				<Trans i18nKey="topBar.menu.saveLyricToClipboard">
 					Save TTML to clipboard
+				</Trans>
+			</DropdownMenu.Item>
+			<DropdownMenu.Item onSelect={menu.onSaveCleanFileToClipboard}>
+				<Trans i18nKey="topBar.menu.saveCleanLyricToClipboard">
+					Save clean TTML to clipboard
 				</Trans>
 			</DropdownMenu.Item>
 			<DropdownMenu.Separator />
