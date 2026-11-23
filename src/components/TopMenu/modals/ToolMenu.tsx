@@ -4,6 +4,7 @@ import {
 	ArrowDownload20Regular,
 	CheckmarkCircle20Regular,
 	Clock20Regular,
+	DocumentText20Regular,
 	History20Regular,
 	People20Regular,
 	Target20Regular,
@@ -27,6 +28,7 @@ import {
 	splitLibraryDialogAtom,
 } from "$/modules/split-library/states";
 import { songInfoDialogAtom } from "$/modules/song-info/states";
+import { handoffSummaryDialogAtom } from "$/states/dialogs";
 import { lyricLinesAtom } from "$/states/main";
 import { formatKeyBindings } from "$/utils/keybindings";
 import { NewMenuIcon } from "../NewMenuIcon";
@@ -47,6 +49,7 @@ const ToolMenuItems = () => {
 	const setSplitLibraryOpen = useSetAtom(splitLibraryDialogAtom);
 	const setApplySavedSplitsOpen = useSetAtom(applySavedSplitsDialogAtom);
 	const setSongInfoOpen = useSetAtom(songInfoDialogAtom);
+	const setHandoffOpen = useSetAtom(handoffSummaryDialogAtom);
 
 	const getShortcut = (key: string[] | undefined) =>
 		key ? formatKeyBindings(key) : undefined;
@@ -84,6 +87,15 @@ const ToolMenuItems = () => {
 					<TextAdd20Regular />
 				</NewMenuIcon>
 				{t("topBar.menu.songInfo", "Song Info...")}
+			</DropdownMenu.Item>
+			<DropdownMenu.Item
+				onSelect={() => setHandoffOpen(true)}
+				disabled={lyricLines.lyricLines.length === 0}
+			>
+				<NewMenuIcon>
+					<DocumentText20Regular />
+				</NewMenuIcon>
+				{t("topBar.menu.handoffSummary", "Hand-off Summary...")}
 			</DropdownMenu.Item>
 			<DropdownMenu.Item onSelect={() => setSplitLibraryOpen(true)}>
 				<NewMenuIcon>

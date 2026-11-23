@@ -214,6 +214,18 @@ export const highlightUnsyncedWordsInEditorAtom = atomWithStorage(
 	false,
 );
 
+/** Keyboard-only navigation across the whole interface. */
+export const mouseFreeModeAtom = atomWithStorage<boolean>(
+	"mouseFreeMode",
+	false,
+);
+
+/** Atkinson Hyperlegible plus generous spacing for easier reading. */
+export const dyslexiaFriendlyFontAtom = atomWithStorage<boolean>(
+	"dyslexiaFriendlyFont",
+	false,
+);
+
 export const autosaveEnabledAtom = atomWithStorage("autosaveEnabled", true);
 export const autosaveIntervalAtom = atomWithStorage("autosaveInterval", 10);
 export const autosaveLimitAtom = atomWithStorage("autosaveLimit", 10);

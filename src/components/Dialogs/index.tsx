@@ -21,6 +21,7 @@ import { ImportLyricsDialog } from "$/modules/lyrics-import/modals/ImportLyricsD
 import { JooxAudioSearchDialog } from "$/modules/joox/modals/JooxAudioSearchDialog.tsx";
 import { JooxImportLyricsDialog } from "$/modules/joox/modals/JooxImportLyricsDialog.tsx";
 import { HistoryRestoreDialog } from "$/modules/project/modals/HistoryRestore.tsx";
+import { HandoffSummaryDialog } from "$/modules/project/handoff/HandoffSummaryDialog";
 import { ImportFromText } from "$/modules/project/modals/ImportFromText.tsx";
 import { MetadataEditor } from "$/modules/project/modals/MetadataEditor.tsx";
 import { AdvancedSegmentationDialog } from "$/modules/segmentation/components/AdvancedSegmentation.tsx";
@@ -78,6 +79,7 @@ export const Dialogs = () => {
 			<ConfirmationDialog />
 			<Mp3ConversionDialog />
 			<HistoryRestoreDialog />
+			<HandoffSummaryDialog />
 			<AdvancedSegmentationDialog />
 			<AutoSegmentDialog />
 			<LearnedSplitsDialog />

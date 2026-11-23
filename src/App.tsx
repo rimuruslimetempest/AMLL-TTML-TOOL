@@ -46,6 +46,8 @@ import { Slide, ToastContainer, toast } from "react-toastify";
 import saveFile from "save-file";
 import { backgroundGradients } from "$/modules/settings/states/gradients";
 import { ThemeRuntime } from "$/modules/themes/ThemeRuntime";
+import { DYSLEXIA_FONT_STACK } from "$/modules/accessibility/fonts";
+import { MouseFreeMode } from "$/modules/accessibility/MouseFreeMode";
 import {
 	themeAccentOverrideAtom,
 	themeIdAtom,
@@ -68,6 +70,7 @@ import {
 	useCustomAccentAtom,
 	useCustomGradientAtom,
 	appFontAtom,
+	dyslexiaFriendlyFontAtom,
 	glassmorphismBlurAtom,
 	advancedPrimaryTextColorAtom,
 	advancedSecondaryTextColorAtom,
@@ -460,6 +463,8 @@ function App() {
 	const customGradientAngle = useAtomValue(customGradientAngleAtom);
 	const customGradientSize = useAtomValue(customGradientSizeAtom);
 	const appFont = useAtomValue(appFontAtom);
+	const dyslexiaFont = useAtomValue(dyslexiaFriendlyFontAtom);
+	const appFontFamily = dyslexiaFont ? DYSLEXIA_FONT_STACK : appFont;
 	const editorFont = useAtomValue(editorFontAtom);
 	const previewFont = useAtomValue(previewFontAtom);
 	const appFontWeight = useAtomValue(appFontWeightAtom);
@@ -726,7 +731,7 @@ function App() {
 		}
 
 		const resolvedEditorFont =
-			editorFont === "inherit" || !editorFont ? appFont : editorFont;
+			editorFont === "inherit" || !editorFont ? appFontFamily : editorFont;
 		const resolvedPreviewFont =
 			previewFont === "default" || !previewFont
 				? '"SpicyLyrics", "Noto Sans Georgian", "VazirmatnRegular", sans-serif'
@@ -834,7 +839,7 @@ function App() {
 		return `
 		${customFontFace}
 		:root {
-			--default-font-family: ${appFont} !important;
+			--default-font-family: ${appFontFamily} !important;
 			--editor-font-family: ${resolvedEditorFont} !important;
 			--preview-font-family: ${resolvedPreviewFont} !important;
 			--toxi-font-family: ${resolvedToxiFont} !important;
@@ -854,7 +859,7 @@ function App() {
 				: ""
 		}
 		.radix-themes {
-			--default-font-family: ${appFont} !important;
+			--default-font-family: ${appFontFamily} !important;
 			--editor-font-family: ${resolvedEditorFont} !important;
 			--preview-font-family: ${resolvedPreviewFont} !important;
 			--toxi-font-family: ${resolvedToxiFont} !important;
@@ -989,6 +994,7 @@ function App() {
 		hasCustomBackground,
 		customThemeStyles,
 		appFont,
+		appFontFamily,
 		glassmorphismBlur,
 		advPrimaryText,
 		advSecondaryText,
@@ -1036,9 +1042,9 @@ function App() {
 
 	useLayoutEffect(() => {
 		const root = document.documentElement;
-		root.style.setProperty("--default-font-family", appFont);
+		root.style.setProperty("--default-font-family", appFontFamily);
 		const resolvedEditorFont =
-			editorFont === "inherit" || !editorFont ? appFont : editorFont;
+			editorFont === "inherit" || !editorFont ? appFontFamily : editorFont;
 		const resolvedPreviewFont =
 			previewFont === "default" || !previewFont
 				? '"SpicyLyrics", "Noto Sans Georgian", "VazirmatnRegular", sans-serif'
@@ -1054,7 +1060,8 @@ function App() {
 		root.style.setProperty("--editor-font-family", resolvedEditorFont);
 		root.style.setProperty("--preview-font-family", resolvedPreviewFont);
 		root.style.setProperty("--toxi-font-family", resolvedToxiFont);
-	}, [appFont, editorFont, previewFont]);
+		root.dataset.dyslexiaFont = dyslexiaFont ? "true" : "false";
+	}, [appFont, appFontFamily, editorFont, previewFont, dyslexiaFont]);
 
 	const effectiveTheme = isDarkTheme ? "dark" : "light";
 	const { checkUpdate } = useAppUpdate();
@@ -1849,6 +1856,7 @@ function App() {
 								{!isPreviewFullscreen && <NewBottomBar />}
 							</Flex>
 							<AiCheckPanel />
+					<MouseFreeMode />
 					<TtmlUploaderPanel />
 					<SplitLibraryProvider />
 					<RecycleBinProvider />

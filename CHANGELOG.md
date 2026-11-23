@@ -3,6 +3,27 @@
 All notable changes to TTML Tool are listed here, newest first. The in-app
 What's New window reads this file.
 
+## [1.0.2] - 2026-11-23
+
+### New
+
+- Added Mouse-free mode under Settings → General → Accessibility. Arrow keys
+  move focus through the interface in reading order, Enter or Space activates
+  the focused control, and Escape clears focus. Text fields, sliders, menus, and
+  other arrow-key widgets keep their own behavior, and a status pill shows the
+  mode is active with a button that turns it off.
+- Added a dyslexia-friendly font option. It applies the bundled Atkinson
+  Hyperlegible font to the interface and lyric editor with extra letter and word
+  spacing, and works offline. Preview lyrics keep their own font.
+- Added Tools → Hand-off Summary, which builds a Markdown snapshot of the open
+  project with title, artist, file and audio names, timing coverage, song span,
+  sections, open items, notes, and links. The summary can be copied or saved as
+  a `.md` file and is generated locally.
+
+### Improved
+
+- Settings search now finds both accessibility options.
+
 ## [1.0.1] - 2026-11-21
 
 ### Release

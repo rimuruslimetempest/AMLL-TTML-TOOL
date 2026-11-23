@@ -1,20 +1,36 @@
-# TTML Tool 1.0.1
+# TTML Tool 1.0.2
 
-TTML Tool is a desktop editor for word-synced TTML lyrics. This release brings
-the Windows, macOS, and Linux builds back onto one release, all from the same
-tagged source.
+TTML Tool is a desktop editor for word-synced TTML lyrics. This release adds a
+keyboard-only navigation mode, a dyslexia-friendly font option, and a hand-off
+summary for collaborators.
 
 All timing is manual. The editor, the importers, and the text tools never create,
 move, or retime a timestamp on their own.
+
+## What's new in 1.0.2
+
+- **Mouse-free mode.** Turn it on in Settings → General → Accessibility. Arrow
+  keys move focus through the interface in reading order, Enter or Space
+  activates the focused control, and Escape clears focus. Text fields, sliders,
+  menus, and other widgets that use arrow keys keep them. A small status pill
+  stays visible and can turn the mode off without a mouse.
+- **Dyslexia-friendly font.** The same Accessibility section can switch the
+  interface and lyric editor to Atkinson Hyperlegible — bundled with the app so
+  it works offline — with extra letter and word spacing. Preview lyrics keep
+  their own designed font.
+- **Hand-off summary.** Tools → Hand-off Summary creates a Markdown snapshot of
+  the open project: title and artist, file and audio, timing coverage, song
+  span, sections, open timing or metadata items, notes, and links. Copy it or
+  save it as a `.md` file. It is generated locally and nothing is uploaded.
 
 ## Downloads
 
 | Platform | File |
 | --- | --- |
-| Windows x64 | `TTML-Tool_1.0.1_x64-setup.exe` or `TTML-Tool_1.0.1_x64.msi` |
-| macOS Apple Silicon | `TTML-Tool_1.0.1_aarch64.dmg` |
-| macOS Intel | `TTML-Tool_1.0.1_x64.dmg` |
-| Linux x64 | `TTML-Tool_1.0.1_amd64.AppImage`, `.deb`, or `.rpm` |
+| Windows x64 | `TTML-Tool_1.0.2_x64-setup.exe` or `TTML-Tool_1.0.2_x64.msi` |
+| macOS Apple Silicon | `TTML-Tool_1.0.2_aarch64.dmg` |
+| macOS Intel | `TTML-Tool_1.0.2_x64.dmg` |
+| Linux x64 | `TTML-Tool_1.0.2_amd64.AppImage`, `.deb`, or `.rpm` |
 
 When updater metadata is generated, the release also includes `latest.json` for
 the built-in updater. On Linux, the AppImage updates itself; use your package

@@ -75,6 +75,7 @@ export const confirmDialogAtom = atom<{
 	description: "",
 });
 export const historyRestoreDialogAtom = atom(false);
+export const handoffSummaryDialogAtom = atom(false);
 export const importFromLRCLIBDialogAtom = atom(false);
 export const geniusSearchDialogAtom = atom(false);
 export const changelogDialogAtom = atom(false);

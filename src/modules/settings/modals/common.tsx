@@ -14,6 +14,7 @@ import {
 	Sparkle24Regular,
 	Speaker224Regular,
 	Stack24Regular,
+	TextT24Regular,
 	TextWrap24Regular,
 	Timer24Regular,
 	TopSpeed24Regular,
@@ -53,6 +54,8 @@ import {
 	geniusCategorizationEnabledAtom,
 	highlightUnsyncedWordsInEditorAtom,
 	keepPlayingWordInViewAtom,
+	dyslexiaFriendlyFontAtom,
+	mouseFreeModeAtom,
 	LayoutMode,
 	layoutModeAtom,
 	newLineInsertionModeAtom,
@@ -191,6 +194,8 @@ export const SettingsCommonTab = ({
 	const [checklistShowUploadedToDb, setChecklistShowUploadedToDb] = useAtom(
 		checklistShowUploadedToDbAtom,
 	);
+	const [mouseFreeMode, setMouseFreeMode] = useAtom(mouseFreeModeAtom);
+	const [dyslexiaFont, setDyslexiaFont] = useAtom(dyslexiaFriendlyFontAtom);
 
 	const { t, i18n } = useTranslation();
 	const currentLanguage = i18n.resolvedLanguage || i18n.language;
@@ -228,6 +233,8 @@ export const SettingsCommonTab = ({
 		(shouldShow("general-language") ||
 			shouldShow("general-layout") ||
 			shouldShow("general-scale") ||
+			shouldShow("general-mouse-free") ||
+			shouldShow("general-dyslexia-font") ||
 			shouldShow("editor-compact-bg") ||
 			shouldShow("editor-word-wrap") ||
 			shouldShow("general-latency"));
@@ -313,7 +320,9 @@ export const SettingsCommonTab = ({
 						shouldShow("general-scale") ||
 						shouldShow("editor-compact-bg") ||
 						shouldShow("editor-word-wrap") ||
-						shouldShow("general-latency")) && (
+						shouldShow("general-latency") ||
+						shouldShow("general-mouse-free") ||
+						shouldShow("general-dyslexia-font")) && (
 						<Heading size="4">{t("settings.group.display", "Display")}</Heading>
 					)}
 
@@ -413,6 +422,91 @@ export const SettingsCommonTab = ({
 					)}
 
 					{shouldShow("general-scale") && <UIScaleSetting />}
+
+					{(shouldShow("general-mouse-free") ||
+						shouldShow("general-dyslexia-font")) && (
+						<Heading size="4">
+							{t("settings.group.accessibility", "Accessibility")}
+						</Heading>
+					)}
+
+					{shouldShow("general-mouse-free") && (
+						<Card>
+							<Text as="label">
+								<Flex gap="3" align="center">
+									<Keyboard12324Regular />
+									<Box flexGrow="1">
+										<Flex gap="2" align="center" justify="between">
+											<Flex direction="column" gap="1">
+												<Text>
+													{t(
+														"settings.accessibility.mouseFree",
+														"Mouse-free mode",
+													)}
+												</Text>
+												<Text size="1" color="gray">
+													{t(
+														"settings.accessibility.mouseFreeDesc",
+														"Move focus with the arrow keys, activate with Enter or Space, and clear focus with Escape. Text fields, sliders, and menus keep their own arrow keys. A small status pill stays visible while the mode is on.",
+													)}
+												</Text>
+											</Flex>
+											<Switch
+												checked={mouseFreeMode}
+												onCheckedChange={setMouseFreeMode}
+											/>
+										</Flex>
+									</Box>
+								</Flex>
+							</Text>
+						</Card>
+					)}
+
+					{shouldShow("general-dyslexia-font") && (
+						<Card>
+							<Text as="label">
+								<Flex gap="3" align="center">
+									<TextT24Regular />
+									<Box flexGrow="1">
+										<Flex gap="2" align="center" justify="between">
+											<Flex direction="column" gap="1">
+												<Text>
+													{t(
+														"settings.accessibility.dyslexiaFont",
+														"Dyslexia-friendly font",
+													)}
+												</Text>
+												<Text size="1" color="gray">
+													{t(
+														"settings.accessibility.dyslexiaFontDesc",
+														"Use the bundled Atkinson Hyperlegible font across the interface and lyric editor, with extra letter and word spacing. Preview lyrics keep their own font.",
+													)}
+												</Text>
+												<Text
+													size="2"
+													color="gray"
+													style={{
+														fontFamily: dyslexiaFont
+															? '"Atkinson Hyperlegible", Verdana, sans-serif'
+															: undefined,
+													}}
+												>
+													{t(
+														"settings.accessibility.dyslexiaSample",
+														"Sample: The quick brown fox jumps over the lazy dog.",
+													)}
+												</Text>
+											</Flex>
+											<Switch
+												checked={dyslexiaFont}
+												onCheckedChange={setDyslexiaFont}
+											/>
+										</Flex>
+									</Box>
+								</Flex>
+							</Text>
+						</Card>
+					)}
 
 					{shouldShow("general-new-line-insertion") && (
 						<Card>

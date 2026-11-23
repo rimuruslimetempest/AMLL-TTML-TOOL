@@ -42,6 +42,39 @@ export const SETTINGS_SEARCH_ITEMS: SettingSearchItem[] = [
 		keywords: ["trigger", "keydown", "keyup", "shortcut", "keybinding", "press"],
 	},
 	{
+		id: "general-mouse-free",
+		title: "Mouse-free Mode",
+		description:
+			"Navigate the whole interface with the arrow keys, Enter, and Escape",
+		tab: "common",
+		tabName: "General",
+		keywords: [
+			"mouse free",
+			"keyboard only",
+			"accessibility",
+			"arrow keys",
+			"focus",
+			"no mouse",
+		],
+	},
+	{
+		id: "general-dyslexia-font",
+		title: "Dyslexia-friendly Font",
+		description:
+			"Use a highly legible font with extra letter and word spacing",
+		tab: "common",
+		tabName: "General",
+		keywords: [
+			"dyslexia",
+			"accessibility",
+			"readable",
+			"legible",
+			"font",
+			"atkinson",
+			"open dyslexic",
+		],
+	},
+	{
 		id: "general-latency",
 		title: "Audio Latency Test",
 		description: "Calibrate keyboard input delay and timing offset",
