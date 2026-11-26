@@ -28,7 +28,6 @@ import {
 	Card,
 	Flex,
 	Heading,
-	Link,
 	SegmentedControl,
 	Select,
 	Slider,
@@ -42,6 +41,7 @@ import { useAtom, useSetAtom } from "jotai";
 import { useTranslation } from "react-i18next";
 import { playbackRateAtom, volumeAtom } from "$/modules/audio/states";
 import { segmentationIgnoreListTextAtom } from "$/modules/segmentation/states";
+import { interfaceDirectionAtom } from "$/modules/studio/state";
 import {
 	allowConsecutiveBackgroundLinesAtom,
 	autoLoadCloudAudioAtom,
@@ -198,6 +198,9 @@ export const SettingsCommonTab = ({
 	);
 	const [mouseFreeMode, setMouseFreeMode] = useAtom(mouseFreeModeAtom);
 	const [dyslexiaFont, setDyslexiaFont] = useAtom(dyslexiaFriendlyFontAtom);
+	const [interfaceDirection, setInterfaceDirection] = useAtom(
+		interfaceDirectionAtom,
+	);
 	const [showReviewInEmptyState, setShowReviewInEmptyState] = useAtom(
 		showReviewInEmptyStateAtom,
 	);
@@ -430,7 +433,8 @@ export const SettingsCommonTab = ({
 					{shouldShow("general-scale") && <UIScaleSetting />}
 
 					{(shouldShow("general-mouse-free") ||
-						shouldShow("general-dyslexia-font")) && (
+						shouldShow("general-dyslexia-font") ||
+						shouldShow("general-interface-direction")) && (
 						<Heading size="4">
 							{t("settings.group.accessibility", "Accessibility")}
 						</Heading>
@@ -511,6 +515,47 @@ export const SettingsCommonTab = ({
 									</Box>
 								</Flex>
 							</Text>
+						</Card>
+					)}
+
+					{shouldShow("general-interface-direction") && (
+						<Card>
+							<Flex gap="3" align="center">
+								<LocalLanguage24Regular />
+								<Box flexGrow="1">
+									<Flex align="center" justify="between" gap="4" wrap="wrap">
+										<Flex direction="column" gap="1" style={{ flex: 1 }}>
+											<Text>
+												{t(
+													"settings.accessibility.interfaceDirection",
+													"Interface direction",
+												)}
+											</Text>
+											<Text size="1" color="gray">
+												{t(
+													"settings.accessibility.interfaceDirectionDesc",
+													"Automatic follows Arabic, Hebrew, Farsi, and Urdu. Force right-to-left to test the logical layout; timing, tabs, and dialogs mirror without moving data.",
+												)}
+											</Text>
+										</Flex>
+										<Select.Root
+											value={interfaceDirection}
+											onValueChange={(value) =>
+												setInterfaceDirection(
+													value as "auto" | "ltr" | "rtl",
+												)
+											}
+										>
+											<Select.Trigger />
+											<Select.Content>
+												<Select.Item value="auto">Automatic</Select.Item>
+												<Select.Item value="ltr">Left to right</Select.Item>
+												<Select.Item value="rtl">Right to left</Select.Item>
+											</Select.Content>
+										</Select.Root>
+									</Flex>
+								</Box>
+							</Flex>
 						</Card>
 					)}
 

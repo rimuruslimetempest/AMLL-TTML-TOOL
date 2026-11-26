@@ -30,6 +30,7 @@ import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai";
 import {
 	type FC,
+	type ReactNode,
 	Suspense,
 	memo,
 	useCallback,
@@ -128,7 +129,13 @@ import {
 import styles from "./App.module.css";
 import DarkThemeDetector from "./components/DarkThemeDetector";
 import RibbonBar from "./components/RibbonBar";
-import { NewTitleBar } from "./components/TitleBar/NewTitleBar";
+import {
+	NewCommandBar,
+	NewShell,
+	NewStatusBar,
+	NewTabRail,
+	NewTopBar,
+} from "./components/NewShell";
 import { UpdateBanner, UpdateDialog } from "./components/UpdateBanner";
 import { TitleBar } from "./components/TitleBar";
 import { ResizablePanel } from "./components/ResizablePanel";
@@ -160,13 +167,16 @@ import { RecycleBinProvider } from "$/modules/recycle-bin/RecycleBinProvider";
 import { SplitSuggestion } from "$/modules/split-library/components/SplitSuggestion";
 import { EditMatchesPrompt } from "$/modules/edit-matching/EditMatchesPrompt";
 import { CrashReportPrompt } from "$/modules/privacy/CrashReportPrompt";
-import { NewBottomBar } from "$/components/AppShell/NewShellChrome";
 import { PrivacyDialogs } from "$/modules/privacy/PrivacyDialogs";
 import { captureDiagnosticException } from "$/modules/privacy/diagnostics";
 import { NewUiBoundary } from "$/design-system/NewUiBoundary";
 import { usePerformanceModeSuggestion } from "./hooks/usePerformanceModeSuggestion";
+import { usePerformanceRuntime } from "$/modules/performance/runtime";
 import { ScreenRecorderDialog } from "$/modules/recorder/ScreenRecorderDialog";
 import { GlobalDragOverlay } from "./modules/project/modals/GlobalDragOverlay.tsx";
+import { UiAuditOverlay } from "$/modules/dev/UiAuditOverlay";
+import { StudioOverlays } from "$/modules/studio";
+import { focusModeAtom } from "$/modules/studio/state";
 import {
 	customBackgroundBlurAtom,
 	customBackgroundBrightnessAtom,
@@ -278,6 +288,40 @@ const AppErrorPage = ({
 					}}
 				/>
 			</Flex>
+		</Flex>
+	);
+};
+
+interface ShellFrameProps {
+	isNew: boolean;
+	newChrome: ReactNode;
+	newFooter?: ReactNode;
+	classicChrome: ReactNode;
+	children: ReactNode;
+}
+
+/**
+ * Swaps the outer shell without touching the editor layout: New gets the
+ * measured grid shell, Classic keeps the original flex column.
+ */
+const ShellFrame: FC<ShellFrameProps> = ({
+	isNew,
+	newChrome,
+	newFooter,
+	classicChrome,
+	children,
+}) => {
+	if (isNew) {
+		return (
+			<NewShell topChrome={newChrome} footer={newFooter}>
+				{children}
+			</NewShell>
+		);
+	}
+	return (
+		<Flex direction="column" height="100vh">
+			{classicChrome}
+			{children}
 		</Flex>
 	);
 };
@@ -519,12 +563,14 @@ function App() {
 			? "top"
 			: vRibbonPosition;
 	const uiLayer = useAtomValue(uiLayerAtom);
+	const focusMode = useAtomValue(focusModeAtom);
 	const performanceMode = useAtomValue(performanceModeAtom);
 	const density = useAtomValue(densityAtom);
 	const contrast = useAtomValue(contrastAtom);
 	const spectrogramFullWidth = useAtomValue(spectrogramFullWidthAtom);
 
 	usePerformanceModeSuggestion();
+	usePerformanceRuntime();
 
 	useEffect(() => {
 		if (vActiveLine === "rgba(56, 189, 248, 0.2)") {
@@ -1534,6 +1580,12 @@ function App() {
 			"--ui-scale",
 			String(normalizedScale),
 		);
+		// Tauri already zooms the webview; only the browser build needs the
+		// extra CSS multiplier. This prevents double-scaling the New chrome.
+		document.documentElement.style.setProperty(
+			"--ttml-chrome-scale",
+			String(isTauri ? 1 : normalizedScale),
+		);
 	}, [normalizedScale]);
 
 	useEffect(() => {
@@ -1680,14 +1732,38 @@ function App() {
 					<LinePropertiesKeybinding />
 					<LineClipboardKeybinding />
 					<DarkThemeDetector />
-					<Flex direction="column" height="100vh">
-						{!isPreviewFullscreen &&
-							(uiLayer === UiLayer.New ? (
-								<NewTitleBar key="titlebar" />
-							) : (
-								<TitleBar key="titlebar" />
-							))}
-						{!isPreviewFullscreen && <UpdateBanner />}
+					<ShellFrame
+						isNew={uiLayer === UiLayer.New}
+						newChrome={
+							<>
+								{!isPreviewFullscreen && !focusMode && (
+									<NewTopBar key="titlebar" />
+								)}
+								{!isPreviewFullscreen && !focusMode && <UpdateBanner />}
+								{!isPreviewFullscreen && !focusMode && (
+									<NewTabRail />
+								)}
+								{!isPreviewFullscreen &&
+									!focusMode &&
+									toolMode !== ToolMode.Review &&
+									(responsiveRibbonPosition === "top" ||
+										responsiveRibbonPosition === "bottom") && (
+										<NewCommandBar
+											position={responsiveRibbonPosition}
+										/>
+									)}
+							</>
+						}
+						newFooter={!isPreviewFullscreen ? <NewStatusBar /> : null}
+						classicChrome={
+							<>
+								{!isPreviewFullscreen && !focusMode && (
+									<TitleBar key="titlebar" />
+								)}
+								{!isPreviewFullscreen && !focusMode && <UpdateBanner />}
+							</>
+						}
+					>
 						{(() => {
 							const sidePreviewPanelElement = previewPanelVisible ? (
 								<ResizablePanel>
@@ -1709,7 +1785,9 @@ function App() {
 								if (id === "titlebar") return null;
 								if (
 									id === "ribbonbar" &&
+									uiLayer !== UiLayer.New &&
 									!isPreviewFullscreen &&
+									!focusMode &&
 									toolMode !== ToolMode.Review &&
 									(responsiveRibbonPosition === "top" ||
 										responsiveRibbonPosition === "bottom")
@@ -1835,6 +1913,7 @@ function App() {
 										<Box
 											flexShrink="0"
 											key="audio-controls"
+											data-ttml-chrome="transport"
 											style={{
 												display: isPreviewFullscreen ? "none" : undefined,
 											}}
@@ -1912,8 +1991,7 @@ function App() {
 									{sidePreviewPanelElement}
 								</Flex>
 							);								})()}
-								{!isPreviewFullscreen && <NewBottomBar />}
-							</Flex>
+									</ShellFrame>
 							<AiCheckPanel />
 					<MouseFreeMode />
 					<TtmlUploaderPanel />
@@ -1935,6 +2013,7 @@ function App() {
 					<Suspense fallback={null}>
 						<Dialogs />
 					</Suspense>
+					<StudioOverlays />
 					<ToastContainer
 						theme={effectiveTheme}
 						hideProgressBar={true}
@@ -1964,6 +2043,7 @@ function App() {
 						)}
 				</div>
 				<RainEffect isRaining={isRaining && !performanceMode} />
+				<UiAuditOverlay />
 				</NewUiBoundary>
 				</ErrorBoundary>
 			</MotionConfig>

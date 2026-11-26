@@ -57,6 +57,16 @@ export function getExportLosses(
 			losses.push("Duet and background roles are not stored.");
 			losses.push("TTML metadata and sections are not stored.");
 			break;
+		case "ass":
+			losses.push("Per-word timing is not stored.");
+			losses.push("Styling is reset to a plain readable style.");
+			losses.push("Duet and background roles are not stored.");
+			break;
+		case "vtt":
+			losses.push("Per-word timing is not stored.");
+			losses.push("Duet and background roles are not stored.");
+			losses.push("TTML metadata and sections are not stored.");
+			break;
 		case "plain":
 			losses.push("All timing is lost. Plain text is lyrics only.");
 			losses.push("Duet and background roles are not stored.");
@@ -150,6 +160,78 @@ export function exportSrt(
 		.join("\n\n");
 }
 
+function assTimestamp(ms: number): string {
+	const safe = Math.max(0, Math.round(ms));
+	const hours = Math.floor(safe / 3_600_000);
+	const minutes = Math.floor((safe % 3_600_000) / 60_000);
+	const seconds = Math.floor((safe % 60_000) / 1000);
+	const centis = Math.floor((safe % 1000) / 10);
+	return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(centis).padStart(2, "0")}`;
+}
+
+function vttTimestamp(ms: number): string {
+	const safe = Math.max(0, Math.round(ms));
+	const hours = Math.floor(safe / 3_600_000);
+	const minutes = Math.floor((safe % 3_600_000) / 60_000);
+	const seconds = Math.floor((safe % 60_000) / 1000);
+	const millis = safe % 1000;
+	return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(millis).padStart(3, "0")}`;
+}
+
+export function exportAss(
+	lyric: TTMLLyric,
+	options: LyricExportOptions,
+): string {
+	const header = [
+		"[Script Info]",
+		"ScriptType: v4.00+",
+		"WrapStyle: 0",
+		"ScaledBorderAndShadow: yes",
+		"PlayResX: 1920",
+		"PlayResY: 1080",
+		"",
+		"[V4+ Styles]",
+		"Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
+		"Style: Default,Arial,64,&H00FFFFFF,&H000000FF,&H00000000,&H64000000,0,0,0,0,100,100,0,0,1,3,0,2,80,80,70,1",
+		"",
+		"[Events]",
+		"Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
+	].join("\n");
+	const events = selectedLines(lyric, options).map((line) => {
+		const parts = [lyricLineText(line)];
+		if (options.includeTranslation && line.translatedLyric?.trim())
+			parts.push(line.translatedLyric.trim());
+		if (options.includeRomanization && line.romanLyric?.trim())
+			parts.push(line.romanLyric.trim());
+		const text = parts
+			.filter(Boolean)
+			.join("\\N")
+			.replace(/\{/g, "(")
+			.replace(/\}/g, ")");
+		return `Dialogue: 0,${assTimestamp(line.startTime)},${assTimestamp(
+			line.endTime,
+		)},Default,,0,0,0,,${text}`;
+	});
+	return `${header}\n${events.join("\n")}`;
+}
+
+export function exportVtt(
+	lyric: TTMLLyric,
+	options: LyricExportOptions,
+): string {
+	const cues = selectedLines(lyric, options).map((line) => {
+		const parts = [lyricLineText(line)];
+		if (options.includeTranslation && line.translatedLyric?.trim())
+			parts.push(line.translatedLyric.trim());
+		if (options.includeRomanization && line.romanLyric?.trim())
+			parts.push(line.romanLyric.trim());
+		return `${vttTimestamp(line.startTime)} --> ${vttTimestamp(
+			line.endTime,
+		)}\n${parts.filter(Boolean).join("\n")}`;
+	});
+	return `WEBVTT\n\n${cues.join("\n\n")}`;
+}
+
 export function exportPlainText(
 	lyric: TTMLLyric,
 	options: LyricExportOptions,
@@ -175,6 +257,12 @@ export function exportLyrics(
 			break;
 		case "srt":
 			content = exportSrt(lyric, options);
+			break;
+		case "ass":
+			content = exportAss(lyric, options);
+			break;
+		case "vtt":
+			content = exportVtt(lyric, options);
 			break;
 		case "plain":
 			content = exportPlainText(lyric, options);

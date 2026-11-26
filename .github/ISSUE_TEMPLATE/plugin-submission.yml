@@ -1,0 +1,130 @@
+name: Plugin marketplace submission
+description: Propose a community WASM plugin before opening a pull request.
+title: "[Plugin]: "
+labels: ["plugin"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for making a plugin for TTML Tool. This issue is for discussion first; the marketplace is updated only by a merged pull request.
+
+        **Do not attach private project files, lyrics, audio, or credentials.** A link to the source, the manifest, and the registry entry are enough.
+
+  - type: input
+    id: plugin_name
+    attributes:
+      label: Plugin name
+      placeholder: "Lyric Normalizer"
+    validations:
+      required: true
+
+  - type: input
+    id: plugin_id
+    attributes:
+      label: Plugin id
+      description: Lowercase letters, numbers, and dashes. This must match plugin.json and the registry entry.
+      placeholder: "lyric-normalizer"
+    validations:
+      required: true
+
+  - type: input
+    id: author
+    attributes:
+      label: Author name
+      description: The name that should appear on the card.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Short description
+      description: One or two sentences in your own words.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Plugin type
+      options:
+        - Importer
+        - Exporter
+        - Lyric tool
+        - Importer and exporter
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: permissions
+    attributes:
+      label: Permissions the plugin declares
+      description: Choose only what the module actually needs. The manifest and registry entry must list the same set.
+      options:
+        - label: lyrics:read
+        - label: lyrics:write
+        - label: files:read
+        - label: files:write
+        - label: network
+        - label: settings:read
+        - label: ui:toolbar
+        - label: ui:panel
+
+  - type: checkboxes
+    id: slots
+    attributes:
+      label: UI slots
+      description: Leave everything unchecked when the plugin is headless.
+      options:
+        - label: toolbar
+        - label: panel
+        - label: import-dialog
+        - label: export-dialog
+
+  - type: input
+    id: min_version
+    attributes:
+      label: Minimum TTML Tool version
+      placeholder: "1.0.4"
+    validations:
+      required: true
+
+  - type: input
+    id: source
+    attributes:
+      label: Source repository
+      description: Link the public source the module is built from.
+      placeholder: "https://github.com/..."
+    validations:
+      required: true
+
+  - type: input
+    id: pull_request
+    attributes:
+      label: Pull request or fork
+      description: Link the pull request that adds the bundle and registry entry, if you have opened one.
+      placeholder: "https://github.com/..."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmations
+      options:
+        - label: The plugin is a WebAssembly module. It does not inject JavaScript, HTML, or remote code into the app.
+          required: true
+        - label: The declared permissions are accurate and the manifest matches the registry entry.
+          required: true
+        - label: I made this plugin or have permission to share it, and the binary is built from the linked source.
+          required: true
+        - label: I understand that a maintainer reviews the module and nothing is published without a merge.
+          required: true

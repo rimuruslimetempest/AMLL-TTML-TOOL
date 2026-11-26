@@ -9,7 +9,7 @@ import {
 	parseQrc,
 	parseYrc,
 } from "@applemusic-like-lyrics/lyric";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom, useStore } from "jotai";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
@@ -22,6 +22,7 @@ import {
 	parseLyricText,
 } from "$/modules/lyrics-formats/parsers";
 import { getProjectList } from "$/modules/project/autosave/autosave";
+import { registerWorkspaceTab } from "$/modules/studio/workspace";
 import { getSuggestedTtmlFileName } from "$/modules/project/logic/metadata-filename";
 import { isProjectMatch } from "$/modules/project/logic/project-match";
 import { parseLyric as parseTTML } from "$/modules/project/logic/ttml-parser";
@@ -76,6 +77,7 @@ export const useFileOpener = () => {
 	const setSaveFileName = useSetAtom(saveFileNameAtom);
 	const setConfirmDialog = useSetAtom(confirmDialogAtom);
 	const isDirty = useAtomValue(isDirtyAtom);
+	const store = useStore();
 	const { t } = useTranslation();
 
 	const normalizeApostrophesOnImport = useAtomValue(
@@ -177,11 +179,18 @@ export const useFileOpener = () => {
 					logError("解析项目数据时失败", e);
 				}
 
-				setProjectId(resolvedProjectId);
-				setNewLyricLines(lyricData);
 				const suggestedFile = getSuggestedTtmlFileName(lyricData.metadata);
 				const nextFileName =
 					ext === "ttml" ? file.name : (suggestedFile?.fileName ?? file.name);
+				// Snapshot the previous tab before replacing the global document.
+				registerWorkspaceTab(
+					store,
+					lyricData,
+					resolvedProjectId,
+					nextFileName,
+				);
+				setProjectId(resolvedProjectId);
+				setNewLyricLines(lyricData);
 				setSaveFileName(nextFileName);
 			} catch (e) {
 				logError(`Failed to open file: ${file.name}`, e);
@@ -189,6 +198,7 @@ export const useFileOpener = () => {
 			}
 		},
 		[
+			store,
 			setNewLyricLines,
 			setProjectId,
 			setSaveFileName,

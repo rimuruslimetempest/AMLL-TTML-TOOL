@@ -41,30 +41,30 @@
 	--ttml-space-6: 32px;
 
 	/* Radii */
-	--ttml-radius-sm: 7px;
-	--ttml-radius-md: 10px;
-	--ttml-radius-lg: 14px;
-	--ttml-radius-xl: 16px;
+	--ttml-radius-sm: 8px;
+	--ttml-radius-md: 12px;
+	--ttml-radius-lg: 16px;
+	--ttml-radius-xl: 20px;
 	--ttml-radius-full: 999px;
 
 	/* Background and surfaces */
-	--ttml-bg-base: #07070b;
-	--ttml-bg-raised: #0e0e14;
-	--ttml-bg-overlay: #15151d;
-	--ttml-scrim: rgba(4, 6, 9, 0.62);
-	--ttml-surface: #101016;
-	--ttml-surface-2: #16161f;
-	--ttml-surface-3: #1c1c26;
-	--ttml-surface-hover: #20202b;
-	--ttml-border: rgba(255, 255, 255, 0.09);
-	--ttml-border-strong: rgba(255, 255, 255, 0.17);
-	--ttml-text: #f4f6fb;
-	--ttml-text-secondary: #b9becd;
-	--ttml-text-muted: #8d94a5;
-	--ttml-text-disabled: #5e6473;
+	--ttml-bg-base: #08090e;
+	--ttml-bg-raised: #0e1017;
+	--ttml-bg-overlay: #161923;
+	--ttml-scrim: rgba(4, 6, 12, 0.66);
+	--ttml-surface: #11131b;
+	--ttml-surface-2: #191c26;
+	--ttml-surface-3: #222633;
+	--ttml-surface-hover: #252a38;
+	--ttml-border: rgba(255, 255, 255, 0.1);
+	--ttml-border-strong: rgba(255, 255, 255, 0.2);
+	--ttml-text: #f5f7fd;
+	--ttml-text-secondary: #bcc4d6;
+	--ttml-text-muted: #8f98ad;
+	--ttml-text-disabled: #5f6779;
 
 	/* Accent and semantic states */
-	--ttml-accent: #5b5ef0;
+	--ttml-accent: #6c5cff;
 	--ttml-accent-hover: color-mix(
 		in srgb,
 		var(--ttml-accent) 82%,
@@ -91,9 +91,9 @@
 	--ttml-info-subtle: rgba(113, 183, 255, 0.12);
 
 	/* Lyric line states */
-	--ttml-lyric-playing: #a9b4ff;
-	--ttml-lyric-playing-bg: rgba(91, 94, 240, 0.15);
-	--ttml-lyric-selected-bg: rgba(91, 94, 240, 0.19);
+	--ttml-lyric-playing: #b0b3ff;
+	--ttml-lyric-playing-bg: rgba(108, 92, 255, 0.16);
+	--ttml-lyric-selected-bg: rgba(108, 92, 255, 0.2);
 	--ttml-lyric-unsynced: #f2bd5c;
 	--ttml-lyric-unsynced-bg: rgba(242, 189, 92, 0.1);
 	--ttml-lyric-synced: #55d68b;
@@ -109,10 +109,10 @@
 	--ttml-timestamp-border: rgba(255, 255, 255, 0.16);
 
 	/* Elevation: intentionally cheap, no colored or layered shadows */
-	--ttml-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.28);
-	--ttml-shadow-2: 0 4px 14px rgba(0, 0, 0, 0.3);
-	--ttml-shadow-3: 0 14px 32px rgba(0, 0, 0, 0.38);
-	--ttml-shadow-4: 0 24px 56px rgba(0, 0, 0, 0.46);
+	--ttml-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.32);
+	--ttml-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.34);
+	--ttml-shadow-3: 0 18px 44px rgba(0, 0, 0, 0.42);
+	--ttml-shadow-4: 0 28px 70px rgba(0, 0, 0, 0.5);
 
 	/* Motion */
 	--ttml-duration-fast: 100ms;
@@ -138,20 +138,20 @@
 
 :root[data-ui-layer="new"].light {
 	color-scheme: light;
-	--ttml-bg-base: #f3f5f9;
-	--ttml-bg-raised: #ffffff;
+	--ttml-bg-base: #f2f4f8;
+	--ttml-bg-raised: #fbfcfe;
 	--ttml-bg-overlay: #ffffff;
-	--ttml-scrim: rgba(15, 23, 42, 0.28);
-	--ttml-surface: #ffffff;
-	--ttml-surface-2: #edf0f6;
-	--ttml-surface-3: #e4e9f1;
-	--ttml-surface-hover: #e8edf5;
-	--ttml-border: rgba(15, 23, 42, 0.12);
-	--ttml-border-strong: rgba(15, 23, 42, 0.22);
-	--ttml-text: #10121a;
-	--ttml-text-secondary: #495266;
-	--ttml-text-muted: #6a7486;
-	--ttml-text-disabled: #98a1b0;
+	--ttml-scrim: rgba(15, 23, 42, 0.26);
+	--ttml-surface: #fdfdff;
+	--ttml-surface-2: #e9edf4;
+	--ttml-surface-3: #dde3ed;
+	--ttml-surface-hover: #e2e8f1;
+	--ttml-border: rgba(18, 24, 40, 0.11);
+	--ttml-border-strong: rgba(18, 24, 40, 0.2);
+	--ttml-text: #0d1220;
+	--ttml-text-secondary: #455066;
+	--ttml-text-muted: #677388;
+	--ttml-text-disabled: #97a1b1;
 	--ttml-accent-hover: color-mix(
 		in srgb,
 		var(--ttml-accent) 86%,
@@ -175,9 +175,9 @@
 	--ttml-danger-subtle: rgba(198, 47, 54, 0.09);
 	--ttml-info: #1769b0;
 	--ttml-info-subtle: rgba(23, 105, 176, 0.09);
-	--ttml-lyric-playing: #303fd0;
-	--ttml-lyric-playing-bg: rgba(91, 94, 240, 0.1);
-	--ttml-lyric-selected-bg: rgba(91, 94, 240, 0.13);
+	--ttml-lyric-playing: #382fd0;
+	--ttml-lyric-playing-bg: rgba(108, 92, 255, 0.1);
+	--ttml-lyric-selected-bg: rgba(108, 92, 255, 0.14);
 	--ttml-lyric-unsynced: #8d6100;
 	--ttml-lyric-unsynced-bg: rgba(141, 97, 0, 0.1);
 	--ttml-lyric-synced: #137a46;
@@ -190,9 +190,9 @@
 	--ttml-timestamp-text: #10121a;
 	--ttml-timestamp-border: rgba(15, 23, 42, 0.15);
 	--ttml-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.08);
-	--ttml-shadow-2: 0 4px 12px rgba(15, 23, 42, 0.09);
-	--ttml-shadow-3: 0 12px 28px rgba(15, 23, 42, 0.12);
-	--ttml-shadow-4: 0 22px 48px rgba(15, 23, 42, 0.16);
+	--ttml-shadow-2: 0 8px 20px rgba(15, 23, 42, 0.1);
+	--ttml-shadow-3: 0 16px 34px rgba(15, 23, 42, 0.13);
+	--ttml-shadow-4: 0 26px 60px rgba(15, 23, 42, 0.18);
 	--ttml-focus-ring: 0 0 0 2px var(--ttml-bg-base), 0 0 0 4px var(--ttml-accent);
 }
 

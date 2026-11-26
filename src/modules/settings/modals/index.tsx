@@ -1,7 +1,10 @@
 import {
 	Bot24Regular,
+	Code24Regular,
+	Color24Regular,
 	Dismiss16Regular,
 	Edit24Regular,
+	Flash24Regular,
 	Folder24Regular,
 	Info24Regular,
 	Keyboard12324Regular,
@@ -16,7 +19,6 @@ import {
 import {
 	Badge,
 	Box,
-	Button,
 	Card,
 	Dialog,
 	Flex,
@@ -30,14 +32,18 @@ import { useAtom } from "jotai";
 import { memo, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { settingsDialogAtom, settingsTabAtom } from "$/states/dialogs.ts";
-import { filterSettings, type SettingSearchItem } from "../searchIndex";
+import { filterSettings } from "../searchIndex";
 import { SettingsAboutTab } from "./about";
 import { SettingsAiCheckTab } from "./ai-check";
 import { SettingsAccountTab } from "./account";
 import { SettingsAppearanceTab } from "./appearance";
+import { SettingsThemesTab } from "./themes";
 import { AudioSettingsTab } from "./audio";
 import { SettingsBackupTab } from "./backup";
+import { PageHeader } from "../components/PageHeader";
 import { SettingsCommonTab } from "./common";
+import { SettingsDevTab } from "./dev";
+import { SettingsPerformanceTab } from "./performance";
 import { SettingsKeyBindingsDialog } from "./keybindings";
 import styles from "./settings.module.css";
 import { PrivacySettingsTab } from "$/modules/privacy/PrivacySettingsTab";
@@ -53,17 +59,8 @@ const SettingsPage = ({
 	description?: string;
 	children: ReactNode;
 }) => (
-	<Flex direction="column" gap="3" className={styles.page}>
-		<Box className={styles.pageHeader}>
-			<Heading size="6" className={styles.pageTitle}>
-				{title}
-			</Heading>
-			{description && (
-				<Text size="2" color="gray">
-					{description}
-				</Text>
-			)}
-		</Box>
+	<Flex direction="column" gap="3" className={styles.page} data-settings-page>
+		<PageHeader title={title} description={description} />
 		{children}
 	</Flex>
 );
@@ -122,6 +119,23 @@ const NavigationItem = ({
 	</Tabs.Trigger>
 );
 
+const SETTINGS_TAB_IDS = new Set([
+	"common",
+	"account",
+	"privacy",
+	"editor",
+	"files",
+	"audio",
+	"ai-check",
+	"keybinding",
+	"appearance",
+	"themes",
+	"discord",
+	"performance",
+	"dev",
+	"about",
+]);
+
 const COMMON_TAB_IDS = new Set([
 	"general-language",
 	"general-scale",
@@ -163,8 +177,14 @@ export const SettingsDialog = memo(() => {
 	const [activeTab, setActiveTab] = useAtom(settingsTabAtom);
 	const [searchQuery, setSearchQuery] = useState("");
 	const searchInputRef = useRef<HTMLInputElement>(null);
+	const contentPaneRef = useRef<HTMLElement>(null);
+	const previousTabRef = useRef(activeTab);
 	const { t } = useTranslation();
-	const displayedTab = activeTab === "assistant" ? "ai" : activeTab;
+	const requestedTab = activeTab === "assistant" ? "ai-check" : activeTab;
+	const displayedTab = SETTINGS_TAB_IDS.has(requestedTab)
+		? requestedTab
+		: "common";
+	const scrollStateRef = useRef({ displayedTab, searchQuery, settingsDialogOpen });
 
 	const searchResults = useMemo(
 		() => filterSettings(searchQuery),
@@ -199,6 +219,26 @@ export const SettingsDialog = memo(() => {
 		}
 	}, [settingsDialogOpen]);
 
+	// Every tab, every new search, and every open starts at the top of the scroll pane.
+	useEffect(() => {
+		const previous = scrollStateRef.current;
+		const changed =
+			previous.displayedTab !== displayedTab ||
+			previous.searchQuery !== searchQuery ||
+			previous.settingsDialogOpen !== settingsDialogOpen;
+		if (!changed) return;
+		scrollStateRef.current = { displayedTab, searchQuery, settingsDialogOpen };
+		contentPaneRef.current?.scrollTo({ top: 0, left: 0 });
+	});
+
+	// A tab link inside a search result must leave the search view, not just
+	// change the tab underneath it.
+	useEffect(() => {
+		if (previousTabRef.current === displayedTab) return;
+		previousTabRef.current = displayedTab;
+		setSearchQuery((query) => (query ? "" : query));
+	}, [displayedTab]);
+
 	// Keyboard shortcut: Cmd/Ctrl+F focuses settings search
 	useEffect(() => {
 		if (!settingsDialogOpen) return;
@@ -216,9 +256,16 @@ export const SettingsDialog = memo(() => {
 		return () => window.removeEventListener("keydown", handleKeyDown);
 	}, [settingsDialogOpen, searchQuery]);
 
+	if (!settingsDialogOpen) return null;
+
 	return (
-		<Dialog.Root open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>
-			<Dialog.Content maxWidth="1000px" className={styles.dialogContent}>
+		<Dialog.Root open onOpenChange={setSettingsDialogOpen}>
+			<Dialog.Content
+				maxWidth="1000px"
+				className={styles.dialogContent}
+				data-settings-dialog
+				data-ui-audit-ignore="true"
+			>
 				<Tabs.Root
 					value={displayedTab}
 					onValueChange={(val) => {
@@ -229,11 +276,28 @@ export const SettingsDialog = memo(() => {
 					}}
 					orientation="vertical"
 					className={styles.settingsLayout}
+					data-settings-layout
 				>
-					<aside className={styles.sidebar}>
-						<Dialog.Title className={styles.sidebarTitle}>
-							{t("settingsDialog.title", "Preferences")}
-						</Dialog.Title>
+					<aside className={styles.sidebar} data-settings-sidebar>
+						<div className={styles.sidebarHeader} data-settings-header>
+							<Dialog.Title
+								className={styles.sidebarTitle}
+								data-settings-title
+							>
+								{t("settingsDialog.title", "Preferences")}
+							</Dialog.Title>
+							<Dialog.Close asChild>
+								<IconButton
+									className={styles.sidebarClose}
+									size="1"
+									variant="ghost"
+									color="gray"
+									aria-label={t("common.close", "Close")}
+								>
+									<Dismiss16Regular />
+								</IconButton>
+							</Dialog.Close>
+						</div>
 
 						<Box className={styles.searchBoxWrapper}>
 							<TextField.Root
@@ -267,7 +331,10 @@ export const SettingsDialog = memo(() => {
 							</TextField.Root>
 						</Box>
 
-						<Tabs.List className={styles.navigation}>
+						<Tabs.List className={styles.navigation} data-settings-nav>
+							<div className={styles.navigationGroup} role="presentation">
+								Essentials
+							</div>
 							<NavigationItem
 								value="common"
 								icon={<Settings24Regular />}
@@ -276,6 +343,9 @@ export const SettingsDialog = memo(() => {
 							>
 								{t("settingsDialog.tab.common", "General")}
 							</NavigationItem>
+							<div className={styles.navigationGroup} role="presentation">
+								Account
+							</div>
 							<NavigationItem
 								value="account"
 								icon={<PersonCircle24Regular />}
@@ -292,6 +362,9 @@ export const SettingsDialog = memo(() => {
 							>
 								{t("settingsDialog.tab.privacy", "Privacy")}
 							</NavigationItem>
+							<div className={styles.navigationGroup} role="presentation">
+								Editing
+							</div>
 							<NavigationItem
 								value="editor"
 								icon={<Edit24Regular />}
@@ -332,6 +405,9 @@ export const SettingsDialog = memo(() => {
 							>
 								{t("settingsDialog.tab.keybindings", "Keybindings")}
 							</NavigationItem>
+							<div className={styles.navigationGroup} role="presentation">
+								Appearance
+							</div>
 							<NavigationItem
 								value="appearance"
 								icon={<PaintBrush24Regular />}
@@ -340,16 +416,48 @@ export const SettingsDialog = memo(() => {
 							>
 								{t("settingsDialog.tab.appearance", "Appearance")}
 							</NavigationItem>
+							<NavigationItem
+								value="themes"
+								icon={<Color24Regular />}
+								matchCount={tabMatchCounts["themes"]}
+								onSelect={() => searchQuery && setSearchQuery("")}
+							>
+								{t("settingsDialog.tab.themes", "Themes")}
+							</NavigationItem>
 							{import.meta.env.TAURI_ENV_PLATFORM && (
-								<NavigationItem
-									value="discord"
+								<>
+									<div className={styles.navigationGroup} role="presentation">
+										Integrations
+									</div>
+									<NavigationItem
+										value="discord"
 									icon={<PlugConnected24Regular />}
-									matchCount={tabMatchCounts["discord"]}
-									onSelect={() => searchQuery && setSearchQuery("")}
-								>
-									{t("settingsDialog.tab.discord", "Discord RPC")}
-								</NavigationItem>
+																			matchCount={tabMatchCounts["discord"]}
+										onSelect={() => searchQuery && setSearchQuery("")}
+									>
+										{t("settingsDialog.tab.discord", "Discord RPC")}
+									</NavigationItem>
+								</>
 							)}
+							<div className={styles.navigationGroup} role="presentation">
+								System
+							</div>
+							<NavigationItem
+								value="performance"
+								icon={<Flash24Regular />}
+								matchCount={tabMatchCounts["performance"]}
+								onSelect={() => searchQuery && setSearchQuery("")}
+							>
+								{t("settingsDialog.tab.performance", "Performance")}
+							</NavigationItem>
+							<NavigationItem
+								value="dev"
+								icon={<Code24Regular />}
+								matchCount={tabMatchCounts["dev"]}
+								onSelect={() => searchQuery && setSearchQuery("")}
+							>
+								{t("settingsDialog.tab.dev", "Developer")}
+							</NavigationItem>
 							<NavigationItem
 								value="about"
 								icon={<Info24Regular />}
@@ -361,7 +469,11 @@ export const SettingsDialog = memo(() => {
 						</Tabs.List>
 					</aside>
 
-					<main className={styles.contentPane}>
+					<main
+						className={styles.contentPane}
+						data-settings-content
+						ref={contentPaneRef}
+					>
 						{searchQuery.trim() ? (
 							<Flex direction="column" gap="4" className={styles.page}>
 								<Box className={styles.pageHeader}>
@@ -460,6 +572,15 @@ export const SettingsDialog = memo(() => {
 											</Flex>
 										)}
 
+										{matchingTabs.has("themes") && (
+											<Flex direction="column" gap="2">
+												<Heading size="4">
+													{t("settingsDialog.tab.themes", "Themes")}
+												</Heading>
+												<SettingsThemesTab />
+											</Flex>
+										)}
+
 										{import.meta.env.TAURI_ENV_PLATFORM &&
 											matchingTabs.has("discord") && (
 												<Flex direction="column" gap="2">
@@ -479,7 +600,16 @@ export const SettingsDialog = memo(() => {
 											</Flex>
 										)}
 
-										{matchingTabs.has("dev") && (
+										{matchingTabs.has("performance") && (
+										<Flex direction="column" gap="2">
+											<Heading size="4">
+												{t("settingsDialog.tab.performance", "Performance")}
+											</Heading>
+											<SettingsPerformanceTab />
+										</Flex>
+									)}
+
+									{matchingTabs.has("dev") && (
 											<Flex direction="column" gap="2">
 												<Heading size="4">
 													{t("settingsDialog.tab.dev", "Developer")}
@@ -591,6 +721,17 @@ export const SettingsDialog = memo(() => {
 										<SettingsAppearanceTab />
 									</SettingsPage>
 								</Tabs.Content>
+								<Tabs.Content value="themes" className={styles.tabContent}>
+									<SettingsPage
+										title={t("settingsDialog.tab.themes", "Themes")}
+										description={t(
+											"settingsDialog.page.themesDesc",
+											"Theme gallery, light/dark pairs, custom CSS, and recovery controls.",
+										)}
+									>
+										<SettingsThemesTab />
+									</SettingsPage>
+								</Tabs.Content>
 								{import.meta.env.TAURI_ENV_PLATFORM && (
 									<Tabs.Content value="discord" className={styles.tabContent}>
 										<SettingsPage
@@ -604,6 +745,28 @@ export const SettingsDialog = memo(() => {
 										</SettingsPage>
 									</Tabs.Content>
 								)}
+								<Tabs.Content value="performance" className={styles.tabContent}>
+									<SettingsPage
+										title={t("settingsDialog.tab.performance", "Performance")}
+										description={t(
+											"settingsDialog.page.performanceDesc",
+											"Preview frame rate, adaptive visual quality, and frame diagnostics.",
+										)}
+									>
+										<SettingsPerformanceTab />
+									</SettingsPage>
+								</Tabs.Content>
+								<Tabs.Content value="dev" className={styles.tabContent}>
+									<SettingsPage
+										title={t("settingsDialog.tab.dev", "Developer")}
+										description={t(
+											"settingsDialog.page.devDesc",
+											"Local debugging tools and WebAssembly plugin management.",
+										)}
+									>
+										<SettingsDevTab />
+									</SettingsPage>
+								</Tabs.Content>
 								<Tabs.Content value="about" className={styles.tabContent}>
 									<SettingsPage
 										title={t("common.about", "About")}

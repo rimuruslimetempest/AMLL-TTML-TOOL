@@ -1,6 +1,6 @@
 [package]
 name = "ttml-tool"
-version = "1.0.4"
+version = "2.0.0"
 description = "TTML Tool - a word-synced TTML lyric editor for Apple Music-style lyrics"
 authors = ["Rimurulover <rimurusamllttmltool@gmail.com>"]
 homepage = "https://github.com/rimuruslimetempest/AMLL-TTML-TOOL"

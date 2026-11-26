@@ -1075,3 +1075,10 @@ button.topMenuBarButton:where([data-state="open"], :active) {
 	box-shadow: none !important;
 }
 
+/* New shell: toasts hang below the measured chrome, never on the tab rail. */
+:root[data-ui-layer="new"] .Toastify__toast-container--top-right,
+:root[data-ui-layer="new"] .Toastify__toast-container--top-left,
+:root[data-ui-layer="new"] .Toastify__toast-container--top-center {
+	top: calc(var(--ttml-content-top, 60px) + 12px) !important;
+}
+

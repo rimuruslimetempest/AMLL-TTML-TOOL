@@ -25,19 +25,15 @@ import {
 	Select,
 	Text,
 } from "@radix-ui/themes";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { gt as semverGt } from "semver";
-import {
-	buildReportProblemUrl,
-	MARKETPLACE_URL,
-	RELEASES_URL,
-} from "$/config/links";
+import { buildReportProblemUrl, RELEASES_URL } from "$/config/links";
 import { APP_VERSION } from "$/modules/changelog/data";
 import { whatsNewAutoOpenAtom } from "$/modules/changelog/states";
 import { PrivacyLinksCard } from "$/modules/privacy/PrivacyDialogs";
-import { whatsNewDialogAtom } from "$/states/dialogs";
+import { settingsTabAtom, whatsNewDialogAtom } from "$/states/dialogs";
 import {
 	autoUpdateCheckAtom,
 	skippedUpdateVersionAtom,
@@ -50,6 +46,7 @@ import { useAppUpdate } from "$/utils/useAppUpdate";
 
 export const SettingsAboutTab = () => {
 	const { t } = useTranslation();
+	const setSettingsTab = useSetAtom(settingsTabAtom);
 	const {
 		status,
 		update,
@@ -718,9 +715,9 @@ export const SettingsAboutTab = () => {
 						</Button>
 						<Button
 							variant="soft"
-							onClick={() => openExternal(MARKETPLACE_URL)}
+							onClick={() => setSettingsTab("themes")}
 						>
-							{t("aboutModal.themeMarketplace", "Theme marketplace")}
+							{t("aboutModal.themeMarketplace", "Theme manager")}
 						</Button>
 					</Flex>
 				</Flex>

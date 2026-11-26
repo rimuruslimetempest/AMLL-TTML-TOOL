@@ -41,6 +41,7 @@ export const RibbonBar = memo(
 					data-guide-target="ribbon"
 					data-ui-chrome="ribbon"
 					data-new-ribbon={uiLayer === UiLayer.New ? "" : undefined}
+					data-ribbon-position={position}
 					style={{
 						minHeight: isSidebar ? "100%" : "fit-content",
 						minWidth: isSidebar ? "240px" : 0,
@@ -57,10 +58,14 @@ export const RibbonBar = memo(
 						borderBottom:
 							position === "top" ? "1px solid var(--gray-a4)" : "none",
 						backgroundColor:
-							"var(--titlebar-bg, var(--color-panel-translucent))",
+							uiLayer === UiLayer.New
+								? "transparent"
+								: "var(--titlebar-bg, var(--color-panel-translucent))",
 						backdropFilter:
-							"var(--titlebar-backdrop-filter, blur(var(--custom-backdrop-blur, 16px)) saturate(160%))",
-						zIndex: 10,
+							uiLayer === UiLayer.New
+								? "none"
+								: "var(--titlebar-backdrop-filter, blur(var(--custom-backdrop-blur, 16px)) saturate(160%))",
+						zIndex: uiLayer === UiLayer.New ? undefined : 10,
 					}}
 					ref={ref}
 				>
@@ -69,8 +74,9 @@ export const RibbonBar = memo(
 							width: "100%",
 							minWidth: 0,
 							overflowY: isSidebar ? "auto" : "visible",
-							overflowX: isSidebar ? "hidden" : "auto",
-							paddingBottom: isSidebar ? 0 : "4px",
+							overflowX:
+								isSidebar || uiLayer === UiLayer.New ? "visible" : "auto",
+							paddingBottom: isSidebar ? 0 : uiLayer === UiLayer.New ? 0 : "4px",
 						}}
 					>
 						{toolMode === ToolMode.Edit && (

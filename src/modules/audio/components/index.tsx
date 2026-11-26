@@ -175,6 +175,7 @@ export const AudioControls: FC<AudioControlsProps> = memo(({
 	const { openFile } = useFileOpener();
 	const { t } = useTranslation();
 
+
 	const handleDownloadAudioAction = useCallback(() => {
 		if (onDownloadAudio) {
 			onDownloadAudio();
@@ -288,9 +289,11 @@ export const AudioControls: FC<AudioControlsProps> = memo(({
 			{!hideKeyBindings && <AudioPlaybackKeyBinding />}
 			{!hideKeyBindings && <AuditionKeyBinding />}
 			<Flex direction="column">
-				<div style={{ display: spectrogramVisible ? "flex" : "none" }}>
-					<AudioSpectrogram />
-				</div>
+				{spectrogramVisible ? (
+					<div style={{ display: "flex" }}>
+						<AudioSpectrogram />
+					</div>
+				) : null}
 				<Flex align="center" px="2" gapX="2">
 					<HoverCard.Root>
 						<HoverCard.Trigger>

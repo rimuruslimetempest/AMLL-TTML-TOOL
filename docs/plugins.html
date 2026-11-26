@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="color-scheme" content="dark" />
+		<meta name="theme-color" content="#07070b" />
+		<title>Plugins — TTML Tool Marketplace</title>
+		<meta
+			name="description"
+			content="Browse community WASM plugins for TTML Tool. Each listing shows its declared permissions, hash, and the exact files it installs."
+		/>
+		<link rel="stylesheet" href="./assets/marketplace.css" />
+	</head>
+	<body>
+		<a class="skip" href="#main">Skip to content</a>
+		<header class="site">
+			<div class="wrap nav">
+				<a class="brand" href="./index.html">
+					<span class="brand-mark" aria-hidden="true"></span>
+					TTML Tool Marketplace
+				</a>
+				<a class="navlink" href="./index.html">Home</a>
+				<a class="navlink" href="./themes.html">Themes</a>
+				<a class="navlink" href="./plugins.html" aria-current="page">Plugins</a>
+				<a class="navlink" href="./submit.html">Submit</a>
+				<a class="navlink" href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL">GitHub</a>
+			</div>
+		</header>
+
+		<main id="main">
+			<div class="wrap page-head">
+				<h1 style="font-size: clamp(30px, 4vw, 44px)">Community plugins</h1>
+				<p class="lede">
+					Plugins add importers, exporters, and lyric tools. Every listing here
+					is a sandboxed WebAssembly module with a published SHA-256 hash,
+					declared permissions, and a matching manifest.
+				</p>
+				<div class="notice info">
+					<span aria-hidden="true">i</span>
+					<div>
+						Plugins are WebAssembly only. They cannot read your files, lyrics,
+						or network unless they declare the permission and you approve it at
+						install. Themes and plugins are reviewed separately.
+					</div>
+				</div>
+
+				<div class="toolbar" role="search">
+					<div class="field search">
+						<label for="plugin-search">Search</label>
+						<input
+							type="search"
+							id="plugin-search"
+							placeholder="Name, author, description, or tag"
+							autocomplete="off"
+						/>
+					</div>
+					<div class="field">
+						<label for="type-filter">Type</label>
+						<select id="type-filter">
+							<option value="all">All types</option>
+							<option value="importer">Importer</option>
+							<option value="exporter">Exporter</option>
+							<option value="tool">Tool</option>
+							<option value="both">Importer and exporter</option>
+						</select>
+					</div>
+					<div class="field">
+						<label for="sort-filter">Sort</label>
+						<select id="sort-filter">
+							<option value="name">Name</option>
+							<option value="newest">Recently added</option>
+						</select>
+					</div>
+				</div>
+
+				<p id="result-count" class="byline" aria-live="polite"></p>
+			</div>
+
+			<div class="wrap">
+				<div id="plugin-grid" class="theme-grid"></div>
+				<noscript>
+					<div class="empty">
+						JavaScript is needed to read the plugin registry. You can still open
+						<a href="./registry/plugins.json">registry/plugins.json</a> directly
+						and download a plugin bundle.
+					</div>
+				</noscript>
+
+				<section>
+					<h2 style="font-size: 22px">Installing a plugin</h2>
+					<ol class="steps">
+						<li>
+							<h3>Open the plugin store</h3>
+							<p>
+								In TTML Tool, open <strong>Plugin Management</strong> and switch
+								to <strong>Plugin Store</strong>. Listings load from this page's
+								registry.
+							</p>
+						</li>
+						<li>
+							<h3>Read the permissions</h3>
+							<p>
+								Install shows the exact permissions the plugin declares. Approve
+								only what you understand; <strong>network</strong> and
+								<strong>files:write</strong> are worth a second look.
+							</p>
+						</li>
+						<li>
+							<h3>Or sideload both files</h3>
+							<p>
+								Download the <code>.wasm</code> and its
+								<code>plugin.json</code>, then choose
+								<strong>Sideload .wasm + plugin.json</strong> in the Installed
+								tab. Sideloaded plugins skip the registry hash check, so only do
+								this with files you trust.
+							</p>
+						</li>
+					</ol>
+				</section>
+			</div>
+		</main>
+
+		<footer class="site">
+			<div class="wrap footer-row">
+				<span>TTML Tool Marketplace · made by Rimurulover</span>
+				<span>
+					<a href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/blob/main/CONTRIBUTING.md">Contributing</a>
+					· <a href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/blob/main/PLUGINS.md">Plugin guide</a>
+					· <a href="./submit.html">Submit a plugin</a>
+				</span>
+			</div>
+		</footer>
+		<script src="./assets/plugins.js" defer></script>
+	</body>
+</html>

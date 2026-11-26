@@ -1,0 +1,51 @@
+/* Rendered inside the Preview, which is already isolated from the app chrome. */
+.preview-frame-diagnostics {
+	position: absolute;
+	/* Clear the Preview's album-art and fullscreen buttons in the top-right. */
+	top: 56px;
+	right: 12px;
+	z-index: 30;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 8px 10px;
+	border-radius: 10px;
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	background: rgba(8, 10, 14, 0.74);
+	color: #f5f7fa;
+	font: 500 11px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	pointer-events: none;
+}
+
+.preview-frame-diagnostics__row {
+	display: flex;
+	gap: 12px;
+	justify-content: space-between;
+}
+
+.preview-frame-diagnostics__muted {
+	opacity: 0.72;
+}
+
+.preview-frame-diagnostics canvas {
+	display: block;
+	width: 240px;
+	height: 44px;
+	border-radius: 4px;
+}
+
+.preview-frame-diagnostics button {
+	pointer-events: auto;
+	align-self: flex-start;
+	padding: 3px 8px;
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	border-radius: 6px;
+	background: rgba(255, 255, 255, 0.08);
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+
+.preview-frame-diagnostics button:hover {
+	background: rgba(255, 255, 255, 0.16);
+}

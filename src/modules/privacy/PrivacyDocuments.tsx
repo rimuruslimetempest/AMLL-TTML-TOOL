@@ -401,15 +401,6 @@ export function PrivacyPolicyContent() {
 					they replace the previous binary. A cookies file is read locally and
 					sent only to the site you are downloading from.
 				</P>
-				<P>
-					Community themes are optional. Browse community themes opens the
-					public marketplace in your browser. Show community themes inside the
-					app is off by default; when enabled, the app requests the public
-					registry and preview images from raw.githubusercontent.com. Only the
-					request itself is sent. A theme file is downloaded only after you
-					click Preview &amp; install, and it is refused if its SHA-256 does not
-					match the registry.
-				</P>
 			</Section>
 
 			<Section title="6. Discord Rich Presence">
@@ -705,8 +696,9 @@ export function TermsContent() {
 				</P>
 				<P>
 					Audio download runs yt-dlp and ffmpeg locally. Their official
-					releases and licenses apply. Community themes are made by other people;
-					JSON/CSS checks and a matching SHA-256 do not guarantee quality.
+					releases and licenses apply. Community themes and plugins are made by
+					other people; JSON/CSS checks, a WebAssembly header check, declared
+					permissions, and a matching SHA-256 do not guarantee quality.
 					Verified only means the entry was reviewed when it was added.
 				</P>
 			</Section>

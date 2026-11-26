@@ -3,13 +3,12 @@ import { sanitizeThemeCss } from "./css";
 import type { ThemePack, ThemePerformance } from "./types";
 import { parseTheme } from "./validate";
 
-export const COMMUNITY_THEMES_OPT_IN_KEY = "ttml_community_themes_opt_in_v1";
-export const COMMUNITY_THEMES_NOTICE_KEY = "ttml_community_themes_notice_v1";
-
 const MAX_REGISTRY_BYTES = 512 * 1024;
 const MAX_THEME_BYTES = 2 * 1024 * 1024;
+const THEME_ID = /^[a-z0-9][a-z0-9-]{1,63}$/;
+const SHA256 = /^[a-f0-9]{64}$/;
 
-export interface CommunityThemeEntry {
+export interface ThemeRegistryEntry {
 	id: string;
 	name: string;
 	author: string;
@@ -24,13 +23,20 @@ export interface CommunityThemeEntry {
 	performance: ThemePerformance;
 	minAppVersion: string;
 	verified?: boolean;
+	addedAt?: string;
+	changelog?: string;
+}
+
+export interface FetchedRegistryTheme {
+	theme: ThemePack;
+	css?: string;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function readEntry(value: unknown): CommunityThemeEntry | null {
+function readEntry(value: unknown): ThemeRegistryEntry | null {
 	if (!isRecord(value)) return null;
 	for (const field of [
 		"id",
@@ -47,11 +53,8 @@ function readEntry(value: unknown): CommunityThemeEntry | null {
 	]) {
 		if (typeof value[field] !== "string" || !value[field].trim()) return null;
 	}
-	if (
-		value.appearance !== "dark" &&
-		value.appearance !== "light"
-	)
-		return null;
+	if (!THEME_ID.test(String(value.id))) return null;
+	if (value.appearance !== "dark" && value.appearance !== "light") return null;
 	if (
 		value.performance !== "light" &&
 		value.performance !== "medium" &&
@@ -60,7 +63,7 @@ function readEntry(value: unknown): CommunityThemeEntry | null {
 		return null;
 	if (!Array.isArray(value.tags) || !value.tags.every((tag) => typeof tag === "string"))
 		return null;
-	if (!/^[a-f0-9]{64}$/.test(String(value.sha256))) return null;
+	if (!SHA256.test(String(value.sha256))) return null;
 	return {
 		id: String(value.id),
 		name: String(value.name),
@@ -76,62 +79,46 @@ function readEntry(value: unknown): CommunityThemeEntry | null {
 		performance: value.performance,
 		minAppVersion: String(value.minAppVersion),
 		verified: value.verified === true,
+		addedAt: typeof value.addedAt === "string" ? value.addedAt : undefined,
+		changelog: typeof value.changelog === "string" ? value.changelog : undefined,
 	};
 }
 
-function resolveHttpsUrl(path: string, base = THEME_REGISTRY_URL): string {
-	const url = new URL(path, base);
+/** Optional override for local testing; the production default is the Pages registry. */
+export function themeRegistryUrl(): string {
+	const override = (
+		import.meta as ImportMeta & { env?: Record<string, string | undefined> }
+	).env?.VITE_THEME_REGISTRY_URL;
+	return override?.trim() || THEME_REGISTRY_URL;
+}
+
+function resolveMarketplaceUrl(path: string): string {
+	const url = new URL(path, themeRegistryUrl());
+	// Registry entries are relative to the marketplace root, not to registry/.
+	if (!/^https?:/i.test(path)) {
+		const base = new URL(themeRegistryUrl());
+		base.pathname = base.pathname.replace(/registry\/[^/]*$/, "");
+		return new URL(path, base).href;
+	}
 	if (url.protocol !== "https:") {
 		throw new Error("The theme registry returned a non-HTTPS address.");
 	}
 	return url.href;
 }
 
-export function isCommunityThemesOptedIn(): boolean {
-	try {
-		return localStorage.getItem(COMMUNITY_THEMES_OPT_IN_KEY) === "true";
-	} catch {
-		return false;
-	}
+export function communityThemePreviewUrl(entry: ThemeRegistryEntry): string {
+	return resolveMarketplaceUrl(entry.preview);
 }
 
-export function setCommunityThemesOptedIn(value: boolean): void {
-	try {
-		localStorage.setItem(COMMUNITY_THEMES_OPT_IN_KEY, String(value));
-	} catch {
-		// Ignore storage failures; the marketplace still works for this session.
-	}
-}
-
-export function hasSeenCommunityThemesNotice(): boolean {
-	try {
-		return localStorage.getItem(COMMUNITY_THEMES_NOTICE_KEY) === "true";
-	} catch {
-		return false;
-	}
-}
-
-export function markCommunityThemesNoticeSeen(): void {
-	try {
-		localStorage.setItem(COMMUNITY_THEMES_NOTICE_KEY, "true");
-	} catch {
-		// Ignore storage failures.
-	}
-}
-
-export function communityThemePreviewUrl(entry: CommunityThemeEntry): string {
-	return resolveHttpsUrl(entry.preview);
-}
-
-export async function fetchCommunityThemes(
+export async function fetchThemeRegistry(
 	signal?: AbortSignal,
-): Promise<CommunityThemeEntry[]> {
-	const response = await fetch(THEME_REGISTRY_URL, {
+): Promise<ThemeRegistryEntry[]> {
+	const response = await fetch(themeRegistryUrl(), {
 		headers: { accept: "application/json" },
 		cache: "no-store",
 		signal: signal ?? AbortSignal.timeout(15_000),
 	});
-	if (!response.ok) throw new Error(`GitHub returned HTTP ${response.status}.`);
+	if (!response.ok) throw new Error(`The marketplace returned HTTP ${response.status}.`);
 	const text = await response.text();
 	if (text.length > MAX_REGISTRY_BYTES) {
 		throw new Error("The theme registry is larger than expected.");
@@ -142,7 +129,7 @@ export async function fetchCommunityThemes(
 	}
 	return parsed.themes
 		.map(readEntry)
-		.filter((entry): entry is CommunityThemeEntry => entry !== null);
+		.filter((entry): entry is ThemeRegistryEntry => entry !== null);
 }
 
 async function sha256Hex(bytes: ArrayBuffer): Promise<string> {
@@ -152,35 +139,27 @@ async function sha256Hex(bytes: ArrayBuffer): Promise<string> {
 		.join("");
 }
 
-export interface FetchedCommunityTheme {
-	theme: ThemePack;
-	css?: string;
-}
-
 /**
- * Downloads one registry theme, verifies the published SHA-256, rejects remote
- * CSS and returns a parsed theme. Nothing is installed here; the caller shows
+ * Downloads one registry theme, verifies its published SHA-256, rejects remote
+ * CSS, and returns a parsed theme. Nothing is installed here; the caller shows
  * the normal preview and confirmation first.
  */
-export async function fetchCommunityTheme(
-	entry: CommunityThemeEntry,
+export async function fetchRegistryTheme(
+	entry: ThemeRegistryEntry,
 	signal?: AbortSignal,
-): Promise<FetchedCommunityTheme> {
-	const url = resolveHttpsUrl(entry.download);
-	const response = await fetch(url, {
+): Promise<FetchedRegistryTheme> {
+	const response = await fetch(resolveMarketplaceUrl(entry.download), {
 		headers: { accept: "application/json" },
 		cache: "no-store",
 		signal: signal ?? AbortSignal.timeout(20_000),
 	});
-	if (!response.ok) throw new Error(`GitHub returned HTTP ${response.status}.`);
+	if (!response.ok) throw new Error(`The marketplace returned HTTP ${response.status}.`);
 	const buffer = await response.arrayBuffer();
 	if (buffer.byteLength > MAX_THEME_BYTES) {
 		throw new Error("The theme file is larger than the 2 MB limit.");
 	}
 	if (entry.size !== undefined && entry.size !== buffer.byteLength) {
-		throw new Error(
-			"The theme file size does not match the marketplace listing.",
-		);
+		throw new Error("The theme file size does not match the marketplace listing.");
 	}
 	const actual = await sha256Hex(buffer);
 	if (actual !== entry.sha256) {
@@ -188,8 +167,9 @@ export async function fetchCommunityTheme(
 			"The downloaded theme does not match its published SHA-256 hash. It was not installed.",
 		);
 	}
-	const text = new TextDecoder().decode(buffer);
-	const parsed = parseTheme(text, { allowBuiltinId: false });
+	const parsed = parseTheme(new TextDecoder().decode(buffer), {
+		allowBuiltinId: false,
+	});
 	if (!parsed.ok || !parsed.theme) {
 		throw new Error(parsed.errors.join(" "));
 	}
@@ -210,4 +190,31 @@ export async function fetchCommunityTheme(
 		};
 	}
 	return { theme: parsed.theme };
+}
+
+function parts(version: string): number[] {
+	return version
+		.split(/[-+]/)[0]
+		.split(".")
+		.map((part) => Number.parseInt(part, 10) || 0);
+}
+
+/** Returns 1 when a is newer than b, -1 when older, and 0 when equal. */
+export function compareVersions(a: string, b: string): number {
+	const left = parts(a);
+	const right = parts(b);
+	const length = Math.max(left.length, right.length);
+	for (let index = 0; index < length; index++) {
+		const difference = (left[index] ?? 0) - (right[index] ?? 0);
+		if (difference !== 0) return difference > 0 ? 1 : -1;
+	}
+	return 0;
+}
+
+export function isUpdateAvailable(
+	installedVersion: string | undefined,
+	registryVersion: string,
+): boolean {
+	if (!installedVersion) return false;
+	return compareVersions(registryVersion, installedVersion) > 0;
 }

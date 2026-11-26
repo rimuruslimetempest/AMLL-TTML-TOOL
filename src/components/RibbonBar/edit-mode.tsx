@@ -1589,7 +1589,7 @@ export const EditModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 	const selectedWords = useAtomValue(selectedWordsAtom);
 	const setSelectedWords = useSetAtom(selectedWordsAtom);
 	const setNewLineTextFocus = useSetAtom(newLineTextFocusAtom);
-	const currentTime = useAtomValue(currentTimeAtom);
+	const store = useStore();
 	const newLineInsertionMode = useAtomValue(newLineInsertionModeAtom);
 	const [showAdvanced, setShowAdvanced] = useAtom(advancedRibbonControlsAtom);
 	const uiLayer = useAtomValue(uiLayerAtom);
@@ -1693,7 +1693,7 @@ export const EditModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 											draft.lyricLines,
 											{
 												selectedLineIds: selectedLines,
-												currentTime,
+												currentTime: store.get(currentTimeAtom),
 												mode: newLineInsertionMode,
 											},
 										);

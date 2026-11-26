@@ -14,6 +14,7 @@ import { useAtom, useAtomValue } from "jotai";
 import { type FC, forwardRef, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
+	ArrowSync16Regular,
 	Eye24Regular,
 	FullScreenMaximize20Regular,
 	FullScreenMinimize20Regular,
@@ -37,6 +38,7 @@ import {
 	showRomanLinesAtom,
 	showTranslationLinesAtom,
 	spicySimpleLyricsModeAtom,
+	vsyncAtom,
 } from "$/modules/settings/states/preview";
 import { UiLayer, uiLayerAtom } from "$/modules/settings/states";
 import { RibbonFrame, RibbonSection } from "./common";
@@ -83,6 +85,7 @@ export const PreviewModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 	const [showRomanLine, setShowRomanLine] = useAtom(showRomanLinesAtom);
 	const [hideObsceneWords, setHideObsceneWords] = useAtom(hideObsceneWordsAtom);
 	const [showFps, setShowFps] = useAtom(showFpsCounterAtom);
+	const [vsync, setVsync] = useAtom(vsyncAtom);
 	const [spicySimpleMode, setSpicySimpleMode] = useAtom(
 		spicySimpleLyricsModeAtom,
 	);
@@ -186,6 +189,16 @@ export const PreviewModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 		/>
 	);
 
+	const vsyncControl = (
+		<PreviewToggle
+			active={vsync}
+			onToggle={() => setVsync((v) => !v)}
+			icon={<ArrowSync16Regular />}
+			label={t("ribbonBar.previewMode.vsync", "VSync")}
+			showTooltip={showTooltip}
+		/>
+	);
+
 	return (
 		<RibbonFrame
 			ref={ref}
@@ -256,6 +269,7 @@ export const PreviewModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 						>
 							{obsceneControl}
 							{fpsControl}
+							{vsyncControl}
 						</Grid>
 					</RibbonSection>
 				</>
@@ -305,6 +319,7 @@ export const PreviewModeRibbonBar: FC<{ isSidebar?: boolean }> = forwardRef<
 							{romanControl}
 							{obsceneControl}
 							{fpsControl}
+							{vsyncControl}
 						</Grid>
 					</RibbonSection>
 				</>

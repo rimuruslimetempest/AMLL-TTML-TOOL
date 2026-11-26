@@ -2,6 +2,7 @@ import { useAtom } from "jotai";
 import { useAtomValue } from "jotai/index";
 import { useCallback, useEffect, useRef } from "react";
 import { audioBufferAtom, currentTimeAtom } from "$/modules/audio/states";
+import { frameScheduler } from "$/modules/performance/scheduler";
 import {
 	spectrogramPlayheadTrackingModeAtom,
 	spectrogramScrollLeftAtom,
@@ -24,40 +25,56 @@ export function useSpectrogramInteraction(
 
 	const targetScrollLeftRef = useRef(scrollLeft);
 	const targetZoomRef = useRef(zoom);
-	const animationFrameRef = useRef<number | null>(null);
+	const animationUnsubRef = useRef<(() => void) | null>(null);
 	const currentScrollLeftRef = useRef(scrollLeft);
 	const currentZoomRef = useRef(zoom);
 
-	const animationLoop = useCallback(() => {
-		const targetScroll = targetScrollLeftRef.current;
-		const targetZoom = targetZoomRef.current;
-		const currentScroll = currentScrollLeftRef.current;
-		const currentZoom = currentZoomRef.current;
+	const animationLoop = useCallback(
+		(frame: { dt: number }) => {
+			const targetScroll = targetScrollLeftRef.current;
+			const targetZoom = targetZoomRef.current;
+			const currentScroll = currentScrollLeftRef.current;
+			const currentZoom = currentZoomRef.current;
 
-		const lerpFactor = 0.35;
-		const nextScroll =
-			(1 - lerpFactor) * currentScroll + lerpFactor * targetScroll;
-		const nextZoom = (1 - lerpFactor) * currentZoom + lerpFactor * targetZoom;
+			// Frame-rate independent easing. 0.35 per 16.67 ms frame is the old
+			// 60 Hz feel; at 165 Hz or 240 Hz the same distance is covered in the
+			// same time instead of finishing much sooner.
+			const lerpFactor = 1 - (1 - 0.35) ** (frame.dt / (1000 / 60));
+			const nextScroll =
+				(1 - lerpFactor) * currentScroll + lerpFactor * targetScroll;
+			const nextZoom =
+				(1 - lerpFactor) * currentZoom + lerpFactor * targetZoom;
 
-		const scrollDiff = Math.abs(nextScroll - targetScroll);
-		const zoomDiff = Math.abs(nextZoom - targetZoom);
+			const scrollDiff = Math.abs(nextScroll - targetScroll);
+			const zoomDiff = Math.abs(nextZoom - targetZoom);
 
-		if (scrollDiff < 1 && zoomDiff < 2) {
-			setScrollLeft(targetScroll);
-			setZoom(targetZoom);
-			animationFrameRef.current = null;
-		} else {
-			setScrollLeft(nextScroll);
-			setZoom(nextZoom);
-			animationFrameRef.current = requestAnimationFrame(animationLoop);
-		}
-	}, [setScrollLeft, setZoom]);
+			if (scrollDiff < 1 && zoomDiff < 2) {
+				setScrollLeft(targetScroll);
+				setZoom(targetZoom);
+				animationUnsubRef.current?.();
+				animationUnsubRef.current = null;
+			} else {
+				setScrollLeft(nextScroll);
+				setZoom(nextZoom);
+			}
+		},
+		[setScrollLeft, setZoom],
+	);
 
 	const startAnimation = useCallback(() => {
-		if (animationFrameRef.current === null) {
-			animationFrameRef.current = requestAnimationFrame(animationLoop);
+		if (animationUnsubRef.current === null) {
+			animationUnsubRef.current = frameScheduler.subscribe(animationLoop, {
+				label: "spectrogram",
+			});
 		}
 	}, [animationLoop]);
+
+	useEffect(() => {
+		return () => {
+			animationUnsubRef.current?.();
+			animationUnsubRef.current = null;
+		};
+	}, []);
 
 	const handleWheelScroll = useCallback(
 		(event: WheelEvent) => {
@@ -124,14 +141,14 @@ export function useSpectrogramInteraction(
 
 	useEffect(() => {
 		currentScrollLeftRef.current = scrollLeft;
-		if (animationFrameRef.current === null) {
+		if (animationUnsubRef.current === null) {
 			targetScrollLeftRef.current = scrollLeft;
 		}
 	}, [scrollLeft]);
 
 	useEffect(() => {
 		currentZoomRef.current = zoom;
-		if (animationFrameRef.current === null) {
+		if (animationUnsubRef.current === null) {
 			targetZoomRef.current = zoom;
 		}
 	}, [zoom]);
@@ -155,10 +172,8 @@ export function useSpectrogramInteraction(
 			const targetScroll = playheadX - containerWidth / 2;
 			const clampedScroll = Math.max(0, Math.min(targetScroll, maxScrollLeft));
 
-			if (animationFrameRef.current !== null) {
-				cancelAnimationFrame(animationFrameRef.current);
-				animationFrameRef.current = null;
-			}
+			animationUnsubRef.current?.();
+			animationUnsubRef.current = null;
 
 			currentScrollLeftRef.current = clampedScroll;
 			targetScrollLeftRef.current = clampedScroll;
@@ -171,10 +186,8 @@ export function useSpectrogramInteraction(
 			if (isPastRight || isBeforeLeft) {
 				const clampedScroll = Math.max(0, Math.min(playheadX, maxScrollLeft));
 
-				if (animationFrameRef.current !== null) {
-					cancelAnimationFrame(animationFrameRef.current);
-					animationFrameRef.current = null;
-				}
+				animationUnsubRef.current?.();
+				animationUnsubRef.current = null;
 
 				currentScrollLeftRef.current = clampedScroll;
 				targetScrollLeftRef.current = clampedScroll;

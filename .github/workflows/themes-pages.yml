@@ -1,4 +1,4 @@
-name: Theme marketplace
+name: Marketplace site
 
 on:
   push:
@@ -6,6 +6,8 @@ on:
     paths:
       - "docs/**"
       - "scripts/validate-theme-registry.mjs"
+      - "scripts/validate-plugin-registry.mjs"
+      - "scripts/validate-marketplace.mjs"
       - ".github/workflows/themes-pages.yml"
   workflow_dispatch:
 
@@ -26,8 +28,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Validate the theme registry
-        run: node scripts/validate-theme-registry.mjs
+      - name: Validate the marketplace catalogs
+        run: node scripts/validate-marketplace.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

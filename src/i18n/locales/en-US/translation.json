@@ -277,7 +277,8 @@
 			"fullscreen": "Fullscreen",
 			"showArtwork": "Album Artwork",
 			"render": "Render",
-			"dev": "Dev",
+			"dev": "Developer",
+			"vsync": "VSync",
 			"showFps": "Show FPS",
 			"display": "Display",
 			"advanced": "Advanced"
@@ -320,6 +321,22 @@
 		"loading": "Loading panel..."
 	},
 	"settings": {
+		"themes": {
+			"safety": {
+				"title": "Theme safety",
+				"desc": "If a theme paints over the interface, turn off theme CSS without losing your colors or project data. Token colors stay active.",
+				"disable": "Disable theme CSS",
+				"disableDesc": "Stops the selected theme's stylesheet and Custom CSS from applying. The theme's color tokens and the rest of the app stay active.",
+				"disableAction": "Disable theme CSS now",
+				"resetTheme": "Reset theme",
+				"resetCss": "Reset custom CSS"
+			},
+			"legacy": {
+				"title": "Legacy appearance presets",
+				"desc": "The old built-in preset grid now lives with themes. Saved custom presets remain under Appearance → Legacy appearance presets.",
+				"open": "Open Appearance"
+			}
+		},
 		"common": {
 			"enabled": "Enabled",
 			"layoutModeOptions": {
@@ -435,7 +452,15 @@
 				"title": "Appearance Presets",
 				"namePlaceholder": "Theme Name...",
 				"save": "Save Current",
-				"empty": "No saved presets yet."
+				"empty": "No saved presets yet.",
+				"themesMoved": "Built-in themes moved to Themes",
+				"themesMovedDesc": "Browse and install themes in Settings → Themes. Your saved appearance presets are still below.",
+				"legacy": "Legacy appearance presets"
+			},
+			"matchingWords": {
+				"section": "Word edits",
+				"title": "Ask before applying edits to matching words",
+				"desc": "After you rename a word, offer to rename its other occurrences. The prompt never applies anything by itself, skips locked or claimed lines, and keeps timing. Default: on."
 			},
 			"theme": "Theme",
 			"uiScale": "Interface Scale",
@@ -549,6 +574,7 @@
 				"densityDesc": "Compact reduces vertical spacing without shrinking text or removing controls.",
 				"densityComfortable": "Comfortable",
 				"densityCompact": "Compact",
+				"densityContrast": "Density & contrast",
 				"contrast": "Contrast",
 				"contrastDesc": "High contrast strengthens borders and text to meet WCAG AA readability.",
 				"contrastStandard": "Standard",
@@ -814,7 +840,7 @@
 				"toCleanLrc": "Export Clean to LyRiC (.lrc)"
 			},
 			"recycleBin": "Recycle Bin…",
-			"themesMarketplace": "Theme marketplace",
+			"themesMarketplace": "Themes & appearance",
 			"refreshGeniusLyrics": "Refresh Lyrics from Genius...",
 			"ttmlReview": "Review TTML..."
 		}
@@ -876,6 +902,10 @@
 		},
 		"keybindings": {
 			"newFile": "New File",
+			"commandPalette": "Command palette",
+			"focusMode": "Focus mode",
+			"workspaceHome": "Workspace home",
+			"reviewCockpit": "Review cockpit",
 			"newWindow": "New Window",
 			"openFile": "Open File",
 			"saveFile": "Save File",
@@ -963,11 +993,15 @@
 			"common": "General",
 			"assistant": "Assistant",
 			"appearance": "Appearance",
+			"themes": "Themes",
 			"audio": "Audio",
 			"keybindings": "Keybindings",
 			"spectrogram": "Spectrogram",
 			"backup": "Backup",
-			"dev": "Dev"
+			"dev": "Developer"
+		},
+		"page": {
+			"devDesc": "Local debugging tools and WebAssembly plugin management."
 		},
 		"searchResults": "Search Results",
 		"searchPlaceholder": "Search settings...",
@@ -1770,7 +1804,7 @@
 		"crowdin": "Help Translate in Crowdin",
 		"buildDate": "Build Date: {date}",
 		"gitCommit": "Git Commit: {commit}",
-		"themeMarketplace": "Theme marketplace"
+		"themeMarketplace": "Theme manager"
 	},
 	"spectrogram": {
 		"invalidEndTime": "Cannot select this end time",

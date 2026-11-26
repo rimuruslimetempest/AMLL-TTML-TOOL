@@ -99,7 +99,10 @@ import {
 	highlightErrorsAtom,
 } from "$/modules/settings/states/index.ts";
 import { instantHighlightFadeAtom } from "$/modules/settings/states/preview.ts";
-import { fontSelectionDialogAtom } from "$/states/dialogs.ts";
+import {
+	fontSelectionDialogAtom,
+	settingsTabAtom,
+} from "$/states/dialogs.ts";
 import {
 	isDarkThemeAtom,
 	darkModeAtom,
@@ -113,7 +116,6 @@ import {
 } from "./customBackground";
 import { PresentationSettings } from "./presentation";
 import { UIScaleSetting } from "./UIScaleSetting";
-import { ThemeAdvancedCard } from "$/modules/themes/ThemeSettings";
 
 const BUILTIN_PRESETS: AppearancePreset[] = [
 	{
@@ -1081,6 +1083,7 @@ export const SettingsAppearanceTab = () => {
 	const previewFont = useAtomValue(previewFontAtom);
 
 	const [showBackgroundSettings, setShowBackgroundSettings] = useState(false);
+	const setSettingsTab = useSetAtom(settingsTabAtom);
 	const { t } = useTranslation();
 
 	if (showBackgroundSettings) {
@@ -1133,137 +1136,54 @@ export const SettingsAppearanceTab = () => {
 				</Flex>
 				<Card>
 					<Flex direction="column" gap="3">
-						<Text
-							size="1"
-							weight="bold"
-							color="gray"
-							style={{ textTransform: "uppercase", letterSpacing: "0.5px" }}
-						>
-							{t("settings.appearance.presets.builtin", "Built-in Themes")}
-						</Text>
-						<Grid columns="3" gap="2">
-							{BUILTIN_PRESETS.map((p) => {
-								const isActive =
-									activePresetId === p.id ||
-									lastLoaded === p.name ||
-									(p.id === "builtin-apple" &&
-										(activePresetId === "builtin-apple-dark" ||
-											activePresetId === "builtin-apple-light" ||
-											lastLoaded === "Apple Dark" ||
-											lastLoaded === "Apple Light"));
-								const s =
-									!isDarkTheme && p.lightSettings
-										? p.lightSettings
-										: p.settings;
-								return (
-									<Card
-										key={p.id}
-										size="1"
-										style={{
-											cursor: "pointer",
-											border: isActive
-												? "2px solid var(--accent-9)"
-												: "1px solid var(--gray-a4)",
-											backgroundColor: isActive
-												? "var(--accent-2)"
-												: "var(--gray-a2)",
-											transition: "all 0.15s ease",
-											padding: "8px 10px",
-										}}
-										onClick={() => handleLoadPreset(p)}
-									>
-										<Flex direction="column" gap="2">
-											<Flex align="center" justify="between">
-												<Text
-													size="2"
-													weight="bold"
-													style={{
-														overflow: "hidden",
-														textOverflow: "ellipsis",
-														whiteSpace: "nowrap",
-													}}
-												>
-													{p.name}
-												</Text>
-												{isActive && (
-													<Badge size="1" color="green" variant="solid">
-														Active
-													</Badge>
-												)}
-											</Flex>
-											{/* Theme Color Palette Preview */}
-											<Flex align="center" gap="1">
-												<Box
-													style={{
-														width: "14px",
-														height: "14px",
-														borderRadius: "50%",
-														backgroundColor: s.vTitlebarBg || "#1f1f1f",
-														backgroundImage:
-															s.vTitlebarBg === "transparent"
-																? "linear-gradient(45deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.2) 75%), linear-gradient(45deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.2) 75%)"
-																: undefined,
-														backgroundSize: "6px 6px",
-														backgroundPosition: "0 0, 3px 3px",
-														border: "1px solid rgba(255,255,255,0.2)",
-													}}
-													title="Titlebar"
-												/>
-												<Box
-													style={{
-														width: "14px",
-														height: "14px",
-														borderRadius: "50%",
-														backgroundColor: s.vEditorBg || "#121212",
-														backgroundImage:
-															s.vEditorBg === "transparent"
-																? "linear-gradient(45deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.2) 75%), linear-gradient(45deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.2) 75%)"
-																: undefined,
-														backgroundSize: "6px 6px",
-														backgroundPosition: "0 0, 3px 3px",
-														border: "1px solid rgba(255,255,255,0.2)",
-													}}
-													title="Editor"
-												/>
-												<Box
-													style={{
-														width: "14px",
-														height: "14px",
-														borderRadius: "50%",
-														backgroundColor: s.advPrimaryText || "#fff",
-														border: "1px solid rgba(255,255,255,0.2)",
-													}}
-													title="Text"
-												/>
-												<Box
-													style={{
-														width: "14px",
-														height: "14px",
-														borderRadius: "50%",
-														backgroundColor: s.useCustomAccent
-															? s.customAccentColor || "#e5484d"
-															: s.accentColor
-																? `var(--${s.accentColor}-9, #e5484d)`
-																: "var(--accent-9)",
-														border: "1px solid rgba(255,255,255,0.2)",
-														marginLeft: "auto",
-													}}
-													title="Accent"
-												/>
-											</Flex>
-										</Flex>
-									</Card>
-								);
-							})}
-						</Grid>
-
-						<div
+						<Flex
+							align="center"
+							justify="between"
+							gap="3"
+							wrap="wrap"
 							style={{
-								borderBottom: "1px solid var(--gray-a5)",
-								margin: "8px 0",
+								padding: "10px 12px",
+								border: "1px solid var(--gray-a4)",
+								borderRadius: 8,
+								background: "var(--gray-a2)",
 							}}
-						/>
+						>
+							<Box>
+								<Text weight="bold" as="div">
+									{t(
+										"settings.appearance.presets.themesMoved",
+										"Built-in themes moved to Themes",
+									)}
+								</Text>
+								<Text size="1" color="gray" as="div" style={{ marginTop: 4 }}>
+									{t(
+										"settings.appearance.presets.themesMovedDesc",
+										"Browse and install themes in Settings → Themes. Your saved appearance presets are still below.",
+									)}
+								</Text>
+							</Box>
+							<Button variant="soft" onClick={() => setSettingsTab("themes")}>
+								<Color24Regular />
+								{t("settingsDialog.tab.themes", "Open Themes")}
+							</Button>
+						</Flex>
 
+
+						<details style={{ display: "block" }}>
+							<summary
+								style={{
+									cursor: "pointer",
+									fontSize: 13,
+									fontWeight: 600,
+									color: "var(--gray-11)",
+								}}
+							>
+								{t(
+									"settings.appearance.presets.legacy",
+									"Legacy appearance presets",
+								)}
+							</summary>
+							<Flex direction="column" gap="3" style={{ marginTop: 8 }}>
 						<Text
 							size="1"
 							weight="bold"
@@ -1366,6 +1286,8 @@ export const SettingsAppearanceTab = () => {
 								)}
 							</Text>
 						)}
+						</Flex>
+						</details>
 					</Flex>
 				</Card>
 			</Flex>
@@ -3077,7 +2999,6 @@ export const SettingsAppearanceTab = () => {
 					</Card>
 				</Flex>
 			)}
-			<ThemeAdvancedCard />
 		</Flex>
 	);
 };

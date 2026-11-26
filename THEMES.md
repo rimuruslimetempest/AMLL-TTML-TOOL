@@ -223,28 +223,30 @@ a separate `theme.css` is preferred for large CSS and local artwork.
 
 ## Community marketplace
 
-Community themes are listed at
-<https://rimuruslimetempest.github.io/AMLL-TTML-TOOL/>. The page is built from
-`docs/registry/themes.json`, and each entry includes a preview, a SHA-256, a
-performance level, and the minimum app version. The same repository holds the
-JSON schema and the validator used on pull requests.
+Themes and plugins share the marketplace at
+<https://rimuruslimetempest.github.io/AMLL-TTML-TOOL/>. Theme entries come from
+`docs/registry/themes.json` and plugin entries from
+`docs/registry/plugins.json`. Each entry includes a SHA-256, a preview or
+manifest, and the minimum app version. The same repository holds both JSON
+schemas and the validators used on pull requests.
 
-In **Settings → Appearance → Themes → Manage themes**, **Open marketplace**
-opens that page in your browser. **Show community themes inside the app** is off
-by default. Turning it on loads the registry and preview images from
-`raw.githubusercontent.com`; the first use shows a notice, and the Privacy
-Policy explains what is requested. A theme is downloaded only when you click
-**Preview & install**. The file is rejected if its size or SHA-256 does not
-match the registry, if it contains remote CSS loads, or if the normal theme
-validation fails. Installation still goes through the same preview and
-confirmation as a local import.
+In **Settings → Appearance → Themes → Manage themes**, the **Community** tab
+loads that registry from GitHub Pages only when you open it. A theme downloads
+only when you choose **Preview & install**. The file is rejected if its size or
+SHA-256 does not match the registry, if it contains remote CSS loads, or if the
+normal theme validation fails. Installation still goes through the same preview
+and confirmation as a local import. **Reload** fetches the catalog again; no
+background polling is used.
 
 **Verified** means the entry was reviewed when it was added. It is not a
 guarantee that a theme will suit your setup. Every other card is labelled
 “Community theme, not reviewed by the app.” Themes are never installed or
 updated automatically.
 
-To submit a theme, read [CONTRIBUTING.md](./CONTRIBUTING.md) and
+Plugins are managed separately under **Plugin Management → Plugin Store** and
+list only reviewed WebAssembly modules. See [PLUGINS.md](./PLUGINS.md).
+
+To submit a theme or plugin, read [CONTRIBUTING.md](./CONTRIBUTING.md) and
 `docs/submit.html`. Nothing is published without a merged pull request.
 
 ## Editor and Custom CSS

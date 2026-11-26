@@ -1,3 +1,4 @@
+import { useAtomValue } from "jotai";
 import { ImportAppleTtmlDialog } from "$/modules/apple-ttml/modals/ImportAppleTtmlDialog.tsx";
 import { LatencyTestDialog } from "$/modules/audio/modals/LatencyTest.tsx";
 import { TimingPasteDialog } from "$/modules/clipboard-timing/components/TimingPasteDialog";
@@ -47,8 +48,10 @@ import {
 import { ImportLyricsChooserDialog } from "./import-lyrics-chooser.tsx";
 import { Mp3ConversionDialog } from "./mp3-conversion.tsx";
 import { WhatsNewDialog } from "./whats-new.tsx";
+import { UiLayer, uiLayerAtom } from "$/modules/settings/states";
 
 export const Dialogs = () => {
+	const uiLayer = useAtomValue(uiLayerAtom);
 	return (
 		<>
 			<ImportLyricsChooserDialog />
@@ -71,7 +74,7 @@ export const Dialogs = () => {
 			<CombineWordsDialog />
 			<ReplaceWordDialog />
 			<ReplaceRomanizationDialog />
-			<FindReplaceBar />
+			{uiLayer === UiLayer.New ? null : <FindReplaceBar />}
 			<TimingPasteDialog />
 			<LatencyTestDialog />
 			<TTMLChecklistDialog />

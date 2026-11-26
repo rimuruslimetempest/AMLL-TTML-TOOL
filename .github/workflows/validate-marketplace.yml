@@ -1,4 +1,4 @@
-name: Validate theme submissions
+name: Validate marketplace submissions
 
 on:
   pull_request:
@@ -6,7 +6,8 @@ on:
       - "docs/registry/**"
       - "docs/assets/previews/**"
       - "scripts/validate-theme-registry.mjs"
-      - ".github/workflows/validate-theme-registry.yml"
+      - "scripts/validate-plugin-registry.mjs"
+      - ".github/workflows/validate-marketplace.yml"
   workflow_dispatch:
 
 permissions:
@@ -20,5 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Validate registry entries, hashes, previews, and theme contents
-        run: node scripts/validate-theme-registry.mjs
+      - name: Validate themes, plugins, hashes, manifests, and previews
+        run: |
+          node scripts/validate-theme-registry.mjs
+          node scripts/validate-plugin-registry.mjs

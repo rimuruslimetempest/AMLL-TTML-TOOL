@@ -1,0 +1,155 @@
+.section {
+	container-type: inline-size;
+}
+
+.sectionHeader {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+}
+
+.sectionIcon {
+	display: inline-flex;
+	flex: 0 0 auto;
+	padding-block-start: 2px;
+	color: var(--gray-11);
+}
+
+.sectionIcon svg {
+	width: 20px;
+	height: 20px;
+}
+
+.sectionHeading {
+	flex: 1 1 auto;
+	min-inline-size: 0;
+}
+
+.sectionTitleRow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.sectionTitle {
+	color: var(--gray-12);
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 18px;
+}
+
+.sectionDescription {
+	margin-block-start: 4px;
+	color: var(--gray-11);
+	font-size: 12px;
+	line-height: 1.45;
+}
+
+.sectionActions {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.sectionBody {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	margin-block-start: 14px;
+}
+
+.row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: start;
+	gap: 10px 20px;
+}
+
+.rowText {
+	min-inline-size: 0;
+}
+
+.rowLabelRow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.rowLabel {
+	color: var(--gray-12);
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 18px;
+}
+
+.rowDescription {
+	margin-block-start: 4px;
+	color: var(--gray-11);
+	font-size: 12px;
+	line-height: 1.45;
+}
+
+.rowControl {
+	justify-self: end;
+	min-inline-size: 0;
+}
+
+.pageHeader {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+.pageHeaderText {
+	min-inline-size: 0;
+}
+
+.pageTitle {
+	margin: 0 0 2px 0 !important;
+	color: var(--gray-12) !important;
+	font-size: var(--font-size-5, 20px) !important;
+	font-weight: 700 !important;
+	letter-spacing: -0.2px;
+	line-height: 1.2;
+}
+
+.pageDescription {
+	line-height: 1.45;
+}
+
+.pageActions {
+	flex: 0 0 auto;
+}
+
+@container (max-width: 520px) {
+	.sectionHeader {
+		flex-wrap: wrap;
+	}
+
+	.sectionActions {
+		flex-basis: 100%;
+		justify-content: flex-start;
+		padding-inline-start: 32px;
+	}
+
+	.row {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.rowControl {
+		justify-self: start;
+	}
+}
+
+@media (max-width: 640px) {
+	.pageTitle {
+		font-size: var(--font-size-5, 20px) !important;
+	}
+}

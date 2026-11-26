@@ -204,12 +204,62 @@
 			color-mix(in srgb, var(--spicy-accent) 18%, #121212),
 			#121212 75%
 		);
-	filter: blur(3.5cqw) saturate(1.35);
+	filter: blur(1.4cqw) saturate(1.35);
 	animation: spicyAmbientBackground 18s ease-in-out infinite alternate;
+}
+/* The WebGL canvas already paints the animated cover; the CSS layer beneath it
+   is fully occluded, so do not keep a second full-screen blurred animation. */
+.background:has(> .backgroundCanvas)::before {
+	content: none;
 }
 .backgroundCanvas {
 	object-fit: cover;
 	z-index: 1;
+}
+
+/* Performance mode keeps every lyric available but drops the compositor-heavy
+   decoration: no animated/blurred backdrop, no viewport mask, no text glow. */
+:global(:root[data-performance-mode="true"]) .animatedBackground::before {
+	filter: none !important;
+	animation: none !important;
+}
+:global(:root[data-performance-mode="true"]) .staticBackground {
+	filter: brightness(0.55) contrast(1.05) saturate(1.7) !important;
+	scale: 1.1;
+}
+:global(:root[data-performance-mode="true"]) .viewport {
+	-webkit-mask-image: none !important;
+	mask-image: none !important;
+}
+:global(:root[data-performance-mode="true"]) .line,
+:global(:root[data-performance-mode="true"]) .lineSynced,
+:global(:root[data-performance-mode="true"]) .word,
+:global(:root[data-performance-mode="true"]) .letter {
+	text-shadow: none !important;
+}
+:global(:root[data-performance-mode="true"]) .dotGroup {
+	will-change: auto !important;
+}
+
+/* Adaptive quality level 1 keeps the gradient sweep and spring motion but
+   stops writing and compositing per-letter glow. Levels 2 and 3 additionally
+   simplify the animated backdrop in JavaScript. */
+.root[data-quality="1"] :is(.word, .letter, .dot),
+.root[data-quality="2"] :is(.word, .letter, .dot),
+.root[data-quality="3"] :is(.word, .letter, .dot) {
+	--shadow-alpha: 0 !important;
+}
+.root[data-quality="1"] .lineSynced,
+.root[data-quality="2"] .lineSynced,
+.root[data-quality="3"] .lineSynced {
+	--line-shadow-alpha: 0 !important;
+}
+
+/* At the highest automatic level the static cover replaces the animated
+   backdrop, and the viewport mask (another full-screen composite) goes too. */
+.root[data-quality="3"] .viewport {
+	-webkit-mask-image: none !important;
+	mask-image: none !important;
 }
 .colorBackground {
 	background: var(
@@ -356,6 +406,16 @@
 .lineSynced[data-state="active"]:not(.dotLine) {
 	scale: 1.05;
 }
+.lineSynced[data-state="sung"] {
+	--line-gradient-position: 100% !important;
+	--line-shadow-blur: 4px !important;
+	--line-shadow-alpha: 0 !important;
+}
+.lineSynced[data-state="not-sung"] {
+	--line-gradient-position: -20% !important;
+	--line-shadow-blur: 4px !important;
+	--line-shadow-alpha: 0 !important;
+}
 
 /* Simple Lyrics Mode adjustments */
 .simple .line[data-state="not-sung"] {
@@ -498,8 +558,8 @@
 	--gradient-position: -20%;
 	--gradient-alpha: 0.85;
 	--gradient-alpha-end: 0.5;
-	--text-shadow-blur-radius: 4px;
-	--text-shadow-opacity: 0%;
+	--shadow-blur: 4px;
+	--shadow-alpha: 0;
 	display: inline-block;
 	white-space: pre-wrap;
 	cursor: pointer;
@@ -513,8 +573,8 @@
 		rgba(255, 255, 255, var(--gradient-alpha)) var(--gradient-position),
 		rgba(255, 255, 255, var(--gradient-alpha-end)) calc(var(--gradient-position) + 20%)
 	);
-	text-shadow: 0 0 var(--text-shadow-blur-radius, var(--shadow-blur, 4px))
-		rgba(255, 255, 255, var(--text-shadow-opacity, var(--shadow-alpha, 0)));
+	text-shadow: 0 0 var(--shadow-blur, 4px)
+		rgba(255, 255, 255, var(--shadow-alpha, 0));
 }
 
 .line[data-state="active"] .word,
@@ -568,6 +628,90 @@
 	--shadow-alpha: 0 !important;
 	--text-shadow-opacity: 0% !important;
 }
+
+/* Once a word inside the active line stops being active, stop stepping its
+   springs in JavaScript. These rules own the exact final pose and never leave
+   a word parked at an intermediate frame. */
+.line[data-state="active"] :is(.word, .letterGroup)[data-word-state="sung"] {
+	transform: none !important;
+	scale: 1 !important;
+}
+.line[data-state="active"] .letterGroup[data-word-state="sung"] .letter {
+	transform: none !important;
+	scale: 1 !important;
+}
+.line[data-state="active"] :is(.word, .letterGroup)[data-word-state="not-sung"] {
+	transform: translateY(0.01em) !important;
+	scale: 0.95 !important;
+}
+.line[data-state="active"] .letterGroup[data-word-state="not-sung"] .letter {
+	transform: translateY(0.02em) !important;
+	scale: 0.95 !important;
+}
+.line[data-state="active"] .dot[data-word-state="sung"] {
+	transform: none !important;
+	scale: 1 !important;
+	opacity: 1 !important;
+}
+.line[data-state="active"] .dot[data-word-state="not-sung"] {
+	transform: none !important;
+	scale: 0.75 !important;
+	opacity: 0.35 !important;
+}
+
+.root:not(.simple)
+	.line[data-state="active"]
+	:is(.word, .letterGroup)[data-word-state="sung"] {
+	--gradient-position: 100% !important;
+}
+.root:not(.simple)
+	.line[data-state="active"]
+	.letterGroup[data-word-state="sung"]
+	.letter {
+	--gradient-position: 100% !important;
+}
+.root:not(.simple)
+	.line[data-state="active"]
+	:is(.word, .letterGroup)[data-word-state="not-sung"] {
+	--gradient-position: -20% !important;
+}
+.root:not(.simple)
+	.line[data-state="active"]
+	.letterGroup[data-word-state="not-sung"]
+	.letter {
+	--gradient-position: -20% !important;
+}
+
+.simple
+	.line[data-state="active"]
+	:is(.word, .letterGroup)[data-word-state="not-sung"] {
+	scale: 1 !important;
+}
+.simple .line[data-state="active"] .dot[data-word-state="not-sung"] {
+	scale: 1 !important;
+	opacity: 0.27 !important;
+}
+
+.simple .line[data-state="sung"] :is(.word, .letter, .letterGroup) {
+	--spicy-slm-gradient-position: 100% !important;
+}
+.simple .line[data-state="not-sung"] :is(.word, .letter, .letterGroup) {
+	--spicy-slm-gradient-position: -50% !important;
+}
+
+.line[data-state="active"] :is(.word, .letterGroup, .letter, .dot)[data-word-state="sung"],
+.line[data-state="active"]
+	:is(.word, .letterGroup, .letter, .dot)[data-word-state="not-sung"] {
+	--shadow-blur: 4px !important;
+	--text-shadow-blur-radius: 4px !important;
+	--shadow-alpha: 0 !important;
+	--text-shadow-opacity: 0% !important;
+	transition:
+		transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+		scale 160ms cubic-bezier(0.22, 1, 0.36, 1),
+		opacity 160ms linear;
+}
+
 .simple .line[data-state="sung"] :is(.word, .letter, .letterGroup) {
 	--gradient-position: 100% !important;
 }

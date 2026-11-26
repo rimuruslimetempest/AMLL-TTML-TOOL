@@ -1,12 +1,15 @@
 import {
 	ArrowDownload24Regular,
 	ArrowReset24Regular,
+	ArrowSync24Regular,
 	ArrowUpload24Regular,
 	Delete24Regular,
 	Edit24Regular,
 	FolderOpen24Regular,
+	Globe24Regular,
 	PaintBrush24Regular,
 	Save24Regular,
+	Search24Regular,
 	Warning24Regular,
 } from "@fluentui/react-icons";
 import {
@@ -22,7 +25,7 @@ import {
 import { isTauri } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { Dialog } from "$/design-system";
 import {
@@ -34,7 +37,7 @@ import {
 } from "$/modules/recycle-bin/actions";
 import { isDarkThemeAtom } from "$/states/main";
 import { BUILTIN_THEMES } from "./builtins";
-import { sanitizeThemeCss } from "./css";
+import { findGlobalThemeSelectors, sanitizeThemeCss } from "./css";
 import {
 	activeThemeAtom,
 	activeThemeSchemeAtom,
@@ -42,6 +45,7 @@ import {
 	themeAllowRemoteContentAtom,
 	themeAutoReloadAtom,
 	themeCatalogAtom,
+	themeCssSafeModeAtom,
 	themeCustomCssAtom,
 	themeCustomCssEnabledAtom,
 	themeIdAtom,
@@ -73,8 +77,14 @@ import {
 	type ThemeTokenKey,
 	type ThemeTokenValues,
 } from "./types";
+import {
+	communityThemePreviewUrl,
+	fetchRegistryTheme,
+	fetchThemeRegistry,
+	isUpdateAvailable,
+	type ThemeRegistryEntry,
+} from "./registry";
 import { parseTheme, sanitizeThemeId } from "./validate";
-import { CommunityThemesPanel } from "./CommunityThemesPanel";
 
 function supportsBackdrop(): boolean {
 	return (
@@ -565,12 +575,17 @@ function ThemeEditor({
 function CustomCssCard() {
 	const [enabled, setEnabled] = useAtom(themeCustomCssEnabledAtom);
 	const [css, setCss] = useAtom(themeCustomCssAtom);
+	const cssSafeMode = useAtomValue(themeCssSafeModeAtom);
 	const [allowRemote, setAllowRemote] = useAtom(
 		themeAllowRemoteContentAtom,
 	);
 	const preview = useMemo(
 		() => sanitizeThemeCss(css, { allowRemote }),
 		[allowRemote, css],
+	);
+	const globalSelectors = useMemo(
+		() => findGlobalThemeSelectors(css),
+		[css],
 	);
 	return (
 		<Card id="appearance-theme-custom-css">
@@ -591,6 +606,20 @@ function CustomCssCard() {
 						aria-label="Enable custom theme CSS"
 					/>
 				</Flex>
+				{cssSafeMode ? (
+					<Text size="1" color="amber" as="div" role="status">
+						Theme CSS is disabled by Theme safety. Edits are saved but not
+						applied until you turn safety mode off.
+					</Text>
+				) : null}
+				{globalSelectors.length > 0 ? (
+					<Text size="1" color="amber" as="div">
+						Global selectors detected:{" "}
+						{globalSelectors.slice(0, 3).join(", ")}. These can restyle the
+						app window or headings. If the interface breaks, use Themes → Theme
+						safety → Disable theme CSS.
+					</Text>
+				) : null}
 				<textarea
 					value={css}
 					onChange={(event) => setCss(event.target.value)}
@@ -704,6 +733,15 @@ export function ThemeManagerDialog({
 	const [allowRemote, setAllowRemote] = useAtom(themeAllowRemoteContentAtom);
 	const [autoReload, setAutoReload] = useAtom(themeAutoReloadAtom);
 	const [view, setView] = useState<"gallery" | "editor">("gallery");
+	const [tab, setTab] = useState<"installed" | "community">("installed");
+	const [community, setCommunity] = useState<ThemeRegistryEntry[]>([]);
+	const [communityLoaded, setCommunityLoaded] = useState(false);
+	const [communityLoading, setCommunityLoading] = useState(false);
+	const [communityError, setCommunityError] = useState<string | null>(null);
+	const [communitySearch, setCommunitySearch] = useState("");
+	const [communityAppearance, setCommunityAppearance] = useState("all");
+	const [communityPerformance, setCommunityPerformance] = useState("all");
+	const [fetchingId, setFetchingId] = useState<string | null>(null);
 	const [pending, setPending] = useState<{
 		theme: ThemePack;
 		css?: string;
@@ -721,6 +759,76 @@ export function ThemeManagerDialog({
 		setUserThemes(themes);
 		setReloadToken((value) => value + 1);
 	};
+
+	const communityRequested = useRef(false);
+	const communityLoadingRef = useRef(false);
+	const loadCommunity = useCallback(async (force = false) => {
+		if (communityLoadingRef.current) return;
+		if (communityRequested.current && !force) return;
+		communityRequested.current = true;
+		communityLoadingRef.current = true;
+		setCommunityLoading(true);
+		setCommunityError(null);
+		try {
+			const entries = await fetchThemeRegistry();
+			setCommunity(entries);
+			setCommunityLoaded(true);
+		} catch (error) {
+			setCommunityError(
+				error instanceof Error ? error.message : String(error),
+			);
+		} finally {
+			communityLoadingRef.current = false;
+			setCommunityLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (dialogOpen && tab === "community") void loadCommunity();
+	}, [dialogOpen, tab, loadCommunity]);
+
+	const previewCommunityTheme = async (entry: ThemeRegistryEntry) => {
+		setFetchingId(entry.id);
+		setImportError(null);
+		try {
+			const result = await fetchRegistryTheme(entry);
+			setPending({
+				theme: result.theme,
+				css: result.css,
+				assets: [],
+			});
+		} catch (error) {
+			setImportError(error instanceof Error ? error.message : String(error));
+		} finally {
+			setFetchingId(null);
+		}
+	};
+
+	const filteredCommunity = useMemo(() => {
+		const term = communitySearch.trim().toLowerCase();
+		return community.filter((entry) => {
+			if (
+				communityAppearance !== "all" &&
+				entry.appearance !== communityAppearance
+			)
+				return false;
+			if (
+				communityPerformance !== "all" &&
+				entry.performance !== communityPerformance
+			)
+				return false;
+			if (!term) return true;
+			return [entry.name, entry.author, entry.description, ...entry.tags]
+				.join(" ")
+				.toLowerCase()
+				.includes(term);
+		});
+	}, [
+		community,
+		communitySearch,
+		communityAppearance,
+		communityPerformance,
+	]);
 
 	useEffect(() => {
 		const refresh = () => {
@@ -1026,6 +1134,22 @@ export function ThemeManagerDialog({
 					/>
 				) : (
 					<>
+						<Flex align="center" gap="2" wrap="wrap">
+							<Button
+								variant={tab === "installed" ? "solid" : "soft"}
+								onClick={() => setTab("installed")}
+							>
+								<PaintBrush24Regular /> Installed ({catalog.length})
+							</Button>
+							<Button
+								variant={tab === "community" ? "solid" : "soft"}
+								onClick={() => setTab("community")}
+							>
+								<Globe24Regular /> Community
+							</Button>
+						</Flex>
+						{tab === "installed" ? (
+							<>
 						<Flex align="center" gap="3" wrap="wrap" justify="between">
 							<Badge size="2" color="gray">
 								Current: {activeTheme.name}
@@ -1113,12 +1237,6 @@ export function ThemeManagerDialog({
 								</Flex>
 							</Flex>
 						</Card>
-
-						<CommunityThemesPanel
-							onPreview={(theme, css) =>
-								setPending({ theme, css, assets: [] })
-							}
-						/>
 
 						{importError ? (
 							<Card style={{ borderColor: "var(--red-8)" }}>
@@ -1311,6 +1429,249 @@ export function ThemeManagerDialog({
 								</Button>
 							</Flex>
 						</Flex>
+							</>
+						) : (
+							<>
+								<Card>
+									<Flex direction="column" gap="2">
+										<Flex align="center" gap="2" wrap="wrap">
+											<Text weight="bold">Community themes</Text>
+											<Badge size="1" color="gray">
+												Reviewed by pull request
+											</Badge>
+										</Flex>
+										<Text size="1" color="gray">
+											Loaded from the static marketplace registry. The app verifies
+											each published SHA-256 and sanitizes the CSS before showing a
+											preview. Nothing installs until you confirm it.
+										</Text>
+										<Flex gap="2" wrap="wrap" align="end">
+											<label
+												style={{
+													display: "flex",
+													flexDirection: "column",
+													gap: 4,
+													flex: "1 1 200px",
+													minWidth: 0,
+												}}
+											>
+												<Text size="1" color="gray" weight="bold">
+													<Search24Regular /> Search
+												</Text>
+												<input
+													type="search"
+													value={communitySearch}
+													onChange={(event) => setCommunitySearch(event.target.value)}
+													placeholder="Name, author, or tag"
+													aria-label="Search community themes"
+													style={{
+														height: 32,
+														padding: "0 9px",
+														border: "1px solid var(--gray-a6)",
+														borderRadius: 7,
+														background: "var(--gray-a2)",
+														color: "var(--gray-12)",
+													}}
+												/>
+											</label>
+											<label
+												style={{
+													display: "flex",
+													flexDirection: "column",
+													gap: 4,
+												}}
+											>
+												<Text size="1" color="gray" weight="bold">
+													Appearance
+												</Text>
+												<select
+													value={communityAppearance}
+													onChange={(event) =>
+														setCommunityAppearance(event.target.value)
+													}
+													aria-label="Filter community themes by appearance"
+													style={{
+														height: 32,
+														borderRadius: 7,
+														border: "1px solid var(--gray-a6)",
+														background: "var(--gray-a2)",
+														color: "var(--gray-12)",
+													}}
+												>
+													<option value="all">Light and dark</option>
+													<option value="dark">Dark</option>
+													<option value="light">Light</option>
+												</select>
+											</label>
+											<label
+												style={{
+													display: "flex",
+													flexDirection: "column",
+													gap: 4,
+												}}
+											>
+												<Text size="1" color="gray" weight="bold">
+													Performance
+												</Text>
+												<select
+													value={communityPerformance}
+													onChange={(event) =>
+														setCommunityPerformance(event.target.value)
+													}
+													aria-label="Filter community themes by performance"
+													style={{
+														height: 32,
+														borderRadius: 7,
+														border: "1px solid var(--gray-a6)",
+														background: "var(--gray-a2)",
+														color: "var(--gray-12)",
+													}}
+												>
+													<option value="all">Any</option>
+													<option value="light">Light</option>
+													<option value="medium">Medium</option>
+													<option value="heavy">Heavy</option>
+												</select>
+											</label>
+											<Button
+												size="1"
+												variant="soft"
+												onClick={() => void loadCommunity(true)}
+												disabled={communityLoading}
+											>
+												<ArrowSync24Regular /> Reload
+											</Button>
+										</Flex>
+									</Flex>
+								</Card>
+
+								{communityError ? (
+									<Card style={{ borderColor: "var(--red-8)" }}>
+										<Flex gap="2" align="start">
+											<Warning24Regular />
+											<Text size="1" color="red">
+												{communityError}
+											</Text>
+										</Flex>
+									</Card>
+								) : null}
+
+								{communityLoading && filteredCommunity.length === 0 ? (
+									<Text size="1" color="gray">
+										Loading community themes…
+									</Text>
+								) : filteredCommunity.length === 0 ? (
+									<Card>
+										<Text size="1" color="gray">
+											{communityLoaded
+												? "No community themes match that search."
+												: "Community themes could not be loaded. Check your connection and try Reload."}
+										</Text>
+									</Card>
+								) : (
+									<Grid columns={{ initial: "1", sm: "2" }} gap="3">
+										{filteredCommunity.map((entry) => {
+											const installed = catalog.find(
+												(theme) => theme.id === entry.id,
+											);
+											const updateAvailable = isUpdateAvailable(
+												installed?.version,
+												entry.version,
+											);
+											return (
+												<Card key={entry.id}>
+													<Flex direction="column" gap="2">
+														<img
+															src={communityThemePreviewUrl(entry)}
+															alt={`${entry.name} theme preview`}
+															loading="lazy"
+															style={{
+																width: "100%",
+																aspectRatio: "16 / 9",
+																objectFit: "cover",
+																borderRadius: 8,
+																border:
+																	"1px solid var(--ttml-border, var(--gray-a5))",
+																background: "var(--gray-a2)",
+															}}
+														/>
+														<Flex
+															align="center"
+															justify="between"
+															gap="2"
+															wrap="wrap"
+														>
+															<Box style={{ minWidth: 0 }}>
+																<Text weight="bold" as="div">
+																	{entry.name}
+																</Text>
+																<Text size="1" color="gray" as="div">
+																	by {entry.author} · v{entry.version}
+																</Text>
+															</Box>
+															<Flex gap="1" wrap="wrap">
+																{entry.verified ? (
+																	<Badge size="1" color="green" variant="soft">
+																		Verified
+																	</Badge>
+																) : null}
+																{installed ? (
+																	<Badge size="1" color="gray">
+																		{updateAvailable ? "Update available" : "Installed"}
+																	</Badge>
+																) : null}
+															</Flex>
+														</Flex>
+														<Text size="1" color="gray" style={{ minHeight: 30 }}>
+															{entry.description}
+														</Text>
+														<Flex gap="1" wrap="wrap">
+															<Badge size="1" color="gray">
+																{entry.appearance === "light" ? "Light" : "Dark"}
+															</Badge>
+															<Badge size="1" color="gray">
+																{entry.performance} performance
+															</Badge>
+															<Badge size="1" color="gray">
+																Needs app {entry.minAppVersion}+
+															</Badge>
+														</Flex>
+														<Flex gap="1" wrap="wrap">
+															<Button
+																size="1"
+																onClick={() => void previewCommunityTheme(entry)}
+																disabled={fetchingId === entry.id}
+															>
+																{fetchingId === entry.id
+																	? "Verifying…"
+																	: updateAvailable
+																		? "Update"
+																		: "Preview & install"}
+															</Button>
+																{installed ? (
+																	<Button
+																		size="1"
+																		variant="soft"
+																		onClick={() => applyTheme(installed)}
+																	>
+																		Apply
+																	</Button>
+																	) : null}
+														</Flex>
+													</Flex>
+												</Card>
+											);
+										})}
+									</Grid>
+								)}
+
+								<Text size="1" color="gray">
+									Community themes are made by other people. Verified means the
+									entry was checked when it was added. Themes are CSS and JSON
+									only and never run code.
+								</Text>
+							</>
+						)}
 					</>
 				)}
 			</Flex>

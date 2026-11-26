@@ -20,10 +20,14 @@ import {
 	currentDurationAtom,
 	currentTimeAtom,
 } from "$/modules/audio/states";
+import { FrameDiagnostics } from "$/modules/performance/FrameDiagnostics";
+import { frameScheduler } from "$/modules/performance/scheduler";
+import { previewQualityLevelAtom } from "$/modules/performance/states";
 import { customBackgroundImageAtom } from "$/modules/settings/modals/customBackground";
 import {
 	backgroundModeAtom,
 	customAccentColorAtom,
+	performanceModeAtom,
 	useCustomAccentAtom,
 } from "$/modules/settings/states";
 import {
@@ -35,6 +39,7 @@ import {
 	spicyForceLineSyncedAtom,
 	spicySimpleLyricsModeAtom,
 	bgFollowsDuetAtom,
+	vsyncAtom,
 } from "$/modules/settings/states/preview";
 import { lyricLinesAtom, projectIdentityAtom } from "$/states/main";
 import type { TTMLLyric } from "$/types/ttml";
@@ -143,6 +148,20 @@ const easeSinOut = (progress: number) => Math.sin((Math.PI * progress) / 2);
 
 const keyFor = (line: SpicyLine, word: SpicyToken, index: number) =>
 	`${line.id}:${word.id}:${index}`;
+
+// Writing the same custom property every frame still invalidates style and
+// paint work. Remember the last value per node and skip unchanged writes.
+const writtenVars = new WeakMap<HTMLElement, Map<string, string>>();
+function setCssVar(node: HTMLElement, name: string, value: string) {
+	let values = writtenVars.get(node);
+	if (!values) {
+		values = new Map();
+		writtenVars.set(node, values);
+	}
+	if (values.get(name) === value) return;
+	values.set(name, value);
+	node.style.setProperty(name, value);
+}
 
 const colorToHex = (red: number, green: number, blue: number) =>
 	`#${[red, green, blue]
@@ -265,9 +284,19 @@ function useKawarpBackground(
 	container: RefObject<HTMLDivElement | null>,
 	image: string | null,
 	mode: "animated" | "color" | "static",
+	performanceMode: boolean,
+	qualityLevel: number,
 ) {
 	useEffect(() => {
-		if (mode !== "animated" || !image || !container.current) return;
+		// Level 3 falls back to the static cover layer rendered by the preview.
+		if (
+			performanceMode ||
+			qualityLevel >= 3 ||
+			mode !== "animated" ||
+			!image ||
+			!container.current
+		)
+			return;
 		let disposed = false;
 		let instance: KawarpInstance | null = null;
 		let frame = 0;
@@ -279,7 +308,7 @@ function useKawarpBackground(
 				if (disposed) return;
 				instance = new Kawarp(canvas, {
 					warpIntensity: 1,
-					blurPasses: 8,
+					blurPasses: qualityLevel >= 2 ? 2 : 4,
 					animationSpeed: 0.1,
 					saturation: 1.5,
 					dithering: 0.008,
@@ -295,11 +324,22 @@ function useKawarpBackground(
 				if (disposed) return;
 				instance.start();
 				const bins = new Uint8Array(audioEngine.analyserNode.frequencyBinCount);
-				const animate = () => {
-					audioEngine.analyserNode.getByteFrequencyData(bins);
-					const energy =
-						bins.reduce((sum, value) => sum + value, 0) / (bins.length * 255);
-					instance?.setOptions({ animationSpeed: 0.1 + energy * 0.35 });
+				let lastUpdate = 0;
+				let lastEnergy = -1;
+				const animate = (now: number) => {
+					// Analyser reads and option churn do not need to run at frame rate,
+					// and the simplified background keeps a steady speed instead.
+					if (qualityLevel < 2 && now - lastUpdate >= 100) {
+						audioEngine.analyserNode.getByteFrequencyData(bins);
+						const energy =
+							bins.reduce((sum, value) => sum + value, 0) /
+							(bins.length * 255);
+						if (Math.abs(energy - lastEnergy) > 0.01) {
+							instance?.setOptions({ animationSpeed: 0.1 + energy * 0.35 });
+							lastEnergy = energy;
+						}
+						lastUpdate = now;
+					}
 					frame = requestAnimationFrame(animate);
 				};
 				frame = requestAnimationFrame(animate);
@@ -309,8 +349,9 @@ function useKawarpBackground(
 			disposed = true;
 			cancelAnimationFrame(frame);
 			instance?.dispose();
+			container.current?.replaceChildren();
 		};
-	}, [container, image, mode]);
+	}, [container, image, mode, performanceMode, qualityLevel]);
 }
 
 export interface SpicyLyricsProps {
@@ -328,6 +369,8 @@ export const SpicyLyrics = memo(
 		const romanized = useAtomValue(showRomanLinesAtom);
 		const showTranslation = useAtomValue(showTranslationLinesAtom);
 		const showFps = useAtomValue(showFpsCounterAtom);
+		const vsync = useAtomValue(vsyncAtom);
+		const performanceMode = useAtomValue(performanceModeAtom);
 		const backgroundMode = useAtomValue(spicyBackgroundModeAtom);
 		const embeddedCoverArt = useAtomValue(audioCoverArtAtom);
 		const customBackgroundImage = useAtomValue(customBackgroundImageAtom);
@@ -429,23 +472,29 @@ export const SpicyLyrics = memo(
 		const lineNodes = useRef(new Map<string, HTMLDivElement>());
 		const wordNodes = useRef(new Map<string, HTMLElement>());
 		const springs = useRef(new Map<string, SpringSet>());
-		const lineGlowSprings = useRef(new Map<string, Spring>());
 		const slmAnimations = useRef(new Map<string, SlmAnimation>());
 		const scrollPauseUntil = useRef(0);
 		const scrollFollowUntil = useRef(0);
 		const scrollRetryAt = useRef(0);
 		const lastLine = useRef<string | null>(null);
-		const lastTime = useRef(performance.now());
-		const fpsLabelRef = useRef<HTMLDivElement>(null);
-		const fpsRef = useRef({ frames: 0, lastTime: performance.now() });
-		const showFpsRef = useRef(showFps);
-		useKawarpBackground(backgroundRef, backgroundImage, backgroundMode);
+		const qualityLevel = useAtomValue(previewQualityLevelAtom);
+		const qualityRef = useRef(qualityLevel);
+		const vsyncRef = useRef(vsync);
+		useKawarpBackground(
+			backgroundRef,
+			backgroundImage,
+			backgroundMode,
+			performanceMode,
+			qualityLevel,
+		);
 
 		useEffect(() => {
-			showFpsRef.current = showFps;
-			fpsRef.current = { frames: 0, lastTime: performance.now() };
-			if (fpsLabelRef.current) fpsLabelRef.current.textContent = "FPS: 0";
-		}, [showFps]);
+			qualityRef.current = qualityLevel;
+		}, [qualityLevel]);
+
+		useEffect(() => {
+			vsyncRef.current = vsync;
+		}, [vsync]);
 
 		useEffect(() => {
 			if (simple) return;
@@ -473,99 +522,167 @@ export const SpicyLyrics = memo(
 		}, []);
 
 		useEffect(() => {
-			let raf = 0;
+			// Line values written for the previous renderer pass must not outlive it.
+			for (const node of lineNodes.current.values()) {
+				node.style.removeProperty("--line-gradient-position");
+				node.style.removeProperty("--line-shadow-blur");
+				node.style.removeProperty("--line-shadow-alpha");
+			}
 			let previousPosition = -Infinity;
+			let frameBudget = 0;
+			let forceUntil = 0;
+			let lastGeometryCheck = 0;
+			let lastBlurIndex = Number.NaN;
+			let lineGlow = new Spring(0, 1, 0.5);
+			let lineGlowLineId: string | null = null;
 			// Keep correcting the active line while content-visibility settles the
 			// off-screen layout after a lyric change or a seek.
 			scrollFollowUntil.current = performance.now() + 1200;
-			const animate = (now: number) => {
-				if (showFpsRef.current) {
-					fpsRef.current.frames++;
-					if (now - fpsRef.current.lastTime >= 1000) {
-						const nextFps = Math.round(
-							(fpsRef.current.frames * 1000) /
-								(now - fpsRef.current.lastTime),
-						);
-						if (fpsLabelRef.current)
-							fpsLabelRef.current.textContent = `FPS: ${nextFps}`;
-						fpsRef.current.frames = 0;
-						fpsRef.current.lastTime = now;
+
+			// Simple Lyrics Mode fills its gradient with a Web Animation. Once a
+			// word is no longer active, pin that animation to its final value; the
+			// CSS state below owns the pose and glow.
+			const pinSlmWord = (
+				word: SpicyToken,
+				rootKey: string,
+				root: HTMLElement | undefined,
+				state: "sung" | "not-sung",
+			) => {
+				const position = state === "sung" ? "100%" : "-50%";
+				const phase = state === "sung" ? "sung" : "idle";
+				const pin = (nodeKey: string, node: HTMLElement | undefined) => {
+					if (!node) return;
+					const animation = slmAnimations.current.get(nodeKey);
+					animation?.animation?.cancel();
+					if (animation) {
+						animation.animation = undefined;
+						animation.phase = phase;
+					} else {
+						slmAnimations.current.set(nodeKey, { phase });
 					}
+					setCssVar(node, "--spicy-slm-gradient-position", position);
+				};
+
+				if (!word.letters) {
+					pin(rootKey, root);
+					return;
 				}
-				const dt = (now - lastTime.current) / 1000;
-				lastTime.current = now;
+				const letterDuration =
+					(word.endTime - word.startTime) / word.letters.length;
+				for (let index = 0; index < word.letters.length; index++) {
+					const start = word.startTime + index * letterDuration;
+					pin(`${rootKey}:${start}`, wordNodes.current.get(`${rootKey}:${start}`));
+				}
+			};
+
+			// requestAnimationFrame is already paced by the display: running the
+			// loop on every callback renders at the monitor's native refresh rate.
+			// A time-based throttle here can only drop frames, which shows up as
+			// judder and is exactly what a preview must not do.
+			const animate = (frame: {
+				now: number;
+				dt: number;
+				timeMs: number;
+				playing: boolean;
+			}) => {
+				const now = frame.now;
+				// VSync locks the preview to 60 FPS. requestAnimationFrame is already
+				// paced by the display, so leaving it off follows the monitor instead
+				// of capping the work.
+				if (vsyncRef.current) {
+					frameBudget += frame.dt;
+					if (frameBudget < 15.9) return;
+					frameBudget = 0;
+				}
 				const time = Math.max(
 					0,
-					audioEngine.interpolatedCurrentTime * 1000 +
-						(audioEngine.musicPlaying ? 100 : 0) -
-						(simple ? 33.5 : 0),
+					frame.timeMs + (frame.playing ? 100 : 0) - (simple ? 33.5 : 0),
 				);
-				const activeIndices = lines.flatMap((line, index) =>
-					stateAt(time, line.startTime, line.endTime) === "active"
-						? [index]
-						: [],
-				);
-				let activeIndex = activeIndices[0] ?? -1;
-				if (activeIndices.length > 1) {
-					const firstActive = activeIndices[0] ?? -1;
-					const lastActive =
-						activeIndices[activeIndices.length - 1] ?? firstActive;
+				// A paused preview has no motion to animate. One extra frame still
+				// runs after a seek or a lyric change so state and scroll settle.
+				if (
+					!frame.playing &&
+					now > forceUntil &&
+					Math.abs(time - previousPosition) < 0.25
+				)
+					return;
+				const dt = Math.min(0.25, Math.max(0, frame.dt / 1000));
+				const glowEnabled = qualityRef.current < 1;
+				let firstActive = -1;
+				let lastActive = -1;
+				let activeCount = 0;
+				for (let i = 0; i < lines.length; i++) {
+					const line = lines[i];
+					if (stateAt(time, line.startTime, line.endTime) === "active") {
+						if (firstActive < 0) firstActive = i;
+						lastActive = i;
+						activeCount++;
+					}
+				}
+				let activeIndex = firstActive;
+				if (activeCount > 1) {
 					activeIndex =
 						lastActive - firstActive <= 1 ? firstActive : lastActive;
 				}
 				const active = activeIndex >= 0 ? lines[activeIndex] : undefined;
 				if (active && lastLine.current !== active.id)
 					scrollFollowUntil.current = now + 900;
+				if (!active || !active.isLineSynced || active.isDotLine || simple)
+					lineGlowLineId = null;
+				const blurChanged = activeIndex !== lastBlurIndex;
+				lastBlurIndex = activeIndex;
 				for (let i = 0; i < lines.length; i++) {
 					const line = lines[i];
 					const status = stateAt(time, line.startTime, line.endTime);
 					const node = lineNodes.current.get(line.id);
-					if (node) {
-						node.dataset.state = status;
-						node.dataset.prehidden = String(
-							!!line.isDotLine &&
-								(status === "not-sung" || time > line.endTime - 500),
-						);
+					if (!node) continue;
+					if (node.dataset.state !== status) node.dataset.state = status;
+					const prehidden = String(
+						!!line.isDotLine &&
+							(status === "not-sung" || time > line.endTime - 500),
+					);
+					if (node.dataset.prehidden !== prehidden)
+						node.dataset.prehidden = prehidden;
+					if (blurChanged) {
 						const blur =
 							status === "active"
 								? 0
 								: Math.min(Math.abs(i - activeIndex) * 1.25, 6.8);
 						node.style.setProperty("--blur", `${blur}px`);
-						if (line.isLineSynced && !line.isDotLine) {
-							const lineProgress =
-								status === "active"
-									? progressAt(time, line.startTime, line.endTime)
-									: status === "sung"
-										? 1
-										: 0;
-							if (simple) {
-								// The normal line renderer writes this variable inline. Pin it here
-								// as well, otherwise switching into SLM leaves a stale mid-sweep
-								// normal-mode value that the SLM stylesheet cannot override.
-								node.style.setProperty("--line-gradient-position", "100%");
-								node.style.setProperty("--line-shadow-alpha", "0");
-							} else {
-								let glow = lineGlowSprings.current.get(line.id);
-								if (!glow) {
-									glow = new Spring(0, 1, 0.5);
-									lineGlowSprings.current.set(line.id, glow);
-								}
-								glow.setGoal(lineGlowSpline.at(lineProgress));
-								const currentGlow = glow.step(dt);
-								node.style.setProperty(
-									"--line-shadow-blur",
-									`${4 + 8 * currentGlow}px`,
-								);
-								node.style.setProperty(
-									"--line-shadow-alpha",
-									String(currentGlow * 0.5),
-								);
-								node.style.setProperty(
-									"--line-gradient-position",
-									`${status === "active" ? lineProgress * 100 : status === "sung" ? 100 : -20}%`,
-								);
-							}
+					}
+					// Only the active line-synced line needs a per-frame sweep. Every
+					// inactive line is pinned by its CSS [data-state] rule.
+					if (
+						active &&
+						line.id === active.id &&
+						line.isLineSynced &&
+						!line.isDotLine &&
+						!simple
+					) {
+						const progress = progressAt(time, line.startTime, line.endTime);
+						if (lineGlowLineId !== line.id) {
+							lineGlow = new Spring(0, 1, 0.5);
+							lineGlowLineId = line.id;
 						}
+						lineGlow.setGoal(lineGlowSpline.at(progress));
+						const currentGlow = lineGlow.step(dt);
+						if (glowEnabled) {
+							setCssVar(
+								node,
+								"--line-shadow-blur",
+								`${(4 + 8 * currentGlow).toFixed(1)}px`,
+							);
+							setCssVar(
+								node,
+								"--line-shadow-alpha",
+								(currentGlow * 0.5).toFixed(3),
+							);
+						}
+						setCssVar(
+							node,
+							"--line-gradient-position",
+							`${(Math.round(progress * 200) / 2).toFixed(1)}%`,
+						);
 					}
 				}
 				for (const line of lines) {
@@ -576,22 +693,29 @@ export const SpicyLyrics = memo(
 					if (stateAt(time, line.startTime, line.endTime) !== "active")
 						continue;
 					for (let wi = 0; wi < line.words.length; wi++) {
-							const word = line.words[wi];
-							const rootKey = keyFor(line, word, wi);
-							// Spicy's TimeSetter cascades the line state to every child when
-							// the line itself is not active. This matters for adjusted held-word
-							// timings near a line boundary.
-							const wordState =
-								stateAt(time, line.startTime, line.endTime) === "active"
-									? stateAt(time, word.startTime, word.endTime)
-									: stateAt(time, line.startTime, line.endTime);
-							const progress =
-								wordState === "active"
-									? progressAt(time, word.startTime, word.endTime)
-									: wordState === "sung"
-										? 1
-										: 0;
-							const slmStateFor = (nodeKey: string) => {
+						const word = line.words[wi];
+						const rootKey = keyFor(line, word, wi);
+						const wordState = stateAt(time, word.startTime, word.endTime);
+						const root = wordNodes.current.get(rootKey);
+						const changed = !!root && root.dataset.wordState !== wordState;
+						if (changed) root.dataset.wordState = wordState;
+
+						// A settled word is owned entirely by CSS: its data-word-state
+						// rule pins the exact final transform, gradient and glow. This is
+						// the snap the old 300 ms spring cache never performed.
+						if (wordState !== "active") {
+							if (simple && changed)
+								pinSlmWord(
+									word,
+									rootKey,
+									root,
+									wordState === "sung" ? "sung" : "not-sung",
+								);
+							continue;
+						}
+						if (!root) continue;
+						const progress = progressAt(time, word.startTime, word.endTime);
+						const slmStateFor = (nodeKey: string) => {
 								let result = slmAnimations.current.get(nodeKey);
 								if (!result) {
 									result = { phase: "idle" };
@@ -611,7 +735,8 @@ export const SpicyLyrics = memo(
 								animation.animation?.cancel();
 								animation.animation = undefined;
 								animation.phase = phase;
-								node.style.setProperty(
+								setCssVar(
+									node,
 									"--spicy-slm-gradient-position",
 									position,
 								);
@@ -742,7 +867,7 @@ export const SpicyLyrics = memo(
 								node.style.transform = isDot
 									? `translate3d(0, calc(var(--line-size) * ${currentY}), 0)`
 									: `translate3d(0, ${currentY}em, 0)`;
-								node.style.scale = String(currentScale);
+								node.style.scale = currentScale.toFixed(4);
 								if (!isDot) {
 									if (simple) {
 										const duration = word.endTime - word.startTime;
@@ -757,33 +882,27 @@ export const SpicyLyrics = memo(
 												wordState === "sung" ? "100%" : "-50%",
 											);
 									} else
-										node.style.setProperty(
+										setCssVar(
+											node,
 											"--gradient-position",
-											`${wordState === "active" ? -20 + 120 * p : wordState === "sung" ? 100 : -20}%`,
+											`${Math.round((wordState === "active" ? -20 + 120 * p : wordState === "sung" ? 100 : -20) * 2) / 2}%`,
 										);
 								}
-								node.style.setProperty(
-									"--shadow-blur",
-									`${4 + (letter ? 12 : isDot ? 6 : 2) * currentGlow}px`,
-								);
-								node.style.setProperty(
-									"--text-shadow-blur-radius",
-									`${4 + (letter ? 12 : isDot ? 6 : 2) * currentGlow}px`,
-								);
-								node.style.setProperty(
-									"--shadow-alpha",
-									String(
+								if (glowEnabled) {
+									const blur =
+										4 + (letter ? 12 : isDot ? 6 : 2) * currentGlow;
+									setCssVar(node, "--shadow-blur", `${blur.toFixed(1)}px`);
+									setCssVar(
+										node,
+										"--shadow-alpha",
 										Math.min(
 											1,
 											currentGlow * (isDot ? 0.9 : letter ? 1 : 0.35),
-										),
-									),
-								);
-								node.style.setProperty(
-									"--text-shadow-opacity",
-									`${Math.min(100, Math.round(currentGlow * (isDot ? 90 : letter ? 100 : 35)))}%`,
-								);
-								if (isDot) node.style.opacity = String(set.opacity.step(dt));
+										).toFixed(3),
+									);
+								}
+								if (isDot)
+									node.style.opacity = set.opacity.step(dt).toFixed(3);
 							};
 							const animateHeldGroup = (
 								nodeKey: string,
@@ -811,7 +930,7 @@ export const SpicyLyrics = memo(
 								const currentScale = simple ? 1 : set.scale.step(dt);
 								const currentY = set.y.step(dt);
 								node.style.transform = `translateY(${currentY}em)`;
-								node.style.scale = String(currentScale);
+								node.style.scale = currentScale.toFixed(4);
 							};
 							const animateHeldLetters = (
 								word: SpicyToken,
@@ -946,28 +1065,25 @@ export const SpicyLyrics = memo(
 												letterState === "sung" ? "100%" : "-50%",
 											);
 									} else
-										node.style.setProperty(
+										setCssVar(
+											node,
 											"--gradient-position",
-											`${gradient}%`,
+											`${Math.round(gradient * 2) / 2}%`,
 										);
 									node.style.transform = `translateY(${currentY * 2}em)`;
-									node.style.scale = String(currentScale);
-									node.style.setProperty(
-										"--shadow-blur",
-										`${4 + 12 * currentGlow}px`,
-									);
-									node.style.setProperty(
-										"--text-shadow-blur-radius",
-										`${4 + 12 * currentGlow}px`,
-									);
-									node.style.setProperty(
-										"--shadow-alpha",
-										String(Math.min(1, currentGlow * 1.85)),
-									);
-									node.style.setProperty(
-										"--text-shadow-opacity",
-										`${Math.min(100, Math.round(currentGlow * 185))}%`,
-									);
+									node.style.scale = currentScale.toFixed(4);
+									if (glowEnabled) {
+										setCssVar(
+											node,
+											"--shadow-blur",
+											`${(4 + 12 * currentGlow).toFixed(1)}px`,
+										);
+										setCssVar(
+											node,
+											"--shadow-alpha",
+											Math.min(1, currentGlow * 1.85).toFixed(3),
+										);
+									}
 								}
 							}
 						if (line.isDotLine)
@@ -988,30 +1104,18 @@ export const SpicyLyrics = memo(
 									animateNode(rootKey, wordNodes.current.get(rootKey), progress);
 						}
 					}
-				const allSung = lines.every(
-					(line) => stateAt(time, line.startTime, line.endTime) === "sung",
-				);
+				const allSung =
+					activeIndex < 0 &&
+					lines.every(
+						(line) => stateAt(time, line.startTime, line.endTime) === "sung",
+					);
 				const shouldForce =
 					lastLine.current === null || Math.abs(time - previousPosition) > 1000;
-				const scrollTarget = allSung
-					? lines[lines.length - 1]
-					: active;
+				const scrollTarget = allSung ? lines[lines.length - 1] : active;
 				const scrollNode = scrollTarget
 					? lineNodes.current.get(scrollTarget.id)
 					: undefined;
 				const viewport = viewportRef.current;
-				const visible =
-					!!scrollNode &&
-					!!viewport &&
-					Math.min(
-						scrollNode.getBoundingClientRect().bottom,
-						viewport.getBoundingClientRect().bottom,
-					) -
-						Math.max(
-							scrollNode.getBoundingClientRect().top,
-							viewport.getBoundingClientRect().top,
-						) >=
-						5;
 				const targetChanged = lastLine.current !== scrollTarget?.id;
 				const followWindow =
 					now < scrollFollowUntil.current && now > scrollPauseUntil.current;
@@ -1019,11 +1123,26 @@ export const SpicyLyrics = memo(
 				// every animation frame makes the lyric list crawl and visibly shake
 				// while the active line is still catching up. Retry at most once per
 				// 700ms if layout settling left the target slightly off-centre.
-				const needsCorrection =
-					!!scrollTarget &&
-					followWindow &&
-					(!visible || targetChanged) &&
-					now >= scrollRetryAt.current;
+				// Only measure geometry when a correction is possible: reading both
+				// rects on every frame forces layout even while the list is idle.
+				let needsCorrection = false;
+									if (
+						scrollTarget &&
+						scrollNode &&
+						viewport &&
+						followWindow &&
+						!targetChanged &&
+						now >= scrollRetryAt.current &&
+						now - lastGeometryCheck >= 250
+					) {
+						lastGeometryCheck = now;
+						const nodeRect = scrollNode.getBoundingClientRect();
+						const viewportRect = viewport.getBoundingClientRect();
+					needsCorrection =
+						Math.min(nodeRect.bottom, viewportRect.bottom) -
+							Math.max(nodeRect.top, viewportRect.top) <
+						5;
+				}
 				const shouldStartScroll =
 					!!scrollTarget &&
 					!!scrollNode &&
@@ -1049,10 +1168,24 @@ export const SpicyLyrics = memo(
 					scrollRetryAt.current = shouldForce ? 0 : now + 700;
 				}
 				previousPosition = time;
-				raf = requestAnimationFrame(animate);
 			};
-			raf = requestAnimationFrame(animate);
-			return () => cancelAnimationFrame(raf);
+			const forceFrame = () => {
+				forceUntil = performance.now() + 400;
+			};
+			audioEngine.addEventListener("music-seeked", forceFrame);
+			audioEngine.addEventListener("music-resume", forceFrame);
+			audioEngine.addEventListener("music-pause", forceFrame);
+			forceUntil = performance.now() + 400;
+			const unsubscribe = frameScheduler.subscribe(animate, {
+				audio: true,
+				label: "lyrics",
+			});
+			return () => {
+				unsubscribe();
+				audioEngine.removeEventListener("music-seeked", forceFrame);
+				audioEngine.removeEventListener("music-resume", forceFrame);
+				audioEngine.removeEventListener("music-pause", forceFrame);
+			};
 		}, [lines, simple]);
 
 		const renderToken = (
@@ -1244,6 +1377,7 @@ export const SpicyLyrics = memo(
 		return (
 			<div
 				className={classNames(styles.root, simple && styles.simple)}
+				data-quality={qualityLevel}
 				style={
 					{
 						"--spicy-accent":
@@ -1257,13 +1391,16 @@ export const SpicyLyrics = memo(
 					ref={backgroundRef}
 					className={classNames(
 						styles.background,
-						backgroundMode === "animated" && styles.animatedBackground,
+						backgroundMode === "animated" &&
+							qualityLevel < 3 &&
+							styles.animatedBackground,
 					)}
 				/>
 				{backgroundMode === "color" ? (
 					<div className={styles.colorBackground} />
 				) : null}
-				{backgroundMode === "static" && backgroundImage ? (
+				{(backgroundMode === "static" || qualityLevel >= 3) &&
+				backgroundImage ? (
 					<div
 						className={styles.staticBackground}
 						style={{ backgroundImage: `url("${backgroundImage}")` }}
@@ -1273,11 +1410,7 @@ export const SpicyLyrics = memo(
 					<div className={styles.staticFallback} />
 				) : null}
 				<div className={styles.overlay} />
-				{showFps ? (
-					<div ref={fpsLabelRef} className={styles.fpsCounter}>
-						FPS: 0
-					</div>
-				) : null}
+				{showFps ? <FrameDiagnostics /> : null}
 
 				<div className={styles.contentOverlay}>
 					{!isPanel && showArtwork ? (

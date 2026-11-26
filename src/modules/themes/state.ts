@@ -46,6 +46,10 @@ export const themeCustomCssAtom = atomWithStorage<string>(
 	"ttmlThemeCustomCss",
 	"",
 );
+export const themeCssSafeModeAtom = atomWithStorage<boolean>(
+	"ttmlThemeCssSafeMode",
+	false,
+);
 export const themeLastGoodIdAtom = atomWithStorage<string>(
 	"ttmlThemeLastGood",
 	DEFAULT_THEME_ID,
@@ -61,6 +65,7 @@ export const resetThemeSelectionAtom = atom(null, (_get, set) => {
 	set(themeReduceEffectsAtom, false);
 	set(themeAccentOverrideAtom, false);
 	set(themeCustomCssEnabledAtom, false);
+	set(themeCssSafeModeAtom, false);
 	set(themeNoticeAtom, null);
 });
 

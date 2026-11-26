@@ -13,6 +13,7 @@ import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } f
 import { useTranslation } from "react-i18next";
 import WaveSurfer from "wavesurfer.js";
 import { audioEngine } from "$/modules/audio/audio-engine";
+import { frameScheduler } from "$/modules/performance/scheduler";
 import {
 	audioBufferAtom,
 	audioPlayingAtom,
@@ -34,9 +35,11 @@ import {
 	spectrogramZoomAtom,
 } from "$/modules/spectrogram/states";
 import {
+	ToolMode,
 	isDarkThemeAtom,
 	lyricLinesAtom,
 	selectedLinesAtom,
+	toolModeAtom,
 } from "$/states/main";
 import type { Mark } from "$/types/ttml";
 import { msToTimestamp } from "$/utils/timestamp";
@@ -217,6 +220,9 @@ export const AudioSlider = memo(({ height = "2.5em" }: AudioSliderProps) => {
 	const [lyricLines, setLyricLines] = useAtom(lyricLinesAtom);
 	const selectedLines = useAtomValue(selectedLinesAtom);
 	const audioBuffer = useAtomValue(audioBufferAtom);
+	const toolMode = useAtomValue(toolModeAtom);
+	const toolModeRef = useRef(toolMode);
+	toolModeRef.current = toolMode;
 
 	const isDarkTheme = useAtomValue(isDarkThemeAtom);
 	const accentColor = useAtomValue(accentColorAtom);
@@ -521,14 +527,22 @@ export const AudioSlider = memo(({ height = "2.5em" }: AudioSliderProps) => {
 
 	useEffect(() => {
 		const handleMusicUnload = () => {
+			stopFrames();
 			destroyWaveSurfer();
 			setCurrentDuration(0);
 			setCurrentTime(0);
 			setAudioPlaying(false);
 		};
 
-		let frameId: number | null = null;
 		let isDestroyed = false;
+		let lastClockUpdate = 0;
+		let lastWaveUpdate = 0;
+		const CLOCK_INTERVAL_MS = 50;
+		const WAVE_INTERVAL_MS = 33;
+		// Preview already has a smooth progress bar above the lyrics. Let the
+		// bottom waveform repaint less often so its canvas work cannot compete
+		// with the lyric animation on slow machines.
+		const PREVIEW_WAVE_INTERVAL_MS = 150;
 
 		const syncClock = () => {
 			if (isDraggingRef.current) return;
@@ -539,33 +553,57 @@ export const AudioSlider = memo(({ height = "2.5em" }: AudioSliderProps) => {
 			}
 		};
 
-		const onFrame = () => {
-			if (isDestroyed || !audioEngine.musicPlaying) {
-				frameId = null;
-				return;
+		const onFrame = (frame: {
+			now: number;
+			timeMs: number;
+			playing: boolean;
+		}) => {
+			if (isDestroyed || !frame.playing || isDraggingRef.current) return;
+			const now = frame.now;
+			// The numeric clock and the waveform do not need to invalidate
+			// React and redraw at display refresh rate. Keep both visually smooth
+			// while leaving the shared frame loop free for the preview renderer.
+			if (now - lastClockUpdate >= CLOCK_INTERVAL_MS) {
+				// Keep the editor-facing time exact; only the waveform uses the
+				// smoothed clock.
+				setCurrentTime(Math.round(audioEngine.musicCurrentTime * 1000));
+				lastClockUpdate = now;
 			}
-
-			if (!isDraggingRef.current) {
-				const currentTime = audioEngine.musicCurrentTime;
-				setCurrentTime(Math.round(currentTime * 1000));
-				if (waveSurferRef.current) {
-					waveSurferRef.current.setTime(currentTime);
-				}
+			const waveInterval =
+				toolModeRef.current === ToolMode.Preview
+					? PREVIEW_WAVE_INTERVAL_MS
+					: WAVE_INTERVAL_MS;
+			if (now - lastWaveUpdate >= waveInterval && waveSurferRef.current) {
+				waveSurferRef.current.setTime(frame.timeMs / 1000);
+				lastWaveUpdate = now;
 			}
-			frameId = requestAnimationFrame(onFrame);
+		};
+		let unsubscribeFrames: (() => void) | null = null;
+		const startFrames = () => {
+			if (isDestroyed || unsubscribeFrames) return;
+			unsubscribeFrames = frameScheduler.subscribe(onFrame, {
+				audio: true,
+				label: "waveform",
+			});
+		};
+		const stopFrames = () => {
+			unsubscribeFrames?.();
+			unsubscribeFrames = null;
 		};
 
 		const handlePlay = () => {
 			syncClock();
-			if (frameId === null) onFrame();
+			lastClockUpdate = 0;
+			lastWaveUpdate = 0;
+			startFrames();
 			setAudioPlaying(true);
 		};
 		const handlePause = () => {
 			syncClock();
+			stopFrames();
 			setAudioPlaying(false);
 		};
 		const handleSeek = syncClock;
-		const handleTimeUpdate = syncClock;
 		const handlePlaybackRateChange = syncClock;
 
 		const handleWindowMouseUp = () => {
@@ -580,7 +618,6 @@ export const AudioSlider = memo(({ height = "2.5em" }: AudioSliderProps) => {
 		audioEngine.addEventListener("music-resume", handlePlay);
 		audioEngine.addEventListener("music-pause", handlePause);
 		audioEngine.addEventListener("music-seeked", handleSeek);
-		audioEngine.addEventListener("music-timeupdate", handleTimeUpdate);
 		audioEngine.addEventListener(
 			"music-playback-rate-change",
 			handlePlaybackRateChange,
@@ -593,14 +630,13 @@ export const AudioSlider = memo(({ height = "2.5em" }: AudioSliderProps) => {
 
 		return () => {
 			isDestroyed = true;
-			if (frameId !== null) cancelAnimationFrame(frameId);
+			stopFrames();
 			destroyWaveSurfer();
 			window.removeEventListener("mouseup", handleWindowMouseUp);
 			audioEngine.removeEventListener("music-unload", handleMusicUnload);
 			audioEngine.removeEventListener("music-resume", handlePlay);
 			audioEngine.removeEventListener("music-pause", handlePause);
 			audioEngine.removeEventListener("music-seeked", handleSeek);
-			audioEngine.removeEventListener("music-timeupdate", handleTimeUpdate);
 			audioEngine.removeEventListener(
 				"music-playback-rate-change",
 				handlePlaybackRateChange,

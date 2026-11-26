@@ -3,6 +3,45 @@
 All notable changes to TTML Tool are listed here, newest first. The in-app
 What's New window reads this file.
 
+## [2.0.0] - 2026-11-26
+
+### New
+
+- Added the Studio workspace layer: a command palette (`Ctrl/Cmd+Shift+P`),
+  workspace home (`Ctrl/Cmd+Shift+H`), review cockpit (`Ctrl/Cmd+Shift+Q`),
+  focus mode (`Ctrl/Cmd+Shift+F`), workspace tabs, layout presets, a diff view,
+  crash recovery, and rolling session backups.
+- Added the New shell with a top bar, tab rail, command bar, and status bar laid
+  out as one flex workspace. It measures its own chrome and handles overflow at
+  narrow sizes and high display scaling. The Classic UI remains available.
+- Added the 2.0 plugin platform: sandboxed WebAssembly importers, exporters, and
+  tools; a reviewed Plugin Store with explicit permissions; Plugin Studio; and
+  the public registry, schema, submission template, and validation workflow.
+- Added Theme Studio, a searchable settings index, consistent settings page
+  headers, and dedicated Themes and Performance pages.
+- Added right-to-left interface support with automatic language detection and a
+  manual direction override, plus a polite live-announcement region.
+- Added ASS and VTT export with the existing export-loss report.
+
+### Improved
+
+- Preview, its progress bar, the bottom waveform, and the spectrogram now share
+  one animation scheduler and a smoothed audio clock. Paused playback does no
+  per-frame lyric work, unchanged style values are skipped, and scroll
+  correction no longer forces layout every frame.
+- Added Settings → Performance with adaptive visual quality, frame diagnostics
+  and Copy frame report, and the opt-in, restart-gated Windows Unlimited
+  frame-rate mode. Auto quality only removes decoration and never delays audio,
+  input, or timing.
+- Spectrogram zoom and pan easing is time-based, so it feels the same at 60,
+  165, and 240 Hz.
+- Added native menu and keyboard command entries for the new workspace actions.
+
+### Fixed
+
+- Retained the 1.0.4 waveform startup-crash fix so existing projects open
+  normally.
+
 ## [1.0.4] - 2026-11-23
 
 ### Fixed
@@ -12,6 +51,22 @@ What's New window reads this file.
   error occurred" before the editor opened. The waveform now uses the shared
   spectrogram visibility context, which also keeps Review mode's spectrogram
   toggle separate from the main editor.
+
+### Improved
+
+- Preview animation now runs on one shared frame scheduler with a smoothed
+  audio clock. The progress bar, waveform, and spectrogram follow the same
+  loop, a paused preview does no per-frame lyric work, unchanged style values
+  are skipped, and scroll correction no longer forces layout every frame.
+- Added Settings → Performance with adaptive visual quality, a frame-time
+  diagnostics overlay and Copy frame report, the existing Performance mode
+  control, and a GPU troubleshooting note. Auto quality only removes visual
+  effects and never delays audio, input, or timing.
+- Added an opt-in, restart-gated Unlimited frame-rate mode for Windows. It
+  passes extra WebView2 flags on the next launch and is marked experimental,
+  because Microsoft warns that browser flags can change or disappear.
+- Spectrogram zoom and pan easing is now time-based, so it feels the same at
+  60, 165, and 240 Hz, and the shared loop avoids a second animation frame.
 
 ## [1.0.3] - 2026-11-23
 

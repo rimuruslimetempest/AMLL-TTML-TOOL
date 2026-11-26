@@ -8,6 +8,56 @@ export interface SettingSearchItem {
 }
 
 export const SETTINGS_SEARCH_ITEMS: SettingSearchItem[] = [
+	// Performance
+	{
+		id: "performance-quality",
+		title: "Preview Quality",
+		description:
+			"Auto, High, Medium, or Low visual quality for the live preview",
+		tab: "performance",
+		tabName: "Performance",
+		keywords: [
+			"quality",
+			"frame rate",
+			"fps",
+			"adaptive",
+			"effects",
+			"lag",
+			"smooth",
+		],
+	},
+	{
+		id: "performance-frame-rate",
+		title: "Preview Frame Rate",
+		description:
+			"Match the display or try the experimental unlimited frame-rate mode",
+		tab: "performance",
+		tabName: "Performance",
+		keywords: [
+			"frame rate",
+			"refresh rate",
+			"hz",
+			"fps",
+			"unlimited",
+			"vsync",
+			"165",
+		],
+	},
+	{
+		id: "performance-diagnostics",
+		title: "Frame Diagnostics",
+		description:
+			"Show FPS, frame times, and copy a frame report in Preview",
+		tab: "performance",
+		tabName: "Performance",
+		keywords: [
+			"fps",
+			"diagnostics",
+			"frame report",
+			"frame time",
+			"performance",
+		],
+	},
 	// General
 	{
 		id: "general-language",
@@ -72,6 +122,25 @@ export const SETTINGS_SEARCH_ITEMS: SettingSearchItem[] = [
 			"font",
 			"atkinson",
 			"open dyslexic",
+		],
+	},
+	{
+		id: "general-interface-direction",
+		title: "Interface Direction (RTL)",
+		description:
+			"Follow the language automatically or force left-to-right / right-to-left layout",
+		tab: "common",
+		tabName: "General",
+		keywords: [
+			"rtl",
+			"ltr",
+			"direction",
+			"arabic",
+			"hebrew",
+			"farsi",
+			"urdu",
+			"mirror",
+			"accessibility",
 		],
 	},
 	{
@@ -481,11 +550,52 @@ export const SETTINGS_SEARCH_ITEMS: SettingSearchItem[] = [
 	// Appearance
 	{
 		id: "appearance-themes",
-		title: "Built-in Themes & Presets",
-		description: "Choose presets including Apple, Clear, Sunset Vibes, Nord Frost, Dracula, and Cyberpunk",
-		tab: "appearance",
-		tabName: "Appearance",
+		title: "Themes & Appearance Presets",
+		description: "Browse, install, and customize themes, or return to the legacy appearance presets",
+		tab: "themes",
+		tabName: "Themes",
 		keywords: ["theme", "preset", "builtin", "apple", "clear", "sunset", "nord", "dracula", "cyberpunk", "catppuccin"],
+	},
+	{
+		id: "plugins-manager",
+		title: "Plugin Manager",
+		description:
+			"Install, enable, run, and remove local WebAssembly plugins",
+		tab: "dev",
+		tabName: "Developer",
+		keywords: ["plugin", "wasm", "webassembly", "extension", "developer", "manage plugins"],
+	},
+	{
+		id: "themes-light-dark-pair",
+		title: "Light / Dark Theme Pair Editor",
+		description:
+			"Edit both schemes of a user theme side by side, preview tokens, and save or export the pair",
+		tab: "themes",
+		tabName: "Themes",
+		keywords: [
+			"theme pair",
+			"light theme",
+			"dark theme",
+			"token editor",
+			"contrast",
+			"theme studio",
+		],
+	},
+	{
+		id: "themes-safe-mode",
+		title: "Theme Safety Mode",
+		description: "Disable theme CSS when a theme paints over the interface, without losing colors or data",
+		tab: "themes",
+		tabName: "Themes",
+		keywords: ["theme", "safe mode", "broken", "css", "disable", "reset", "recovery"],
+	},
+	{
+		id: "themes-custom-css",
+		title: "Custom Theme CSS",
+		description: "Add personal CSS tweaks on top of the active theme and review global-selector warnings",
+		tab: "themes",
+		tabName: "Themes",
+		keywords: ["custom css", "css", "theme", "style", "tweak", "selector"],
 	},
 	{
 		id: "appearance-theme-mode",

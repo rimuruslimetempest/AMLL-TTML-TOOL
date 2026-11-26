@@ -2,6 +2,7 @@ import React, { memo, useCallback, useEffect, useRef } from "react";
 import classNames from "classnames";
 import { useSetAtom } from "jotai";
 import { audioEngine } from "$/modules/audio/audio-engine";
+import { frameScheduler } from "$/modules/performance/scheduler";
 import { currentTimeAtom } from "$/modules/audio/states/index.ts";
 import styles from "./PreviewProgressBar.module.css";
 
@@ -31,6 +32,7 @@ export const PreviewProgressBar: React.FC<PreviewProgressBarProps> = memo(
 		const containerRef = useRef<HTMLDivElement>(null);
 		const isDraggingRef = useRef(false);
 		const lastDisplaySecRef = useRef(-1);
+		const lastPctRef = useRef(Number.NaN);
 
 		const updateProgress = useCallback(
 			(timeMs: number) => {
@@ -45,6 +47,8 @@ export const PreviewProgressBar: React.FC<PreviewProgressBarProps> = memo(
 					}
 				}
 
+				if (Math.abs(pct - lastPctRef.current) < 0.005) return;
+				lastPctRef.current = pct;
 				if (fillRef.current) {
 					fillRef.current.style.width = `${pct}%`;
 				}
@@ -56,51 +60,33 @@ export const PreviewProgressBar: React.FC<PreviewProgressBarProps> = memo(
 		);
 
 		useEffect(() => {
-			let rafId: number | null = null;
-
-			const tick = () => {
-				if (!isDraggingRef.current) {
-					const currentTimeMs = audioEngine.musicCurrentTime * 1000;
-					updateProgress(currentTimeMs);
-				}
-				if (audioEngine.musicPlaying) {
-					rafId = requestAnimationFrame(tick);
-				} else {
-					rafId = null;
-				}
+			const sync = () => {
+				if (isDraggingRef.current) return;
+				lastDisplaySecRef.current = -1;
+				lastPctRef.current = Number.NaN;
+				updateProgress(audioEngine.musicCurrentTime * 1000);
 			};
 
-			const handlePlay = () => {
-				if (rafId !== null) cancelAnimationFrame(rafId);
-				rafId = requestAnimationFrame(tick);
-			};
+			audioEngine.addEventListener("music-pause", sync);
+			audioEngine.addEventListener("music-seeked", sync);
 
-			const handlePauseOrSeek = () => {
-				if (!isDraggingRef.current) {
-					lastDisplaySecRef.current = -1;
-					updateProgress(audioEngine.musicCurrentTime * 1000);
-				}
-			};
+			// The shared loop already has a smoothed audio clock, so this bar no
+			// longer needs its own requestAnimationFrame loop.
+			const unsubscribe = frameScheduler.subscribe(
+				(frame) => {
+					if (!isDraggingRef.current) updateProgress(frame.timeMs);
+				},
+				{ audio: true, label: "progress" },
+			);
 
-			audioEngine.addEventListener("music-resume", handlePlay);
-			audioEngine.addEventListener("music-pause", handlePauseOrSeek);
-			audioEngine.addEventListener("music-seeked", handlePauseOrSeek);
-			audioEngine.addEventListener("music-timeupdate", handlePauseOrSeek);
-
-			// Initial sync on mount or totalDuration change
 			lastDisplaySecRef.current = -1;
+			lastPctRef.current = Number.NaN;
 			updateProgress(audioEngine.musicCurrentTime * 1000);
 
-			if (audioEngine.musicPlaying) {
-				rafId = requestAnimationFrame(tick);
-			}
-
 			return () => {
-				if (rafId !== null) cancelAnimationFrame(rafId);
-				audioEngine.removeEventListener("music-resume", handlePlay);
-				audioEngine.removeEventListener("music-pause", handlePauseOrSeek);
-				audioEngine.removeEventListener("music-seeked", handlePauseOrSeek);
-				audioEngine.removeEventListener("music-timeupdate", handlePauseOrSeek);
+				unsubscribe();
+				audioEngine.removeEventListener("music-pause", sync);
+				audioEngine.removeEventListener("music-seeked", sync);
 			};
 		}, [updateProgress]);
 

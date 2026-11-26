@@ -65,6 +65,7 @@ import {
 	spectrogramSplitBgMainAtom,
 } from "$/modules/spectrogram/states";
 import { isDraggingAtom } from "$/modules/spectrogram/states/dnd.ts";
+import { previewQualityLevelAtom } from "$/modules/performance/states";
 import {
 	timeShiftDialogAtom,
 	timeShiftPreviewActiveAtom,
@@ -116,6 +117,11 @@ export const AudioSpectrogram: FC = memo(() => {
 	const [gain, setGain] = useAtom(spectrogramGainAtom);
 	const [dataHeight, setDataHeight] = useAtom(spectrogramHeightAtom);
 	const fftSize = useAtomValue(spectrogramFftSizeAtom);
+	const previewQualityLevel = useAtomValue(previewQualityLevelAtom);
+	// Level 2+ halves frequency resolution: fewer FFT bins per tile and less
+	// worker/canvas work, while the waveform and timing stay exact.
+	const effectiveFftSize =
+		previewQualityLevel >= 2 ? Math.max(256, Math.floor(fftSize / 2)) : fftSize;
 	const [playbackRate, setPlaybackRate] = useAtom(playbackRateAtom);
 	const [onlyShowSyncLine, setOnlyShowSyncLine] = useAtom(
 		spectrogramOnlyShowSyncLineAtom,
@@ -471,7 +477,7 @@ export const AudioSpectrogram: FC = memo(() => {
 				height: dataHeight,
 				tileWidthPx: targetLodWidth,
 				paletteId: currentPaletteId,
-				fftSize: fftSize,
+				fftSize: effectiveFftSize,
 			});
 
 			const cacheEntry = tileCache.current.get(cacheId);
@@ -497,7 +503,7 @@ export const AudioSpectrogram: FC = memo(() => {
 		palette.id,
 		zoom,
 		scrollLeft,
-		fftSize,
+		effectiveFftSize,
 	]);
 
 	const updateVisibleTilesRef = useRef(updateVisibleTiles);

@@ -15,6 +15,7 @@ import {
 	themeAllowRemoteContentAtom,
 	themeAutoReloadAtom,
 	themeCatalogAtom,
+	themeCssSafeModeAtom,
 	themeCustomCssAtom,
 	themeCustomCssEnabledAtom,
 	themeIdAtom,
@@ -144,6 +145,7 @@ export function ThemeRuntime() {
 	const allowRemote = useAtomValue(themeAllowRemoteContentAtom);
 	const customCss = useAtomValue(themeCustomCssAtom);
 	const customCssEnabled = useAtomValue(themeCustomCssEnabledAtom);
+	const cssSafeMode = useAtomValue(themeCssSafeModeAtom);
 	const autoReload = useAtomValue(themeAutoReloadAtom);
 	const reloadToken = useAtomValue(themeReloadTokenAtom);
 	const [nativeEffectOn, setNativeEffectOn] = useState(false);
@@ -286,6 +288,7 @@ export function ThemeRuntime() {
 			root.removeAttribute("data-theme-effects");
 			root.removeAttribute("data-theme-light");
 			root.removeAttribute("data-native-effect");
+			root.removeAttribute("data-theme-css");
 			return;
 		}
 		root.dataset.theme = activeTheme.id;
@@ -293,7 +296,9 @@ export function ThemeRuntime() {
 		root.dataset.themeEffects = effectsOn ? "on" : "off";
 		root.dataset.themeLight = scheme.appearance === "light" ? "true" : "false";
 		root.dataset.nativeEffect = nativeEffectOn ? "on" : "off";
+		root.dataset.themeCss = cssSafeMode ? "off" : "on";
 	}, [
+		cssSafeMode,
 		activeTheme.id,
 		effectsOn,
 		nativeEffectOn,
@@ -303,7 +308,7 @@ export function ThemeRuntime() {
 	]);
 
 	const themeCss = useMemo(() => {
-		if (uiLayer !== UiLayer.New) return "";
+		if (uiLayer !== UiLayer.New || cssSafeMode) return "";
 		const sanitized = sanitizeThemeCss(activeTheme.css ?? "", {
 			allowRemote,
 		});
@@ -311,15 +316,20 @@ export function ThemeRuntime() {
 		return activeTheme.builtin
 			? sanitized.css
 			: scopeNewUiCss(sanitized.css);
-	}, [activeTheme.builtin, activeTheme.css, allowRemote]);
+	}, [activeTheme.builtin, activeTheme.css, allowRemote, cssSafeMode, uiLayer]);
 
 	const customCssText = useMemo(() => {
-		if (uiLayer !== UiLayer.New || !customCssEnabled || !customCss.trim())
+		if (
+			uiLayer !== UiLayer.New ||
+			cssSafeMode ||
+			!customCssEnabled ||
+			!customCss.trim()
+		)
 			return "";
 		const sanitized = sanitizeThemeCss(customCss, { allowRemote });
 		if (!sanitized.css.trim()) return "";
 		return scopeNewUiCss(sanitized.css);
-	}, [allowRemote, customCss, customCssEnabled, uiLayer]);
+	}, [allowRemote, cssSafeMode, customCss, customCssEnabled, uiLayer]);
 
 	const runtimeCss = useMemo(() => {
 		const base = buildRuntimeCss(

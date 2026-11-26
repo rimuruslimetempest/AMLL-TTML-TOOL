@@ -88,6 +88,30 @@ export function scopeNewUiCss(css: string): string {
 	return `@scope (html[data-ui-layer="new"]) {\n${css}\n}`;
 }
 
+const GLOBAL_THEME_SELECTOR =
+	/(^|[\s,>+~(])(?:\*|html|body|:root|h[1-6]|\.rt-Heading)(?=$|[\s,.#:[>+~)])/i;
+
+/**
+ * Returns selectors that target the app shell or headings instead of a
+ * theme-owned surface. These are the rules that can paint over the Settings
+ * dialog or the title bar; the Theme safety switch exists to disable them.
+ */
+export function findGlobalThemeSelectors(css: string): string[] {
+	const found = new Set<string>();
+	const withoutComments = String(css ?? "").replace(/\/\*[\s\S]*?\*\//g, "");
+	for (const match of withoutComments.matchAll(/([^{}]+)\{/g)) {
+		const selector = match[1]?.trim();
+		if (!selector || selector.startsWith("@")) continue;
+		for (const part of selector.split(",")) {
+			const trimmed = part.trim();
+			if (trimmed && GLOBAL_THEME_SELECTOR.test(trimmed)) {
+				found.add(trimmed);
+			}
+		}
+	}
+	return [...found].slice(0, 20);
+}
+
 export function isLocalCssUrl(url: string): boolean {
 	return !isRemoteUrl(url) || isLocalAssetUrl(url);
 }

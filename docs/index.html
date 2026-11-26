@@ -5,10 +5,10 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="color-scheme" content="dark" />
 		<meta name="theme-color" content="#07070b" />
-		<title>TTML Tool Themes — Community theme marketplace</title>
+		<title>TTML Tool Marketplace — Community themes and plugins</title>
 		<meta
 			name="description"
-			content="Community themes for TTML Tool, a word-synced TTML lyric editor for Spicy Lyrics. Browse, download, and install themes made by the community."
+			content="Community themes and WASM plugins for TTML Tool, a word-synced TTML lyric editor. Browse, download, and install reviewed community content."
 		/>
 		<link rel="stylesheet" href="./assets/marketplace.css" />
 	</head>
@@ -18,11 +18,12 @@
 			<div class="wrap nav">
 				<a class="brand" href="./index.html">
 					<span class="brand-mark" aria-hidden="true"></span>
-					TTML Tool Themes
+					TTML Tool Marketplace
 				</a>
 				<a class="navlink" href="./index.html" aria-current="page">Home</a>
 				<a class="navlink" href="./themes.html">Themes</a>
-				<a class="navlink" href="./submit.html">Submit your theme</a>
+				<a class="navlink" href="./plugins.html">Plugins</a>
+				<a class="navlink" href="./submit.html">Submit</a>
 				<a class="navlink" href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL">GitHub</a>
 			</div>
 		</header>
@@ -33,14 +34,16 @@
 					<div class="eyebrow">Community marketplace</div>
 					<h1>Make your editor <span class="grad">feel like yours.</span></h1>
 					<p class="lede">
-						TTML Tool themes change the colors of the New interface without
-						touching your lyrics, timing, shortcuts, or projects. Browse
-						community palettes, preview them, and install with one file.
+						Themes change the colors of the New interface. Plugins add importers,
+						exporters, and lyric tools. Neither touches your timing, shortcuts, or
+						projects. Browse the community catalogs, preview an entry, and install
+						with one click.
 					</p>
 					<div class="actions">
 						<a class="btn primary" href="./themes.html">Browse themes</a>
+						<a class="btn secondary" href="./plugins.html">Browse plugins</a>
 						<a
-							class="btn secondary"
+							class="btn ghost"
 							href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/releases/latest"
 							>Download TTML Tool</a
 						>
@@ -84,8 +87,9 @@
 						<div>
 							<h2>Built for the way TTML Tool works</h2>
 							<p class="sub">
-								Themes are color schemes plus optional CSS. No scripts, no
-								background services, and nothing that changes timing.
+								Themes are color schemes plus optional CSS. Plugins are sandboxed
+								WebAssembly. No scripts in themes, no background services, and
+								nothing that changes timing.
 							</p>
 						</div>
 					</div>
@@ -100,18 +104,18 @@
 						</article>
 						<article class="card">
 							<div class="icon" aria-hidden="true">⌁</div>
-							<h3>CSS and JSON only</h3>
+							<h3>CSS and JSON themes</h3>
 							<p>
 								A theme is a <code>theme.json</code> file and optional CSS.
 								Remote URLs and scripts are rejected before install.
 							</p>
 						</article>
 						<article class="card">
-							<div class="icon" aria-hidden="true">↺</div>
-							<h3>Your files stay put</h3>
+							<div class="icon" aria-hidden="true">▣</div>
+							<h3>Sandboxed WASM plugins</h3>
 							<p>
-								Installing a theme never edits projects, audio, saved splits, or
-								shortcuts. Remove it whenever you like.
+								A plugin declares its permissions before install. The app
+								verifies the published SHA-256 and never runs page scripts.
 							</p>
 						</article>
 					</div>
@@ -128,7 +132,7 @@
 								first.
 							</p>
 						</div>
-						<a class="btn ghost small" href="./submit.html">Submit yours</a>
+						<a class="btn ghost small" href="./submit.html">Submit content</a>
 					</div>
 					<div class="grid-3">
 						<article class="card">
@@ -152,9 +156,10 @@
 							<div class="icon" aria-hidden="true">3</div>
 							<h3>Or browse in the app</h3>
 							<p>
-								Turn on <strong>Show community themes inside the app</strong> to
-								load this registry in the theme manager. Installs still require
-								a click and a matching SHA-256 hash.
+								Open <strong>Settings → Appearance → Themes → Manage themes →
+								Community</strong> for themes, or <strong>Plugin Management →
+								Plugin Store</strong> for plugins. Installs still require a click
+								and a matching SHA-256 hash.
 							</p>
 						</article>
 					</div>
@@ -166,10 +171,10 @@
 					<div class="notice info">
 						<span aria-hidden="true">◆</span>
 						<div>
-							<strong>Plugins: coming soon.</strong> TTML Tool already runs
-							optional WASM plugins from their own registry. This marketplace
-							lists themes only for now; plugin listings will be added after
-							they have the same review and hash checks.
+							<strong>Themes and plugins share one marketplace.</strong> Both
+							catalogs are reviewed by pull request, listed with a SHA-256 hash,
+							and fetched only when you open the in-app browser. Plugin
+							listings show every permission they declare.
 						</div>
 					</div>
 					<div class="notice" style="margin-top: 14px">
@@ -177,8 +182,9 @@
 						<div>
 							<strong>Community content is not reviewed by the app.</strong>
 							Entries marked Verified were checked by Rimurulover when they were
-							added. Always look at the author and the theme preview. Themes
-							never need to run an installer or an executable.
+							added. Always look at the author, the theme preview, and a plugin's
+							permissions. Themes never need to run an installer or an
+							executable.
 						</div>
 					</div>
 				</div>
@@ -187,10 +193,11 @@
 
 		<footer class="site">
 			<div class="wrap footer-row">
-				<span>TTML Tool Themes · made by Rimurulover</span>
+				<span>TTML Tool Marketplace · made by Rimurulover</span>
 				<span>
 					<a href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL">Repository</a>
 					· <a href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/blob/main/THEMES.md">Theme guide</a>
+					· <a href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/blob/main/PLUGINS.md">Plugin guide</a>
 					· <a href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/blob/main/PRIVACY.md">Privacy</a>
 				</span>
 			</div>

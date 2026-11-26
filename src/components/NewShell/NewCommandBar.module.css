@@ -1,0 +1,113 @@
+.command {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: stretch;
+	gap: 6px;
+	min-width: 0;
+	padding: 0 6px;
+	background: var(--ttml-bg-raised, var(--color-panel-solid));
+	border-bottom: 1px solid var(--ttml-border, var(--gray-a5));
+	overflow: visible;
+}
+
+.command[data-placement="bottom"] {
+	border-top: 1px solid var(--ttml-border, var(--gray-a5));
+	border-bottom: 0;
+}
+
+.scroll {
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 38px;
+	padding: 4px 2px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-width: none;
+	overscroll-behavior-x: contain;
+}
+
+.scroll::-webkit-scrollbar {
+	display: none;
+}
+
+.scroll[data-expanded="true"] {
+	overflow-x: hidden;
+	overflow-y: auto;
+	max-height: min(38vh, 340px);
+}
+
+/* The ribbon frame itself is not a scroll container in the New command bar;
+ * the JS-measured wrapper owns the scrolling and the expansion. */
+.scroll :global([data-ui-chrome="ribbon"]) {
+	background: transparent !important;
+	border: 0 !important;
+	z-index: auto !important;
+}
+
+.scroll :global([data-ui-chrome="ribbon"]) > div {
+	overflow: visible !important;
+	padding: 2px 2px 0 !important;
+}
+
+/* RibbonFrame is its own horizontal scroller. Let the measured wrapper own
+ * the scroll so its scrollWidth reveals the real controls width. */
+.scroll :global(.ribbon-scrollbar) {
+	overflow: visible !important;
+}
+
+.scroll :global([data-ribbon-scroll]) {
+	height: auto !important;
+	min-height: 36px;
+	align-items: center;
+}
+
+.scroll[data-expanded="true"] :global([data-ribbon-scroll]) {
+	flex-wrap: wrap;
+	row-gap: 6px;
+	padding-bottom: 6px;
+}
+
+.scroll[data-expanded="true"] :global([data-ribbon-group]) {
+	border-left: 0 !important;
+	padding-inline: 6px !important;
+}
+
+.more {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 3px;
+	flex: 0 0 auto;
+	align-self: center;
+	height: 28px;
+	padding: 0 8px;
+	border: 1px solid var(--ttml-border, var(--gray-a5));
+	border-radius: 6px;
+	background: transparent;
+	color: var(--ttml-text-secondary, var(--gray-11));
+	font: inherit;
+	font-size: 11px;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.more:hover {
+	background: var(--ttml-surface-2, var(--gray-a3));
+	color: var(--ttml-text, var(--gray-12));
+}
+
+.more svg {
+	width: 12px;
+	height: 12px;
+}
+
+@media (max-width: 900px) {
+	.more span {
+		display: none;
+	}
+
+	.more {
+		width: 28px;
+		padding: 0;
+	}
+}

@@ -21,6 +21,7 @@ import "./i18n/index.ts";
 import "./index.css";
 import "./styles/tokens.css";
 import "./styles/new-theme.css";
+import "./styles/new-studio.css";
 import "./utils/pwa.tsx";
 import { initFirebase } from "$/modules/cloud/firebase";
 import { isMigrationPath } from "$/modules/domain-migration/config";

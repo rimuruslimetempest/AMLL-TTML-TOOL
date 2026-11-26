@@ -555,6 +555,38 @@ export const cmdTtmlReview = registerCommand(
 	"Tools",
 );
 
+// =========================================================================================
+//  2.0 studio
+// =========================================================================================
+
+export const cmdCommandPalette = registerCommand(
+	"commandPalette",
+	[CONTROL_KEY, "Shift", "KeyP"],
+	t("settingsDialog.keybindings.commandPalette", "Command palette"),
+	"View",
+);
+
+export const cmdFocusMode = registerCommand(
+	"focusMode",
+	[CONTROL_KEY, "Shift", "KeyF"],
+	t("settingsDialog.keybindings.focusMode", "Focus mode"),
+	"View",
+);
+
+export const cmdWorkspaceHome = registerCommand(
+	"workspaceHome",
+	[CONTROL_KEY, "Shift", "KeyH"],
+	t("settingsDialog.keybindings.workspaceHome", "Workspace home"),
+	"File",
+);
+
+export const cmdReviewCockpit = registerCommand(
+	"reviewCockpit",
+	[CONTROL_KEY, "Shift", "KeyQ"],
+	t("settingsDialog.keybindings.reviewCockpit", "Review cockpit"),
+	"Tools",
+);
+
 if (import.meta.env.DEV) {
 	t("settingsDialog.keybindings.category.File");
 	t("settingsDialog.keybindings.category.Edit");

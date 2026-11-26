@@ -1,0 +1,13 @@
+.rail {
+	display: flex;
+	flex: 0 0 auto;
+	min-width: 0;
+	overflow: hidden;
+	background: var(--ttml-bg-raised, var(--color-panel-solid));
+	border-bottom: 1px solid var(--ttml-border, var(--gray-a5));
+}
+
+.rail > * {
+	flex: 1 1 auto;
+	min-width: 0;
+}

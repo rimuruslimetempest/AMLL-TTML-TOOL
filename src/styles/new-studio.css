@@ -1,0 +1,338 @@
+/*
+ * New UI — Studio skin.
+ *
+ * This is the visual layer for the New interface. It only changes surfaces,
+ * spacing, and emphasis; the shell layout, commands, and editor behavior stay
+ * in the existing components. Classic never receives these rules.
+ */
+
+html[data-ui-layer="new"] {
+	--studio-highlight: inset 0 1px 0
+		color-mix(in srgb, var(--ttml-text) 6%, transparent);
+	--studio-dock: linear-gradient(
+		180deg,
+		color-mix(in srgb, var(--ttml-surface-2) 90%, var(--ttml-accent) 10%),
+		var(--ttml-surface)
+	);
+	--studio-dock-shadow: 0 14px 36px -28px rgba(0, 0, 0, 0.95);
+}
+
+/* --------------------------------------------------------------------------
+ * Top rail
+ * ----------------------------------------------------------------------- */
+
+html[data-ui-layer="new"][data-ttml-shell="new"]
+	[data-ui-chrome="titlebar"] {
+	background: linear-gradient(
+		180deg,
+		var(--ttml-bg-raised),
+		color-mix(in srgb, var(--ttml-bg-raised) 84%, var(--ttml-bg-base))
+	) !important;
+	border-bottom-color: var(--ttml-border) !important;
+	box-shadow:
+		0 1px 0 color-mix(in srgb, var(--ttml-accent) 12%, transparent),
+		var(--studio-highlight);
+}
+
+html[data-ui-layer="new"] [data-ui-chrome="titlebar"] .topMenuToolbar {
+	gap: 1px;
+}
+
+html[data-ui-layer="new"] button.topMenuBarButton:hover,
+html[data-ui-layer="new"] button.topMenuBarButton[data-state="open"] {
+	border-color: transparent !important;
+	background: var(--ttml-surface-2) !important;
+}
+
+html[data-ui-layer="new"] [data-ui-chrome="titlebar"] .fileInfoSlot .rt-BaseButton {
+	color: var(--ttml-text) !important;
+	letter-spacing: -0.01em;
+}
+
+/* A single filled pill makes the current mode unambiguous. */
+html[data-ui-layer="new"]
+	[data-ui-chrome="titlebar"]
+	.rt-SegmentedControlRoot {
+	height: auto !important;
+	min-height: 0 !important;
+	padding: 3px !important;
+	gap: 2px !important;
+	border: 1px solid var(--ttml-border) !important;
+	border-radius: 999px !important;
+	background: color-mix(
+		in srgb,
+		var(--ttml-bg-base) 84%,
+		var(--ttml-surface)
+	) !important;
+	box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+html[data-ui-layer="new"]
+	[data-ui-chrome="titlebar"]
+	.rt-SegmentedControlItem {
+	height: 26px !important;
+	min-height: 26px !important;
+	padding: 0 12px !important;
+	border-radius: 999px !important;
+	color: var(--ttml-text-muted) !important;
+}
+
+html[data-ui-layer="new"]
+	[data-ui-chrome="titlebar"]
+	.rt-SegmentedControlItem:hover {
+	background: var(--ttml-surface-2) !important;
+	color: var(--ttml-text) !important;
+}
+
+html[data-ui-layer="new"]
+	[data-ui-chrome="titlebar"]
+	.rt-SegmentedControlItem[data-state="on"],
+html[data-ui-layer="new"]
+	[data-ui-chrome="titlebar"]
+	.rt-SegmentedControlItem[data-state="on"]:hover {
+	background: var(--ttml-accent) !important;
+	color: var(--ttml-accent-contrast) !important;
+	box-shadow:
+		inset 0 1px 0 color-mix(in srgb, white 20%, transparent),
+		0 2px 10px color-mix(in srgb, var(--ttml-accent) 34%, transparent) !important;
+}
+
+html[data-ui-layer="new"]
+	[data-ui-chrome="titlebar"]
+	.rt-SegmentedControlItem[data-state="on"]
+	* {
+	color: inherit !important;
+}
+
+html[data-ui-layer="new"] [class*="timerChip"] {
+	height: 30px !important;
+	border: 1px solid var(--ttml-border) !important;
+	border-radius: 999px !important;
+	background: var(--ttml-surface-2) !important;
+	color: var(--ttml-text-secondary) !important;
+}
+
+html[data-ui-layer="new"] [class*="timerChip"]:hover {
+	border-color: var(--ttml-border-strong) !important;
+	color: var(--ttml-text) !important;
+}
+
+/* --------------------------------------------------------------------------
+ * Command dock
+ * ----------------------------------------------------------------------- */
+
+html[data-ui-layer="new"] [data-ttml-chrome="command"] {
+	margin: 6px 8px 7px !important;
+	padding: 0 2px !important;
+	border: 1px solid var(--ttml-border) !important;
+	border-radius: var(--ttml-radius-md) !important;
+	background: var(--studio-dock) !important;
+	box-shadow: var(--studio-dock-shadow), var(--studio-highlight) !important;
+	overflow: visible !important;
+}
+
+html[data-ui-layer="new"] [data-ttml-chrome="command"] > button {
+	height: 28px !important;
+	border: 1px solid var(--ttml-border) !important;
+	border-radius: var(--ttml-radius-sm) !important;
+	background: var(--ttml-surface) !important;
+	color: var(--ttml-text-secondary) !important;
+}
+
+html[data-ui-layer="new"] [data-ttml-chrome="command"] > button:hover {
+	border-color: var(--ttml-border-strong) !important;
+	color: var(--ttml-text) !important;
+}
+
+html[data-ui-layer="new"] [data-ribbon-group] {
+	padding-inline: 8px !important;
+}
+
+html[data-ui-layer="new"] [data-ribbon-scroll] {
+	gap: 6px !important;
+}
+
+html[data-ui-layer="new"] [data-ribbon-group-body] .rt-BaseButton,
+html[data-ui-layer="new"] [data-ribbon-group-body] .rt-IconButton {
+	border-radius: var(--ttml-radius-sm) !important;
+}
+
+/* --------------------------------------------------------------------------
+ * Editor canvas
+ * ----------------------------------------------------------------------- */
+
+html[data-ui-layer="new"] [data-ttml-chrome="workspace"] {
+	background-color: var(--ttml-bg-base) !important;
+	background-image: radial-gradient(
+		1100px 340px at 50% -180px,
+		color-mix(in srgb, var(--ttml-accent) 9%, transparent),
+		transparent 72%
+	) !important;
+}
+
+html[data-ui-layer="new"] [data-lyric-line-id] > .rt-Flex:first-child {
+	margin-right: 4px;
+	padding-right: 10px;
+	border-right: 1px solid
+		color-mix(in srgb, var(--ttml-border) 70%, transparent);
+}
+
+html[data-ui-layer="new"]
+	[data-lyric-line-id]:hover
+	[class*="lineNumber"] {
+	color: var(--ttml-text-secondary) !important;
+	opacity: 0.92;
+}
+
+/* --------------------------------------------------------------------------
+ * Playback dock and status strip
+ * ----------------------------------------------------------------------- */
+
+html[data-ui-layer="new"] [data-ui-chrome="audiobar"] {
+	box-sizing: border-box !important;
+	width: calc(100% - 20px) !important;
+	height: 100% !important;
+	margin-inline: auto !important;
+	border: 1px solid var(--ttml-border) !important;
+	border-bottom: 0 !important;
+	border-radius: var(--ttml-radius-md) var(--ttml-radius-md) 0 0 !important;
+	background: linear-gradient(
+		180deg,
+		var(--ttml-surface),
+		var(--ttml-bg-raised)
+	) !important;
+	box-shadow: var(--studio-highlight) !important;
+	overflow: hidden !important;
+}
+
+html[data-ui-layer="new"] [data-ttml-chrome="statusbar"] {
+	height: calc(24px * var(--ttml-chrome-scale, 1)) !important;
+	padding-inline: 12px !important;
+	border-top: 1px solid
+		color-mix(in srgb, var(--ttml-border) 55%, transparent) !important;
+	background: var(--ttml-bg-base) !important;
+	font-size: 10.5px !important;
+	letter-spacing: 0.03em;
+}
+
+html[data-ui-layer="new"]
+	[data-ttml-chrome="statusbar"]
+	> span:first-child {
+	color: var(--ttml-accent-active) !important;
+	font-weight: var(--ttml-weight-bold) !important;
+	letter-spacing: 0.1em !important;
+	text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------------------
+ * Shared controls
+ * ----------------------------------------------------------------------- */
+
+html[data-ui-layer="new"] .rt-SegmentedControlItem[data-state="on"] {
+	background: var(--ttml-accent) !important;
+	box-shadow: inset 0 1px 0
+		color-mix(in srgb, white 18%, transparent) !important;
+	color: var(--ttml-accent-contrast) !important;
+}
+
+html[data-ui-layer="new"]
+	.rt-SegmentedControlItem[data-state="on"]:hover {
+	background: var(--ttml-accent-hover) !important;
+	color: var(--ttml-accent-contrast) !important;
+}
+
+html[data-ui-layer="new"] .rt-BaseButton:where(.rt-variant-solid) {
+	box-shadow:
+		inset 0 1px 0 color-mix(in srgb, white 18%, transparent),
+		0 6px 18px -12px
+			color-mix(in srgb, var(--ttml-accent) 65%, transparent) !important;
+}
+
+html[data-ui-layer="new"] .rt-BaseButton:where(.rt-variant-solid):active {
+	box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.22) !important;
+}
+
+html[data-ui-layer="new"] .rt-Card {
+	border-radius: var(--ttml-radius-md) !important;
+	background: var(--ttml-surface) !important;
+	box-shadow: none !important;
+}
+
+html[data-ui-layer="new"] .rt-DialogContent {
+	border-radius: var(--ttml-radius-lg) !important;
+	box-shadow: var(--ttml-shadow-4), var(--studio-highlight) !important;
+}
+
+html[data-ui-layer="new"] .rt-DialogOverlay,
+html[data-ui-layer="new"] .rt-AlertDialogOverlay {
+	background: color-mix(
+		in srgb,
+		var(--ttml-bg-base) 68%,
+		transparent
+	) !important;
+	backdrop-filter: blur(8px) !important;
+	-webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* --------------------------------------------------------------------------
+ * Settings workspace
+ * ----------------------------------------------------------------------- */
+
+html[data-ui-layer="new"] [data-settings-layout] {
+	background: var(--ttml-bg-overlay) !important;
+}
+
+html[data-ui-layer="new"] [data-settings-sidebar] {
+	padding: 12px 8px !important;
+	border-inline-end: 1px solid var(--ttml-border) !important;
+	background: color-mix(
+		in srgb,
+		var(--ttml-surface-2) 58%,
+		var(--ttml-bg-overlay)
+	) !important;
+}
+
+html[data-ui-layer="new"]
+	[data-settings-sidebar]
+	[class*="navigationItem"] {
+	min-height: 34px !important;
+	border-radius: var(--ttml-radius-sm) !important;
+}
+
+html[data-ui-layer="new"]
+	[data-settings-layout]
+	[class*="navigationItem"][data-state="active"] {
+	background: var(--ttml-accent-subtle) !important;
+	box-shadow: inset 2px 0 0 var(--ttml-accent) !important;
+	color: var(--ttml-accent-active) !important;
+	font-weight: var(--ttml-weight-semibold) !important;
+}
+
+html[data-ui-layer="new"] [data-settings-layout] [class*="contentPane"] {
+	padding: 20px 28px 44px !important;
+}
+
+html[data-ui-layer="new"] [data-settings-layout] .rt-Card {
+	border-color: var(--ttml-border) !important;
+	background: color-mix(
+		in srgb,
+		var(--ttml-surface) 88%,
+		var(--ttml-bg-overlay)
+	) !important;
+}
+
+/* --------------------------------------------------------------------------
+ * Flat fallbacks
+ * ----------------------------------------------------------------------- */
+
+html[data-ui-layer="new"][data-performance-mode="true"]
+	[data-ui-chrome="titlebar"],
+html[data-ui-layer="new"][data-performance-mode="true"]
+	[data-ttml-chrome="command"],
+html[data-ui-layer="new"][data-performance-mode="true"]
+	[data-ttml-chrome="workspace"],
+html[data-ui-layer="new"][data-performance-mode="true"]
+	[data-ui-chrome="audiobar"] {
+	background-image: none !important;
+	box-shadow: none !important;
+}

@@ -226,13 +226,20 @@ function clearPressingKeys() {
  * with only the held modifiers.
  */
 function dispatchPressingKeys(code: string, evt: KeyboardEvent) {
-	const joined = getShortcutKey(pressingKeys);
+	// Assistive tools and automation can deliver a shortcut as one event with
+	// modifier flags and no separate modifier keydowns. Include both sources.
+	const eventModifiers: string[] = [];
+	if (evt.ctrlKey) eventModifiers.push("Control");
+	if (evt.metaKey) eventModifiers.push("Meta");
+	if (evt.altKey) eventModifiers.push("Alt");
+	if (evt.shiftKey) eventModifiers.push("Shift");
+	const joined = getShortcutKey([...pressingKeys, ...eventModifiers]);
 	if (registeredKeyBindings.has(joined) || MODIFIER_ORDER.includes(code)) {
 		triggerCallbacks(joined, evt, downTime);
 		return;
 	}
-	const modifiers = [...pressingKeys].filter((key) =>
-		MODIFIER_ORDER.includes(key),
+	const modifiers = [...new Set([...pressingKeys, ...eventModifiers])].filter(
+		(key) => MODIFIER_ORDER.includes(key),
 	);
 	triggerCallbacks(
 		getShortcutKey([...modifiers, code]),

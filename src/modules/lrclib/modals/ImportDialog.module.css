@@ -1,6 +1,8 @@
 .dialogContent {
 	max-width: 800px;
-	height: 600px;
+	height: min(600px, calc(100dvh - 48px));
+	max-height: 88vh;
+	min-height: 0;
 	display: flex;
 	flex-direction: column;
 }

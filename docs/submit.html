@@ -5,10 +5,10 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="color-scheme" content="dark" />
 		<meta name="theme-color" content="#07070b" />
-		<title>Submit your theme — TTML Tool Themes</title>
+		<title>Submit to the marketplace — TTML Tool</title>
 		<meta
 			name="description"
-			content="How to submit a community theme for TTML Tool with a pull request, a registry entry, and an automatic validation check."
+			content="How to submit a community theme or a WASM plugin for TTML Tool with a pull request, a registry entry, and automatic validation."
 		/>
 		<link rel="stylesheet" href="./assets/marketplace.css" />
 	</head>
@@ -18,21 +18,23 @@
 			<div class="wrap nav">
 				<a class="brand" href="./index.html">
 					<span class="brand-mark" aria-hidden="true"></span>
-					TTML Tool Themes
+					TTML Tool Marketplace
 				</a>
 				<a class="navlink" href="./index.html">Home</a>
 				<a class="navlink" href="./themes.html">Themes</a>
-				<a class="navlink" href="./submit.html" aria-current="page">Submit your theme</a>
+				<a class="navlink" href="./plugins.html">Plugins</a>
+				<a class="navlink" href="./submit.html" aria-current="page">Submit</a>
 				<a class="navlink" href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL">GitHub</a>
 			</div>
 		</header>
 
 		<main id="main">
 			<div class="wrap page-head">
-				<h1 style="font-size: clamp(30px, 4vw, 44px)">Submit your theme</h1>
+				<h1 style="font-size: clamp(30px, 4vw, 44px)">Submit to the marketplace</h1>
 				<p class="lede">
-					Themes are added by pull request. Nothing appears on this page until
-					Rimurulover reviews and merges your change.
+					Themes and plugins are added by pull request. Nothing appears on this
+					site until Rimurulover reviews and merges your change, and the same
+					validation runs on your pull request.
 				</p>
 				<div class="actions">
 					<a
@@ -42,15 +44,15 @@
 					>
 					<a
 						class="btn secondary"
-						href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/issues/new?template=theme-submission.yml"
+						href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/issues/new/choose"
 						>Ask first with an issue</a
 					>
 				</div>
 			</div>
 
-			<section>
+			<section id="themes">
 				<div class="wrap">
-					<h2>What to send</h2>
+					<h2>Submit a theme</h2>
 					<ol class="steps">
 						<li>
 							<h3>Build and test your theme</h3>
@@ -99,7 +101,7 @@
 						</li>
 					</ol>
 
-					<h2 style="margin-top: 34px">Registry entry example</h2>
+					<h2 style="margin-top: 34px">Theme registry entry example</h2>
 					<pre><code>{
   "id": "aurora",
   "name": "Aurora",
@@ -126,14 +128,93 @@
 							by the app's importer.
 						</div>
 					</div>
+				</div>
+			</section>
 
-					<div class="notice info" style="margin-top: 14px">
-						<span aria-hidden="true">◆</span>
+			<section id="plugins">
+				<div class="wrap">
+					<h2>Submit a plugin</h2>
+					<p class="sub" style="margin-bottom: 18px">
+						Plugins run as sandboxed WebAssembly. A plugin can add an import
+						format, an export format, or a lyric tool; it cannot inject
+						JavaScript into the editor.
+					</p>
+					<ol class="steps">
+						<li>
+							<h3>Build against API 2.0</h3>
+							<p>
+								Compile a <code>.wasm</code> module that exports
+								<code>allocate</code>, <code>run_importer</code>,
+								<code>run_exporter</code>, or <code>run_tool</code>, and add a
+								<code>plugin.json</code> manifest that declares its type,
+								permissions, and slots. See <code>PLUGINS.md</code> for the full
+								contract.
+							</p>
+						</li>
+						<li>
+							<h3>Add the bundle</h3>
+							<p>
+								Create <code>docs/registry/plugins/&lt;id&gt;/plugin.wasm</code>
+								and <code>plugin.json</code> next to it. The module is capped at
+								2 MB and the manifest must match the registry entry exactly.
+							</p>
+						</li>
+						<li>
+							<h3>Add a registry entry</h3>
+							<p>
+								Edit <code>docs/registry/plugins.json</code> with the id, name,
+								author, version, description, tags, type, permissions, slots,
+								download path, SHA-256, byte size, minimum app version, and
+								<code>addedAt</code> date.
+							</p>
+						</li>
+						<li>
+							<h3>Run both validators</h3>
+							<p>
+								<code>node scripts/validate-marketplace.mjs</code> runs the theme
+								and plugin checks. Your pull request fails on a hash mismatch, a
+								bad file size, a missing manifest, a permission outside the
+								allowlist, or a module without the WebAssembly header.
+							</p>
+						</li>
+						<li>
+							<h3>Wait for review</h3>
+							<p>
+								A maintainer reads the module's permissions and behavior before
+								merging. Nothing is installed automatically, and a bad entry can
+								be marked deprecated without touching anyone's installed copy.
+							</p>
+						</li>
+					</ol>
+
+					<h2 style="margin-top: 34px">Plugin registry entry example</h2>
+					<pre><code>{
+  "id": "lyric-normalizer",
+  "name": "Lyric Normalizer",
+  "author": "your-github-name",
+  "version": "1.0.0",
+  "description": "Trims stray spaces and normalizes word order in tool runs.",
+  "tags": ["lyrics", "tool"],
+  "type": "tool",
+  "apiVersion": 2,
+  "permissions": ["lyrics:read", "lyrics:write"],
+  "slots": [],
+  "download": "registry/plugins/lyric-normalizer/plugin.wasm",
+  "sha256": "&lt;64 lowercase hex characters&gt;",
+  "size": 24576,
+  "minAppVersion": "1.0.4",
+  "addedAt": "2026-11-24",
+  "verified": false
+}</code></pre>
+
+					<div class="notice" style="margin-top: 22px">
+						<span aria-hidden="true">!</span>
 						<div>
-							<strong>Plugins are not part of this marketplace yet.</strong>
-							TTML Tool has a separate WASM plugin registry. Do not submit
-							plugins here; plugin listings are coming later with their own
-							review process.
+							<strong>WebAssembly only for now.</strong> The marketplace does not
+							run arbitrary JavaScript or CSS inside the app. A plugin must
+							declare every permission it uses, and permissions are shown before
+							install. Modules that load remote code or hide their behavior are
+							rejected.
 						</div>
 					</div>
 				</div>
@@ -143,11 +224,11 @@
 				<div class="wrap">
 					<h2>Review and removal</h2>
 					<p class="sub">
-						Rimurulover reviews every entry. A theme can be removed if it
-						breaks the app, contains content that does not belong to the author,
-						or stops matching its published hash. Removing an entry does not
-						reach into anyone's installed copy; people can delete a theme in
-						Settings.
+						Rimurulover reviews every entry. A theme or plugin can be removed or
+						marked deprecated if it breaks the app, contains content that does
+						not belong to the author, or stops matching its published hash.
+						Removing an entry does not reach into anyone's installed copy; people
+						can delete it in Settings.
 					</p>
 					<div class="actions" style="margin-top: 18px">
 						<a
@@ -160,6 +241,11 @@
 							href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/blob/main/THEMES.md"
 							>Read THEMES.md</a
 						>
+						<a
+							class="btn ghost"
+							href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL/blob/main/PLUGINS.md"
+							>Read PLUGINS.md</a
+						>
 					</div>
 				</div>
 			</section>
@@ -167,10 +253,11 @@
 
 		<footer class="site">
 			<div class="wrap footer-row">
-				<span>TTML Tool Themes · made by Rimurulover</span>
+				<span>TTML Tool Marketplace · made by Rimurulover</span>
 				<span>
 					<a href="https://github.com/rimuruslimetempest/AMLL-TTML-TOOL">Repository</a>
 					· <a href="./themes.html">Browse themes</a>
+					· <a href="./plugins.html">Browse plugins</a>
 				</span>
 			</div>
 		</footer>

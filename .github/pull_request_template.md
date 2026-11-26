@@ -16,3 +16,4 @@
 - [ ] I did not commit lyrics, audio, credentials, `.env` files, build output, or private data.
 - [ ] I updated the changelog for a user-visible change.
 - [ ] I ran the relevant build, test, or lint checks and reported the results.
+- [ ] For a marketplace entry, I ran `pnpm validate:marketplace` and the registry, hash, manifest, and preview match the committed files.

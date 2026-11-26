@@ -11,18 +11,21 @@ export function useViewportWidth() {
 	);
 
 	useEffect(() => {
-		let frame = 0;
+		let timer = 0;
 
+		// A timeout, not requestAnimationFrame: rAF is paused in background
+		// windows, which would leave structural decisions on a stale width.
 		const updateWidth = () => {
-			cancelAnimationFrame(frame);
-			frame = requestAnimationFrame(() => {
+			window.clearTimeout(timer);
+			timer = window.setTimeout(() => {
 				setWidth(window.innerWidth);
-			});
+			}, 40);
 		};
 
+		updateWidth();
 		window.addEventListener("resize", updateWidth, { passive: true });
 		return () => {
-			cancelAnimationFrame(frame);
+			window.clearTimeout(timer);
 			window.removeEventListener("resize", updateWidth);
 		};
 	}, []);

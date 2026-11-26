@@ -17,17 +17,11 @@
 }
 
 :root[data-ui-layer="new"] .drawer {
-	top: var(--ds-topbar-height, 46px);
-	padding-bottom: var(--ds-bottombar-height, 48px);
-	background: color-mix(
-		in srgb,
-		var(
-			--ttml-bg-raised,
-			var(--color-panel-solid, #1b1b1e)
-		) 92%,
-		transparent
-	);
-	backdrop-filter: blur(18px) saturate(140%);
+	top: var(--ttml-content-top, 82px);
+	bottom: var(--ttml-content-bottom, 26px);
+	padding-bottom: 0;
+	background: var(--ttml-bg-raised, var(--color-panel-solid, #1b1b1e));
+	backdrop-filter: none;
 }
 
 .drawerHeader {
@@ -307,6 +301,14 @@
 	width: 120px;
 }
 
+:root[data-ui-layer="new"] .banner {
+	top: calc(var(--ttml-content-top, 82px) + 8px);
+}
+
+:root[data-ui-layer="new"] .bottomLeftPrompt {
+	bottom: calc(var(--ttml-content-bottom, 26px) + 12px);
+}
+
 @media (max-width: 760px) {
 	.drawer {
 		width: 100vw;
@@ -314,5 +316,13 @@
 	}
 	.banner {
 		top: 46px;
+	}
+
+	:root[data-ui-layer="new"] .drawer {
+		top: var(--ttml-content-top, 82px);
+	}
+
+	:root[data-ui-layer="new"] .banner {
+		top: calc(var(--ttml-content-top, 82px) + 8px);
 	}
 }

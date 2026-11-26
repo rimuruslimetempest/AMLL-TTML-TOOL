@@ -16,6 +16,30 @@ const DISCORD_LOGO_URL: &str =
     "https://raw.githubusercontent.com/rimuruslimetempest/AMLL-TTML-TOOL/main/public/logo.png";
 const REPOSITORY_URL: &str = "https://github.com/rimuruslimetempest/AMLL-TTML-TOOL";
 
+/// WebView2 arguments for the opt-in Unlimited frame-rate mode.
+///
+/// wry always supplies its own browser arguments, so WebView2 ignores
+/// WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS for this app. The main window is
+/// built at runtime with these arguments instead. wry's defaults are repeated
+/// because custom arguments replace them.
+#[cfg(windows)]
+fn experimental_browser_args(app: &tauri::AppHandle) -> Option<String> {
+    use tauri::Manager;
+
+    let marker = app
+        .path()
+        .app_config_dir()
+        .ok()?
+        .join("unlimited-frame-rate");
+    if !marker.exists() {
+        return None;
+    }
+    Some(
+        "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --disable-frame-rate-limit --disable-gpu-vsync"
+            .to_string(),
+    )
+}
+
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(dead_code)]
@@ -373,6 +397,39 @@ async fn create_new_window(app: tauri::AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn set_preview_startup_flag(
+    app: tauri::AppHandle,
+    flag: String,
+    enabled: bool,
+) -> Result<(), String> {
+    #[cfg(not(windows))]
+    {
+        let _ = (&app, &flag, enabled);
+        return Err("Startup frame-rate flags are only supported on Windows.".into());
+    }
+
+    #[cfg(windows)]
+    {
+        use tauri::Manager;
+
+        let file_name = match flag.as_str() {
+            "unlimited-frame-rate" => "unlimited-frame-rate",
+            _ => return Err("Unknown startup flag.".into()),
+        };
+        let dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
+        fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+        let path = dir.join(file_name);
+        if enabled {
+            fs::write(&path, b"1").map_err(|e| e.to_string())
+        } else if path.exists() {
+            fs::remove_file(&path).map_err(|e| e.to_string())
+        } else {
+            Ok(())
+        }
+    }
+}
+
+#[tauri::command]
 async fn fetch_url(
     url: String,
     headers: Option<std::collections::HashMap<String, String>>,
@@ -536,6 +593,24 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
+            // The main window has `create: false` in tauri.conf.json so the
+            // optional Unlimited mode can decide the WebView2 arguments before
+            // the webview exists. All other window options still come from the
+            // same config.
+            {
+                if let Some(config) = app.config().app.windows.first().cloned() {
+                    let builder =
+                        tauri::WebviewWindowBuilder::from_config(app.handle(), &config)?;
+                    #[cfg(windows)]
+                    let builder = match experimental_browser_args(app.handle()) {
+                        Some(arguments) => builder.additional_browser_args(&arguments),
+                        None => builder,
+                    };
+                    builder.build()?;
+                }
+            }
+
             #[cfg(target_os = "macos")]
             {
                 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
@@ -877,6 +952,7 @@ pub fn run() {
             get_open_file_data,
             convert_audio_mp3_to_flac,
             set_discord_activity,
+            set_preview_startup_flag,
             clear_discord_activity,
             create_new_window,
             restart_app,

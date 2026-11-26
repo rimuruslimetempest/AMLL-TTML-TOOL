@@ -1,0 +1,327 @@
+.topbar {
+	position: relative;
+	display: flex;
+	flex: 0 0 auto;
+	min-width: 0;
+	height: calc(48px * var(--ttml-chrome-scale, 1));
+	background: var(--ttml-bg-raised, var(--color-panel-solid));
+}
+
+.topbar :global([data-ui-chrome="titlebar"]) {
+	height: 100% !important;
+	min-height: 100% !important;
+	padding: 0 8px !important;
+	background: transparent !important;
+	background-image: none !important;
+	border-bottom: 0 !important;
+	font-size: 13px;
+}
+
+.start {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 100%;
+	overflow: hidden;
+}
+
+.start :global([class*="fileInfoSlot"]) {
+	min-width: 0;
+	flex-shrink: 1;
+}
+
+.topbar[data-stage="compact"] .start :global([class*="fileInfoSlot"]) {
+	max-width: 230px;
+	overflow: hidden;
+}
+
+.topbar[data-stage="icon"] .start :global([class*="fileInfoSlot"]) {
+	display: none !important;
+}
+
+.modeSwitch {
+	flex: 0 0 auto;
+}
+
+.modeItem {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
+.modeItem svg {
+	width: 16px;
+	height: 16px;
+	flex: 0 0 auto;
+}
+
+.modeLabel {
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.end {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
+	height: 100%;
+	flex-wrap: nowrap;
+}
+
+.divider {
+	width: 1px;
+	height: 18px;
+	flex: 0 0 auto;
+	margin: 0 2px;
+	background: var(--ttml-border, var(--gray-a5));
+}
+
+.timerChip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 30px;
+	padding: 0 9px;
+	border: 1px solid var(--ttml-border, var(--gray-a5));
+	border-radius: 7px;
+	background: transparent;
+	color: var(--ttml-text-secondary, var(--gray-11));
+	user-select: none;
+	white-space: nowrap;
+}
+
+.timerChip:hover {
+	border-color: var(--ttml-border-strong, var(--gray-a6));
+	color: var(--ttml-text, var(--gray-12));
+}
+
+.timerIcon {
+	width: 14px;
+	height: 14px;
+	color: var(--ttml-accent, var(--accent-9));
+	flex: 0 0 auto;
+}
+
+.timerValue {
+	font-family: var(--ttml-font-mono, ui-monospace, monospace);
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: -0.02em;
+}
+
+.timerTooltip {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	text-align: left;
+}
+
+.timerIdle {
+	margin-left: 4px;
+	opacity: 0.72;
+}
+
+.timerAverage {
+	color: var(--ttml-text-muted, var(--gray-10));
+	font-size: 12px;
+}
+
+.iconButton,
+.geniusButton {
+	display: inline-grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	flex: 0 0 auto;
+	padding: 0;
+	border: 1px solid transparent;
+	border-radius: 7px;
+	background: transparent;
+	color: var(--ttml-text-secondary, var(--gray-11));
+	cursor: pointer;
+}
+
+.iconButton svg {
+	width: 17px;
+	height: 17px;
+}
+
+.iconButton:hover,
+.geniusButton:hover:not(:disabled) {
+	background: var(--ttml-surface-2, var(--gray-a3));
+	border-color: var(--ttml-border, var(--gray-a5));
+	color: var(--ttml-text, var(--gray-12));
+}
+
+.iconButton[data-active="true"] {
+	background: var(--ttml-accent-subtle, var(--accent-a3));
+	border-color: color-mix(in srgb, var(--ttml-accent, var(--accent-9)) 38%, transparent);
+	color: var(--ttml-accent-active, var(--accent-11));
+}
+
+.geniusButton {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1px;
+}
+
+.geniusMark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	border-radius: 4px;
+	background: #ffff64;
+	color: #111111;
+	font-size: 12px;
+	font-weight: 900;
+	line-height: 1;
+}
+
+.geniusArrow {
+	width: 11px;
+	height: 11px;
+	color: var(--ttml-text-muted, var(--gray-10));
+}
+
+.geniusButton:disabled {
+	opacity: 0.42;
+	cursor: not-allowed;
+}
+
+.userChip {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	height: 32px;
+	flex: 0 0 auto;
+	padding: 2px 9px 2px 2px;
+	border: 1px solid var(--ttml-border, var(--gray-a5));
+	border-radius: 999px;
+	background: transparent;
+	color: var(--ttml-text, var(--gray-12));
+	cursor: pointer;
+}
+
+.userChip:hover {
+	background: var(--ttml-surface-2, var(--gray-a3));
+	border-color: var(--ttml-border-strong, var(--gray-a6));
+}
+
+.userAvatar {
+	display: inline-grid;
+	place-items: center;
+	width: 26px;
+	height: 26px;
+	flex: 0 0 auto;
+	border-radius: 50%;
+	background: var(--ttml-accent, var(--accent-9));
+	color: var(--ttml-accent-contrast, white);
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.userMeta {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0;
+	min-width: 0;
+}
+
+.userName {
+	max-width: 104px;
+	overflow: hidden;
+	color: var(--ttml-text, var(--gray-12));
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 14px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.userRole {
+	color: var(--ttml-text-muted, var(--gray-10));
+	font-size: 11px;
+	line-height: 13px;
+	white-space: nowrap;
+}
+
+.secretButton {
+	width: 6px;
+	height: 6px;
+	flex: 0 0 auto;
+	margin: 0 4px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: var(--ttml-accent, var(--accent-9));
+	opacity: 0.18;
+	cursor: pointer;
+}
+
+.secretButton:hover {
+	opacity: 0.6;
+}
+
+/* Compact stages: labels go first, then metadata, then whole chips. */
+.topbar[data-stage="compact"] .modeLabel {
+	display: none;
+}
+
+.topbar[data-stage="compact"] .userMeta {
+	display: none;
+}
+
+.topbar[data-stage="compact"] .userChip {
+	width: 32px;
+	padding: 2px;
+	justify-content: center;
+}
+
+.topbar[data-stage="compact"] .timerValue {
+	display: none;
+}
+
+.topbar[data-stage="compact"] .timerChip {
+	width: 32px;
+	justify-content: center;
+	padding: 0;
+}
+
+.topbar[data-stage="icon"] .modeLabel {
+	display: none;
+}
+
+.topbar[data-stage="icon"] .timerChip,
+.topbar[data-stage="icon"] .userChip,
+.topbar[data-stage="icon"] .divider,
+.topbar[data-stage="icon"] .secretButton {
+	display: none;
+}
+
+.topbar[data-stage="icon"] .end {
+	gap: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.timerChip,
+	.iconButton,
+	.geniusButton,
+	.userChip,
+	.secretButton {
+		transition: none;
+	}
+}

@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from "react";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -21,9 +22,10 @@ import {
 	Delete16Regular as TrashIcon,
 	ArrowUpload16Regular as UploadIcon,
 	ShoppingBag16Regular as StoreIcon,
-	CheckmarkCircle16Regular as InstalledIcon,
 	CloudArrowDown16Regular as DownloadIcon,
 	Info16Regular as InfoIcon,
+	Search16Regular as SearchIcon,
+	ShieldCheckmark16Regular as ShieldIcon,
 } from "@fluentui/react-icons";
 import {
 	getAllPlugins,
@@ -31,11 +33,33 @@ import {
 	deletePlugin,
 	togglePlugin,
 } from "../plugin-store";
-import type { WASMPlugin } from "../types";
+import type { PluginPermission, PluginSlot, WASMPlugin } from "../types";
 import { pluginManager } from "../plugin-manager";
 import { OFFICIAL_PLUGIN_REGISTRY, fetchRemoteRegistry } from "../registry";
 import type { PluginRegistryEntry } from "../registry";
 import styles from "./PluginManager.module.css";
+
+const PERMISSION_LABELS: Record<PluginPermission, string> = {
+	"lyrics:read": "Read lyrics",
+	"lyrics:write": "Change lyrics",
+	"files:read": "Read files",
+	"files:write": "Write files",
+	network: "Network",
+	"settings:read": "Read settings",
+	"ui:toolbar": "Toolbar button",
+	"ui:panel": "Side panel",
+};
+
+function compareVersions(a: string, b: string): number {
+	const left = a.split(/[-+]/)[0].split(".").map((part) => Number.parseInt(part, 10) || 0);
+	const right = b.split(/[-+]/)[0].split(".").map((part) => Number.parseInt(part, 10) || 0);
+	const length = Math.max(left.length, right.length);
+	for (let index = 0; index < length; index++) {
+		const difference = (left[index] ?? 0) - (right[index] ?? 0);
+		if (difference !== 0) return difference > 0 ? 1 : -1;
+	}
+	return 0;
+}
 
 export const PluginManagerDialog: FC = () => {
 	const { t } = useTranslation();
@@ -46,6 +70,11 @@ export const PluginManagerDialog: FC = () => {
 		OFFICIAL_PLUGIN_REGISTRY,
 	);
 	const [isLoadingRegistry, setIsLoadingRegistry] = useState(false);
+	const [search, setSearch] = useState("");
+	const [typeFilter, setTypeFilter] = useState("all");
+	const [consentEntry, setConsentEntry] = useState<PluginRegistryEntry | null>(
+		null,
+	);
 
 	const verifyHash = async (
 		blob: Blob,
@@ -86,17 +115,93 @@ export const PluginManagerDialog: FC = () => {
 	const handleFileUpload = async (
 		event: React.ChangeEvent<HTMLInputElement>,
 	) => {
-		const file = event.target.files?.[0];
-		if (!file) return;
+		const files = Array.from(event.target.files ?? []);
+		event.target.value = "";
+		const wasm = files.find((file) => file.name.toLowerCase().endsWith(".wasm"));
+		if (!wasm) {
+			window.alert("Choose a .wasm plugin (optionally with its plugin.json manifest).");
+			return;
+		}
+		const manifestFile = files.find((file) =>
+			file.name.toLowerCase().endsWith(".json"),
+		);
+		let manifest: Partial<WASMPlugin> = {};
+		if (manifestFile) {
+			try {
+				const parsed = JSON.parse(await manifestFile.text()) as Record<
+					string,
+					unknown
+				>;
+				const allowedPermissions = new Set<PluginPermission>([
+					"lyrics:read",
+					"lyrics:write",
+					"files:read",
+					"files:write",
+					"network",
+					"settings:read",
+					"ui:toolbar",
+					"ui:panel",
+				]);
+				const allowedSlots = new Set<PluginSlot>([
+					"toolbar",
+					"panel",
+					"import-dialog",
+					"export-dialog",
+				]);
+				manifest = {
+					id: typeof parsed.id === "string" ? parsed.id : undefined,
+					name: typeof parsed.name === "string" ? parsed.name : undefined,
+					description:
+						typeof parsed.description === "string"
+							? parsed.description
+							: undefined,
+					author: typeof parsed.author === "string" ? parsed.author : undefined,
+					version:
+						typeof parsed.version === "string" ? parsed.version : undefined,
+					type:
+						parsed.type === "importer" ||
+						parsed.type === "exporter" ||
+						parsed.type === "tool" ||
+						parsed.type === "both"
+							? parsed.type
+							: undefined,
+					apiVersion:
+						parsed.apiVersion === 2 ? 2 : undefined,
+					permissions: Array.isArray(parsed.permissions)
+						? parsed.permissions.filter(
+								(permission): permission is PluginPermission =>
+									typeof permission === "string" &&
+									allowedPermissions.has(permission as PluginPermission),
+							)
+						: undefined,
+					slots: Array.isArray(parsed.slots)
+						? parsed.slots.filter(
+								(slot): slot is PluginSlot =>
+									typeof slot === "string" &&
+									allowedSlots.has(slot as PluginSlot),
+							)
+						: undefined,
+					homepage:
+						typeof parsed.homepage === "string" ? parsed.homepage : undefined,
+				};
+			} catch {
+				window.alert("The plugin.json manifest is not valid JSON.");
+				return;
+			}
+		}
 
 		const plugin: WASMPlugin = {
-			id: crypto.randomUUID(),
-			name: file.name.replace(".wasm", ""),
-			description: "Community provided plugin",
-			author: "Unknown",
-			version: "1.0.0",
-			type: "importer",
-			blob: file,
+			id: manifest.id ?? crypto.randomUUID(),
+			name: manifest.name ?? wasm.name.replace(/\.wasm$/i, ""),
+			description: manifest.description ?? "Community provided plugin",
+			author: manifest.author ?? "Unknown",
+			version: manifest.version ?? "1.0.0",
+			type: manifest.type ?? "importer",
+			apiVersion: manifest.apiVersion,
+			permissions: manifest.permissions,
+			slots: manifest.slots,
+			homepage: manifest.homepage,
+			blob: wasm,
 			isEnabled: true,
 			createdAt: Date.now(),
 		};
@@ -108,13 +213,26 @@ export const PluginManagerDialog: FC = () => {
 
 	const handleDelete = async (id: string) => {
 		await deletePlugin(id);
+		pluginManager.unloadPlugin(id);
 		await loadPlugins();
 	};
 
 	const handleToggle = async (id: string, enabled: boolean) => {
 		await togglePlugin(id, enabled);
+		if (!enabled) pluginManager.unloadPlugin(id);
 		await loadPlugins();
 		await pluginManager.loadEnabledPlugins();
+	};
+
+	const isWasm = async (blob: Blob): Promise<boolean> => {
+		const bytes = new Uint8Array(await blob.slice(0, 4).arrayBuffer());
+		return (
+			bytes.length === 4 &&
+			bytes[0] === 0x00 &&
+			bytes[1] === 0x61 &&
+			bytes[2] === 0x73 &&
+			bytes[3] === 0x6d
+		);
 	};
 
 	const handleInstall = async (entry: PluginRegistryEntry) => {
@@ -132,6 +250,12 @@ export const PluginManagerDialog: FC = () => {
 					if (!isValid) {
 						alert(
 							`Security Error: Plugin hash mismatch for ${entry.name}. The file might have been tampered with.`,
+						);
+						return;
+					}
+					if (!(await isWasm(blob))) {
+						alert(
+							`Security Error: ${entry.name} is not a WebAssembly module. It was not installed.`,
 						);
 						return;
 					}
@@ -155,6 +279,7 @@ export const PluginManagerDialog: FC = () => {
 			await savePlugin(plugin);
 			await loadPlugins();
 			await pluginManager.loadEnabledPlugins();
+			setConsentEntry(null);
 		} catch (e) {
 			console.error("Installation failed", e);
 		} finally {
@@ -163,8 +288,30 @@ export const PluginManagerDialog: FC = () => {
 	};
 
 	const isInstalled = (id: string) => plugins.some((p) => p.id === id);
+	const installedVersion = (id: string) =>
+		plugins.find((plugin) => plugin.id === id)?.version;
+	const updateAvailable = (entry: PluginRegistryEntry) => {
+		const current = installedVersion(entry.id);
+		return current ? compareVersions(entry.version, current) > 0 : false;
+	};
+
+	const filteredRegistry = remoteRegistry.filter((entry) => {
+		if (typeFilter !== "all" && entry.type !== typeFilter) return false;
+		const term = search.trim().toLowerCase();
+		if (!term) return true;
+		return [
+			entry.name,
+			entry.author,
+			entry.description,
+			...(entry.tags ?? []),
+		]
+			.join(" ")
+			.toLowerCase()
+			.includes(term);
+	});
 
 	return (
+		<>
 		<Dialog.Root>
 			<Dialog.Trigger>
 				<Button variant="soft" size="2">
@@ -370,12 +517,16 @@ export const PluginManagerDialog: FC = () => {
 									<Flex align="center" gap="2">
 										<UploadIcon />{" "}
 										<Text size="3">
-											{t("pluginManager.sideload", "Sideload .wasm plugin")}
+											{t(
+												"pluginManager.sideload",
+												"Sideload .wasm + plugin.json",
+											)}
 										</Text>
 									</Flex>
 									<input
 										type="file"
-										accept=".wasm"
+										accept=".wasm,.json"
+										multiple
 										style={{ display: "none" }}
 										onChange={handleFileUpload}
 									/>
@@ -383,6 +534,52 @@ export const PluginManagerDialog: FC = () => {
 							</Flex>
 						</Tabs.Content>
 						<Tabs.Content value="store">
+							<Flex gap="3" mb="4" wrap="wrap" align="end">
+								<Box style={{ flex: "1 1 220px", minWidth: 0 }}>
+									<Text size="1" color="gray" weight="bold" as="div" mb="1">
+										<SearchIcon /> Search
+									</Text>
+									<input
+										type="search"
+										value={search}
+										onChange={(event) => setSearch(event.target.value)}
+										placeholder="Name, author, description, or tag"
+										aria-label="Search community plugins"
+										style={{
+											width: "100%",
+											height: 34,
+											padding: "0 10px",
+											borderRadius: 7,
+											border: "1px solid var(--gray-a6)",
+											background: "var(--gray-a2)",
+											color: "var(--gray-12)",
+										}}
+									/>
+								</Box>
+								<Box>
+									<Text size="1" color="gray" weight="bold" as="div" mb="1">
+										Type
+									</Text>
+									<select
+										value={typeFilter}
+										onChange={(event) => setTypeFilter(event.target.value)}
+										aria-label="Filter plugins by type"
+										style={{
+											height: 34,
+											borderRadius: 7,
+											border: "1px solid var(--gray-a6)",
+											background: "var(--gray-a2)",
+											color: "var(--gray-12)",
+										}}
+									>
+										<option value="all">All types</option>
+										<option value="importer">Importer</option>
+										<option value="exporter">Exporter</option>
+										<option value="tool">Lyric tool</option>
+										<option value="both">Importer and exporter</option>
+									</select>
+								</Box>
+							</Flex>
 							{isLoadingRegistry && remoteRegistry.length === 0 ? (
 								<Flex
 									direction="column"
@@ -397,12 +594,27 @@ export const PluginManagerDialog: FC = () => {
 									</Text>
 								</Flex>
 							) : (
+								<>
+									{filteredRegistry.length === 0 ? (
+										<Card>
+											<Text size="2" color="gray">
+												{remoteRegistry.length === 0
+													? "No community plugins are listed yet. Reviewed plugins appear here after a merged submission."
+													: "No plugins match that search and type."}
+											</Text>
+										</Card>
+									) : null}
 								<Grid columns="2" gap="4">
-									{remoteRegistry.map((entry) => (
+									{filteredRegistry.map((entry) => (
 										<Card
 											key={entry.id}
 											className={styles.pluginStoreCard}
-											style={{ opacity: isInstalled(entry.id) ? 0.6 : 1 }}
+											style={{
+												opacity:
+													isInstalled(entry.id) && !updateAvailable(entry)
+														? 0.6
+														: 1,
+											}}
 										>
 											<Flex
 												direction="column"
@@ -418,6 +630,25 @@ export const PluginManagerDialog: FC = () => {
 													>
 														{entry.name}
 													</Text>
+													{entry.verified ? (
+														<Badge size="1" color="green" variant="soft">
+															Verified
+														</Badge>
+													) : (
+														<Badge size="1" color="gray" variant="soft">
+															Community
+														</Badge>
+													)}
+													{entry.deprecated ? (
+														<Badge size="1" color="red" variant="soft">
+															Deprecated
+														</Badge>
+													) : null}
+													{updateAvailable(entry) ? (
+														<Badge size="1" color="amber" variant="soft">
+															Update
+														</Badge>
+													) : null}
 													<Popover.Root>
 														<Popover.Trigger>
 															<Button variant="ghost" color="gray" size="1">
@@ -455,15 +686,29 @@ export const PluginManagerDialog: FC = () => {
 												>
 													{entry.description}
 												</Text>
+												<Flex gap="1" wrap="wrap">
+													{(entry.permissions ?? []).length === 0 ? (
+														<Badge size="1" color="gray">
+															No permissions declared
+														</Badge>
+													) : (
+														(entry.permissions ?? []).map((permission) => (
+															<Badge key={permission} size="1" color="blue" variant="soft">
+																{PERMISSION_LABELS[permission] ?? permission}
+															</Badge>
+														))
+													)}
+												</Flex>
 												<Flex justify="between" align="center">
 													<Text size="1" color="gray">
 														by {entry.author}
 													</Text>
-													{!isInstalled(entry.id) && (
+													{(!isInstalled(entry.id) || updateAvailable(entry)) &&
+													!entry.deprecated && (
 														<Button
 															size="2"
 															variant="soft"
-															onClick={() => handleInstall(entry)}
+															onClick={() => setConsentEntry(entry)}
 															disabled={installingId === entry.id}
 														>
 															{installingId === entry.id ? (
@@ -471,7 +716,9 @@ export const PluginManagerDialog: FC = () => {
 															) : (
 																<>
 																	<DownloadIcon />{" "}
-																	{t("pluginManager.install", "Install")}
+																	{updateAvailable(entry)
+																		? t("pluginManager.update", "Update")
+																		: t("pluginManager.install", "Install")}
 																</>
 															)}
 														</Button>
@@ -481,11 +728,89 @@ export const PluginManagerDialog: FC = () => {
 										</Card>
 									))}
 								</Grid>
+								</>
 							)}
 						</Tabs.Content>
 					</Box>
 				</Tabs.Root>
 			</Dialog.Content>
 		</Dialog.Root>
+		<Dialog.Root
+			open={consentEntry !== null}
+			onOpenChange={(next) => {
+				if (!next) setConsentEntry(null);
+			}}
+		>
+			<Dialog.Content maxWidth="520px">
+				{consentEntry ? (
+					<Flex direction="column" gap="4">
+						<Box>
+							<Dialog.Title style={{ margin: 0 }}>
+								Install {consentEntry.name}?
+							</Dialog.Title>
+							<Dialog.Description size="2" color="gray" mt="1">
+								by {consentEntry.author} · v{consentEntry.version}
+							</Dialog.Description>
+						</Box>
+						<Text size="2">{consentEntry.description}</Text>
+						<Box>
+							<Flex align="center" gap="2">
+								<ShieldIcon />
+								<Text size="2" weight="bold">
+									This plugin declares
+								</Text>
+							</Flex>
+							<Flex gap="1" wrap="wrap" mt="2">
+								{(consentEntry.permissions ?? []).length === 0 ? (
+									<Badge size="1" color="gray">
+										No permissions
+									</Badge>
+								) : (
+									(consentEntry.permissions ?? []).map((permission) => (
+										<Badge
+											key={permission}
+											size="1"
+											color="blue"
+											variant="soft"
+										>
+											{PERMISSION_LABELS[permission] ?? permission}
+										</Badge>
+									))
+								)}
+							</Flex>
+						</Box>
+						<Text size="1" color="gray">
+							The app verifies the published SHA-256 and the WebAssembly header
+							before installing. This plugin cannot read the page, your files,
+							or the network beyond the permissions above.
+						</Text>
+						<Flex gap="2" justify="end">
+							<Button
+								variant="soft"
+								onClick={() => setConsentEntry(null)}
+							>
+								Cancel
+							</Button>
+							<Button
+								onClick={() => void handleInstall(consentEntry)}
+								disabled={installingId === consentEntry.id}
+							>
+								{installingId === consentEntry.id ? (
+									<Spinner />
+								) : (
+									<>
+										<DownloadIcon />{" "}
+										{updateAvailable(consentEntry)
+											? t("pluginManager.update", "Update")
+											: t("pluginManager.install", "Install")}
+									</>
+								)}
+							</Button>
+						</Flex>
+					</Flex>
+				) : null}
+			</Dialog.Content>
+		</Dialog.Root>
+		</>
 	);
 };

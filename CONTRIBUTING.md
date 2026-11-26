@@ -47,15 +47,31 @@ Use a focused branch and explain what changed, why, and how you tested it. Inclu
 
 Every user-visible feature or fix needs an entry in `CHANGELOG.md`. Keep entries ordered by user impact: features first, then fixes. A release tag should have a matching `## [X.Y.Z] - YYYY-MM-DD` heading; GitHub Release notes use that section.
 
-## Theme submissions
+## Marketplace submissions
 
-The community marketplace lives in `docs/` and is served by GitHub Pages. A theme submission is a pull request that adds three things:
+The community marketplace lives in `docs/` and is served by GitHub Pages. Themes and plugins are separate catalogs with separate validators, reviewed by pull request.
+
+### Theme submission
+
+A theme submission adds three things:
 
 1. `docs/registry/themes/<id>.json` — one theme file, JSON plus optional CSS, under 2 MB.
 2. `docs/assets/previews/<id>.svg` (or `.png`, `.jpg`, `.webp`) — a 16:9 preview.
 3. An entry in `docs/registry/themes.json` with the required fields and the SHA-256 of the exact theme file.
 
-Run `node scripts/validate-theme-registry.mjs` before opening the pull request. The **Validate theme submissions** workflow runs the same check and fails on a missing field, a hash mismatch, a missing preview, remote CSS loads, or script-like content. Themes are CSS and JSON only; do not submit plugins here. A maintainer reviews every entry, and nothing is published without a merge.
+Themes are CSS and JSON only. Do not include JavaScript, HTML, remote fonts, or remote images; the validator and the in-app importer both reject them.
+
+### Plugin submission
+
+A plugin submission adds a WebAssembly bundle and one registry entry:
+
+1. `docs/registry/plugins/<id>/plugin.wasm` — API 2.0 module, under 2 MB.
+2. `docs/registry/plugins/<id>/plugin.json` — manifest with the same id, name, author, version, type, permissions, and slots as the registry entry.
+3. An entry in `docs/registry/plugins.json` with the SHA-256 and byte size of the exact `plugin.wasm`.
+
+See `PLUGINS.md` for the WASM contract, permission allowlist, and review rules. The marketplace only lists WebAssembly plugins; it does not run arbitrary JavaScript, CSS, or HTML inside the app. Declared permissions must match the manifest, and every permission needs a reason in the pull request.
+
+Run `node scripts/validate-marketplace.mjs` (or `pnpm validate:marketplace`) before opening the pull request. The **Validate marketplace submissions** workflow runs the same checks and fails on a missing field, a hash or size mismatch, a missing preview or manifest, a bad WASM header, an unknown permission, remote theme CSS, or script-like content. A maintainer reviews every entry, and nothing is published without a merge. Do not submit lyrics, audio, private project files, or credentials.
 
 ## Releases
 

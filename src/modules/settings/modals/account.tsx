@@ -363,6 +363,30 @@ export const SettingsAccountTab = memo(() => {
 
 						<Separator size="4" my="2" />
 
+						{!isConfigured && (
+							<Card
+								variant="surface"
+								style={{
+									padding: 12,
+									border: "1px solid var(--amber-6)",
+									background: "var(--amber-a2)",
+								}}
+							>
+								<Flex direction="column" gap="1">
+									<Text size="2" weight="bold">
+										Cloud sign-in is not configured in this build
+									</Text>
+									<Text size="1" color="gray">
+										No Firebase project is bundled, so the Sign In button stays
+										disabled. Set VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN,
+										VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_STORAGE_BUCKET,
+										VITE_FIREBASE_MESSAGING_SENDER_ID and VITE_FIREBASE_APP_ID in
+										.env, then rebuild the app.
+									</Text>
+								</Flex>
+							</Card>
+						)}
+
 						<form onSubmit={handleEmailAuth}>
 							<Flex direction="column" gap="3">
 								{isSignUp && (

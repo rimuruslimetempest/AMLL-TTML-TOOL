@@ -1,0 +1,103 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://rimuruslimetempest.github.io/AMLL-TTML-TOOL/registry/plugin.schema.json",
+	"title": "TTML Tool community plugin registry",
+	"type": "object",
+	"required": ["version", "updatedAt", "plugins"],
+	"additionalProperties": false,
+	"properties": {
+		"version": { "const": 1 },
+		"updatedAt": { "type": "string", "minLength": 1 },
+		"plugins": {
+			"type": "array",
+			"items": { "$ref": "#/definitions/pluginEntry" }
+		}
+	},
+	"definitions": {
+		"pluginEntry": {
+			"type": "object",
+			"required": [
+				"id",
+				"name",
+				"author",
+				"version",
+				"description",
+				"tags",
+				"type",
+				"apiVersion",
+				"permissions",
+				"download",
+				"sha256",
+				"size",
+				"minAppVersion",
+				"addedAt"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"id": {
+					"type": "string",
+					"pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+				},
+				"name": { "type": "string", "minLength": 1, "maxLength": 80 },
+				"author": { "type": "string", "minLength": 1, "maxLength": 120 },
+				"version": {
+					"type": "string",
+					"pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][0-9a-z.-]+)?$"
+				},
+				"description": { "type": "string", "minLength": 1, "maxLength": 600 },
+				"tags": {
+					"type": "array",
+					"minItems": 1,
+					"maxItems": 8,
+					"items": { "type": "string", "minLength": 1, "maxLength": 32 }
+				},
+				"type": { "enum": ["importer", "exporter", "tool", "both"] },
+				"apiVersion": { "const": 2 },
+				"permissions": {
+					"type": "array",
+					"items": {
+						"enum": [
+							"lyrics:read",
+							"lyrics:write",
+							"files:read",
+							"files:write",
+							"network",
+							"settings:read",
+							"ui:toolbar",
+							"ui:panel"
+						]
+					},
+					"uniqueItems": true
+				},
+				"slots": {
+					"type": "array",
+					"items": {
+						"enum": ["toolbar", "panel", "import-dialog", "export-dialog"]
+					},
+					"uniqueItems": true
+				},
+				"download": {
+					"type": "string",
+					"description": "Path relative to the docs site root. Plugin bundles live in registry/plugins/<id>/."
+				},
+				"sha256": {
+					"type": "string",
+					"pattern": "^[a-f0-9]{64}$"
+				},
+				"size": { "type": "number", "minimum": 8, "maximum": 2097152 },
+				"minAppVersion": {
+					"type": "string",
+					"pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][0-9a-z.-]+)?$"
+				},
+				"addedAt": {
+					"type": "string",
+					"description": "ISO date, for example 2026-11-24."
+				},
+				"verified": { "type": "boolean" },
+				"deprecated": { "type": "boolean" },
+				"homepage": { "type": "string" },
+				"changelog": { "type": "string", "maxLength": 2000 }
+			}
+		}
+	}
+}
