@@ -1,0 +1,14 @@
+{
+  "id": "whitespace-cleaner",
+  "name": "Whitespace Cleaner",
+  "description": "Collapses repeated whitespace and removes zero-width characters from lyric text. Timing and word order stay untouched.",
+  "author": "Rimurulover",
+  "version": "1.0.0",
+  "type": "tool",
+  "apiVersion": 2,
+  "permissions": ["lyrics:read", "lyrics:write", "ui:toolbar"],
+  "slots": ["toolbar"],
+  "homepage": "https://github.com/rimuruslimetempest/AMLL-TTML-TOOL",
+  "techniques": ["Collapse repeated whitespace", "Remove zero-width characters"],
+  "usage": "Run from Tools or the plugin toolbar after importing lyrics."
+}

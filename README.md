@@ -28,6 +28,15 @@ editing aids; they never decide when a word should be sung.
 
 ## Features
 
+### Studio, plugins, and themes
+
+- A Studio workspace with a command palette, workspace home, review cockpit,
+  focus mode, workspace tabs, layout presets, a diff view, crash recovery, and
+  rolling session backups.
+- A Plugin Store with two reviewed first-party text tools, a capability-aware
+  plugin list, explicit permissions, and host-enforced text-only results.
+- Theme Studio, installable themes, and the community theme marketplace.
+
 ### Syncing and editing
 
 - Line-by-line, word-by-word, and syllable-by-syllable timing with a waveform,
@@ -45,7 +54,6 @@ editing aids; they never decide when a word should be sung.
   already have timing, and per-word notes.
 - Syllable splitting, word replacement, line merging, duplicate cleanup, and
   other text tools that operate on the lyrics you selected.
-- A TTML Checklist for keeping a local queue of songs and their progress.
 - A song-info panel for writers, languages, streaming IDs, version notes, and a
   copy-ready metadata block.
 
@@ -131,6 +139,17 @@ the same list inside the app. Downloads are checked against the published hash
 and still go through the normal theme preview. See [THEMES.md](./THEMES.md) and
 [CONTRIBUTING.md](./CONTRIBUTING.md) to submit a theme.
 
+## Plugin marketplace
+
+The Plugin Store loads reviewed WebAssembly plugins from
+`docs/registry/plugins.json` and merges two bundled official plugins, so both
+are available even when the public page is stale or offline. Every entry shows
+its permissions before install, and downloads are checked against the published
+SHA-256. Tool plugins may edit lyric text only: the host rejects any result that
+changes line or word IDs, line or word order, or start/end times. See
+[PLUGINS.md](./PLUGINS.md) and [CONTRIBUTING.md](./CONTRIBUTING.md) to submit a
+plugin.
+
 ## What is different in this version
 
 TTML Tool keeps the familiar TTML editing workflow and adds:
@@ -147,6 +166,9 @@ TTML Tool keeps the familiar TTML editing workflow and adds:
   duet and background-vocal layout, and the Preview options listed above.
 - **Extra import and export formats.** LRC, enhanced LRC, SRT, ASS/SSA, WebVTT,
   plain text, and TTML, with a review step before imported timing is trusted.
+- **A working Plugin Store and Studio workspace.** Command palette, workspace
+  tabs, review cockpit, Theme Studio, and two official text-only plugins.
+  Plugins can change text but never timing.
 - **First-run setup and an auto-updater.** A short onboarding wizard and update
   checks that use this repository's GitHub Releases.
 
@@ -156,15 +178,15 @@ Download the latest release for your system:
 
 | Platform | File |
 | --- | --- |
-| Windows x64 | `TTML-Tool_1.0.4_x64-setup.exe` (NSIS) or `.msi` |
-| macOS Apple Silicon | `TTML-Tool_1.0.4_aarch64.dmg` |
-| macOS Intel | `TTML-Tool_1.0.4_x64.dmg` |
-| Linux x64 | `TTML-Tool_1.0.4_amd64.AppImage`, `.deb`, or `.rpm` |
+| Windows x64 | `TTML-Tool_2.1.0_x64-setup.exe` (NSIS) or `.msi` |
+| macOS Apple Silicon | `TTML-Tool_2.1.0_aarch64.dmg` |
+| macOS Intel | `TTML-Tool_2.1.0_x64.dmg` |
+| Linux x64 | `TTML-Tool_2.1.0_amd64.AppImage`, `.deb`, or `.rpm` |
 
-Releases built with updater metadata also publish `latest.json`, which the
-built-in updater uses. If a release has no updater metadata, installations are
-still fully usable and the updater stays quiet. On Linux, the AppImage updates
-itself; update `.deb` and `.rpm` packages with your package manager.
+2.1.0 and later publish `latest.json` and signed updater artifacts. Because
+1.0.4 and 2.0.0 never had an updater manifest, install 2.1.0 once manually;
+after that, the built-in updater can find later releases. On Linux, the AppImage
+updates itself; update `.deb` and `.rpm` packages with your package manager.
 
 ### Windows
 
@@ -183,13 +205,13 @@ Mac and the Intel download for an older Intel Mac.
 The AppImage is a single portable file. Make it executable once, then run it:
 
 ```bash
-chmod +x TTML-Tool_1.0.4_amd64.AppImage
-./TTML-Tool_1.0.4_amd64.AppImage
+chmod +x TTML-Tool_2.1.0_amd64.AppImage
+./TTML-Tool_2.1.0_amd64.AppImage
 ```
 
-On Debian or Ubuntu, install the `.deb` with `sudo apt install ./TTML-Tool_1.0.4_amd64.deb`.
+On Debian or Ubuntu, install the `.deb` with `sudo apt install ./TTML-Tool_2.1.0_amd64.deb`.
 On Fedora or another RPM-based distribution, use
-`sudo dnf install ./TTML-Tool_1.0.4_x86_64.rpm`. The package manager keeps
+`sudo dnf install ./TTML-Tool_2.1.0_x86_64.rpm`. The package manager keeps
 those installations up to date.
 
 If you are replacing a build that used a different application identifier,
@@ -218,8 +240,10 @@ pnpm install --frozen-lockfile
 
 pnpm dev          # browser development build
 pnpm tauri dev    # desktop development build
-pnpm build        # production web build
-pnpm tauri build  # production desktop bundles
+pnpm build          # production web build
+pnpm tauri build    # production desktop bundles
+pnpm plugins:build  # rebuild the bundled official WASM plugins
+pnpm plugins:test   # smoke-test their hashes, ABI, text, and timings
 ```
 
 Desktop bundles are written under `src-tauri/target/release/bundle/`. Unit tests

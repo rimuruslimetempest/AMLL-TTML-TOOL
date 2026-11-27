@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "updatedAt": "2026-11-26",
+  "plugins": [
+    {
+      "id": "whitespace-cleaner",
+      "name": "Whitespace Cleaner",
+      "author": "Rimurulover",
+      "version": "1.0.0",
+      "description": "Collapses repeated whitespace and removes zero-width characters from lyric text. Timing and word order stay untouched.",
+      "type": "tool",
+      "apiVersion": 2,
+      "permissions": [
+        "lyrics:read",
+        "lyrics:write",
+        "ui:toolbar"
+      ],
+      "slots": [
+        "toolbar"
+      ],
+      "tags": [
+        "text",
+        "cleanup",
+        "toolbar"
+      ],
+      "minAppVersion": "2.1.0",
+      "addedAt": "2026-11-26",
+      "homepage": "https://github.com/rimuruslimetempest/AMLL-TTML-TOOL",
+      "verified": true,
+      "download": "/plugins/whitespace-cleaner.wasm",
+      "sha256": "daf503d69fe6a0aecc4cbf1bdfe454380c7ec2a9c994a6efe009319a5c9b34ee",
+      "size": 48001
+    },
+    {
+      "id": "entity-decoder",
+      "name": "HTML Entity Decoder",
+      "author": "Rimurulover",
+      "version": "1.0.0",
+      "description": "Decodes HTML entities such as &amp; and &#39; in imported lyric text. Timing and word order stay untouched.",
+      "type": "tool",
+      "apiVersion": 2,
+      "permissions": [
+        "lyrics:read",
+        "lyrics:write",
+        "ui:toolbar"
+      ],
+      "slots": [
+        "toolbar"
+      ],
+      "tags": [
+        "text",
+        "import",
+        "toolbar"
+      ],
+      "minAppVersion": "2.1.0",
+      "addedAt": "2026-11-26",
+      "homepage": "https://github.com/rimuruslimetempest/AMLL-TTML-TOOL",
+      "verified": true,
+      "download": "/plugins/entity-decoder.wasm",
+      "sha256": "1233a882b7f05474d72b59091e11a43b45242608e7585ac018f8d608a84acb20",
+      "size": 57215
+    }
+  ]
+}

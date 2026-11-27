@@ -8,6 +8,7 @@ import {
 	type CSSProperties,
 	memo,
 	type RefObject,
+	useCallback,
 	useEffect,
 	useMemo,
 	useRef,
@@ -49,6 +50,7 @@ import {
 import styles from "./index.module.css";
 import { PreviewProgressBar } from "$/components/PreviewProgressBar";
 import { CubicSpline, progressAt, Spring, stateAt } from "./math";
+import { findSpicyScrollIndex } from "./active-line";
 import {
 	buildSpicyLines,
 	groupSpicyTokens,
@@ -56,6 +58,8 @@ import {
 	type SpicyLine,
 	type SpicyToken,
 } from "./model";
+import { usePreviewScroll } from "./usePreviewScroll";
+import { rowGap, useSpicyVirtualList } from "./useSpicyVirtualList";
 
 type KawarpInstance = {
 	dispose(): void;
@@ -194,7 +198,7 @@ function useCoverPalette(imageSource: string | null) {
 					canvas.width,
 					canvas.height,
 				);
-				let base = { red: 0, green: 0, blue: 0, weight: 0 };
+				const base = { red: 0, green: 0, blue: 0, weight: 0 };
 				let highlight = { red: 0, green: 0, blue: 0, saturation: -1 };
 				for (let index = 0; index < data.length; index += 4) {
 					const red = data[index];
@@ -473,10 +477,7 @@ export const SpicyLyrics = memo(
 		const wordNodes = useRef(new Map<string, HTMLElement>());
 		const springs = useRef(new Map<string, SpringSet>());
 		const slmAnimations = useRef(new Map<string, SlmAnimation>());
-		const scrollPauseUntil = useRef(0);
-		const scrollFollowUntil = useRef(0);
-		const scrollRetryAt = useRef(0);
-		const lastLine = useRef<string | null>(null);
+		const forceFrameRef = useRef<() => void>(() => {});
 		const qualityLevel = useAtomValue(previewQualityLevelAtom);
 		const qualityRef = useRef(qualityLevel);
 		const vsyncRef = useRef(vsync);
@@ -487,6 +488,41 @@ export const SpicyLyrics = memo(
 			performanceMode,
 			qualityLevel,
 		);
+
+		// Only the rows around the viewport are mounted. The list measures each
+		// row once and keeps its offset, so a long song no longer pays for
+		// thousands of off-screen word and letter nodes every frame.
+		const { rows, totalSize, measureRow, getTop } = useSpicyVirtualList(
+			lines,
+			viewportRef,
+			() => forceFrameRef.current(),
+		);
+
+		// Follow the active line with the same measured offsets the list uses.
+		// A row that is not mounted yet can still be targeted through getTop.
+		const interludeWait = useRef<{ id: string; until: number } | null>(null);
+		const getScrollTarget = useCallback(
+			(timeMs: number) => {
+				const index = findSpicyScrollIndex(lines, timeMs);
+				if (index < 0) return undefined;
+				const line = lines[index];
+				let deferred = false;
+				if (lines[index - 1]?.isDotLine) {
+					const now = performance.now();
+					if (interludeWait.current?.id !== line.id)
+						interludeWait.current = { id: line.id, until: now + 240 };
+					deferred = now < interludeWait.current.until;
+				} else interludeWait.current = null;
+				return {
+					id: line.id,
+					getTop: (anchor: number, offset: number) =>
+						getTop(index, anchor, offset),
+					deferred,
+				};
+			},
+			[lines, getTop],
+		);
+		usePreviewScroll(viewportRef, getScrollTarget, 30);
 
 		useEffect(() => {
 			qualityRef.current = qualityLevel;
@@ -508,20 +544,6 @@ export const SpicyLyrics = memo(
 		}, [simple]);
 
 		useEffect(() => {
-			const viewport = viewportRef.current;
-			if (!viewport) return;
-			const onUserScroll = () => {
-				scrollPauseUntil.current = performance.now() + 750;
-			};
-			viewport.addEventListener("wheel", onUserScroll, { passive: true });
-			viewport.addEventListener("touchmove", onUserScroll, { passive: true });
-			return () => {
-				viewport.removeEventListener("wheel", onUserScroll);
-				viewport.removeEventListener("touchmove", onUserScroll);
-			};
-		}, []);
-
-		useEffect(() => {
 			// Line values written for the previous renderer pass must not outlive it.
 			for (const node of lineNodes.current.values()) {
 				node.style.removeProperty("--line-gradient-position");
@@ -531,13 +553,21 @@ export const SpicyLyrics = memo(
 			let previousPosition = -Infinity;
 			let frameBudget = 0;
 			let forceUntil = 0;
-			let lastGeometryCheck = 0;
 			let lastBlurIndex = Number.NaN;
 			let lineGlow = new Spring(0, 1, 0.5);
 			let lineGlowLineId: string | null = null;
-			// Keep correcting the active line while content-visibility settles the
-			// off-screen layout after a lyric change or a seek.
-			scrollFollowUntil.current = performance.now() + 1200;
+
+			// Rows unmount when they leave the virtual window. Drop their spring
+			// and Web Animation state with them so a remount starts clean instead
+			// of resuming a stale pose.
+			for (const key of springs.current.keys()) {
+				if (!wordNodes.current.has(key)) springs.current.delete(key);
+			}
+			for (const [key, animation] of slmAnimations.current) {
+				if (wordNodes.current.has(key)) continue;
+				animation.animation?.cancel();
+				slmAnimations.current.delete(key);
+			}
 
 			// Simple Lyrics Mode fills its gradient with a Web Animation. Once a
 			// word is no longer active, pin that animation to its final value; the
@@ -606,6 +636,17 @@ export const SpicyLyrics = memo(
 					Math.abs(time - previousPosition) < 0.25
 				)
 					return;
+				// Virtual rows mount and unmount as the list scrolls. Discard any
+				// spring or Web Animation that outlived its node, so a remount starts
+				// from the correct rest pose instead of a stale one.
+				for (const key of springs.current.keys()) {
+					if (!wordNodes.current.has(key)) springs.current.delete(key);
+				}
+				for (const [key, animation] of slmAnimations.current) {
+					if (wordNodes.current.has(key)) continue;
+					animation.animation?.cancel();
+					slmAnimations.current.delete(key);
+				}
 				const dt = Math.min(0.25, Math.max(0, frame.dt / 1000));
 				const glowEnabled = qualityRef.current < 1;
 				let firstActive = -1;
@@ -625,8 +666,6 @@ export const SpicyLyrics = memo(
 						lastActive - firstActive <= 1 ? firstActive : lastActive;
 				}
 				const active = activeIndex >= 0 ? lines[activeIndex] : undefined;
-				if (active && lastLine.current !== active.id)
-					scrollFollowUntil.current = now + 900;
 				if (!active || !active.isLineSynced || active.isDotLine || simple)
 					lineGlowLineId = null;
 				const blurChanged = activeIndex !== lastBlurIndex;
@@ -1093,85 +1132,25 @@ export const SpicyLyrics = memo(
 									progress,
 									true,
 								);
-							else if (word.letters) {
-								animateHeldGroup(
-									rootKey,
-									wordNodes.current.get(rootKey),
-									progress,
-								);
-								animateHeldLetters(word, rootKey, wordState);
-															} else
-									animateNode(rootKey, wordNodes.current.get(rootKey), progress);
+													else if (word.letters) {
+							animateHeldGroup(
+								rootKey,
+								wordNodes.current.get(rootKey),
+								progress,
+							);
+							animateHeldLetters(word, rootKey, wordState);
+						} else
+							animateNode(rootKey, wordNodes.current.get(rootKey), progress);
 						}
 					}
-				const allSung =
-					activeIndex < 0 &&
-					lines.every(
-						(line) => stateAt(time, line.startTime, line.endTime) === "sung",
-					);
-				const shouldForce =
-					lastLine.current === null || Math.abs(time - previousPosition) > 1000;
-				const scrollTarget = allSung ? lines[lines.length - 1] : active;
-				const scrollNode = scrollTarget
-					? lineNodes.current.get(scrollTarget.id)
-					: undefined;
-				const viewport = viewportRef.current;
-				const targetChanged = lastLine.current !== scrollTarget?.id;
-				const followWindow =
-					now < scrollFollowUntil.current && now > scrollPauseUntil.current;
-				// A smooth scroll must be started once per target. Restarting it on
-				// every animation frame makes the lyric list crawl and visibly shake
-				// while the active line is still catching up. Retry at most once per
-				// 700ms if layout settling left the target slightly off-centre.
-				// Only measure geometry when a correction is possible: reading both
-				// rects on every frame forces layout even while the list is idle.
-				let needsCorrection = false;
-									if (
-						scrollTarget &&
-						scrollNode &&
-						viewport &&
-						followWindow &&
-						!targetChanged &&
-						now >= scrollRetryAt.current &&
-						now - lastGeometryCheck >= 250
-					) {
-						lastGeometryCheck = now;
-						const nodeRect = scrollNode.getBoundingClientRect();
-						const viewportRect = viewport.getBoundingClientRect();
-					needsCorrection =
-						Math.min(nodeRect.bottom, viewportRect.bottom) -
-							Math.max(nodeRect.top, viewportRect.top) <
-						5;
-				}
-				const shouldStartScroll =
-					!!scrollTarget &&
-					!!scrollNode &&
-					!!viewport &&
-					(shouldForce ||
-						(now > scrollPauseUntil.current && targetChanged) ||
-						needsCorrection);
-				if (shouldStartScroll && scrollTarget && scrollNode && viewport) {
-					const target = Math.max(
-						0,
-						Math.min(
-							viewport.scrollHeight - viewport.clientHeight,
-							scrollNode.offsetTop -
-								(viewport.clientHeight / 2 - scrollNode.offsetHeight / 2) +
-								30,
-						),
-					);
-					viewport.scrollTo({
-						top: target,
-						behavior: shouldForce ? "instant" : "smooth",
-					});
-					lastLine.current = scrollTarget.id;
-					scrollRetryAt.current = shouldForce ? 0 : now + 700;
-				}
 				previousPosition = time;
 			};
 			const forceFrame = () => {
 				forceUntil = performance.now() + 400;
 			};
+			// Newly mounted virtual rows need one full state pass before CSS can
+			// own their resting pose.
+			forceFrameRef.current = forceFrame;
 			audioEngine.addEventListener("music-seeked", forceFrame);
 			audioEngine.addEventListener("music-resume", forceFrame);
 			audioEngine.addEventListener("music-pause", forceFrame);
@@ -1182,6 +1161,7 @@ export const SpicyLyrics = memo(
 			});
 			return () => {
 				unsubscribe();
+				forceFrameRef.current = () => {};
 				audioEngine.removeEventListener("music-seeked", forceFrame);
 				audioEngine.removeEventListener("music-resume", forceFrame);
 				audioEngine.removeEventListener("music-pause", forceFrame);
@@ -1255,92 +1235,96 @@ export const SpicyLyrics = memo(
 					hasDuetLines && styles.hasDuetLines,
 				)}
 			>
-				{lines.map((line) => {
-					const isLineTimed =
-						line.isDotLine ||
-						line.startTime > 0 ||
-						line.endTime > 0 ||
-						Boolean(
-							line.words &&
-								line.words.some(
-									(w) =>
-										w.endTime > w.startTime &&
-										(w.startTime > 0 || w.endTime > 0),
-								),
-						);
-					return (
-						<div
-							key={line.id}
-							ref={(node) => {
-								if (node) lineNodes.current.set(line.id, node);
-								else lineNodes.current.delete(line.id);
-							}}
-							className={classNames(
-								styles.line,
-								line.isDotLine && styles.dotLine,
-								line.isLineSynced && styles.lineSynced,
-								line.isRtl && styles.rtl,
-								line.isBackground && styles.backgroundLine,
-								line.isDuet && styles.duet,
-								!isLineTimed && styles.lineUnsynced,
-							)}
-							dir={line.isRtl ? "rtl" : undefined}
-							onClick={() => {
-								if (!isLineTimed) return;
-								seek(line.startTime);
-							}}
-						>
-							{line.isDotLine ? (
-								<div className={styles.dotGroup}>
-									{line.words.map((word, wi) => {
-										const key = keyFor(line, word, wi);
-										return (
-											<span
-												key={key}
-												ref={(node) => {
-													if (node) wordNodes.current.set(key, node);
-													else wordNodes.current.delete(key);
-												}}
-												className={styles.dot}
-											>
-												{word.text}
-											</span>
-										);
-									})}
-								</div>
-							) : line.isLineSynced ? (
-								line.text
-							) : (
-								groupSpicyTokens(line.words).map((group) => {
-									const first = group.items[0];
-									if (group.items.length === 1)
-										return renderToken(
-											line,
-											first.token,
-											first.wordIndex,
-											group.hasTrailingSpace,
-										);
-									return (
-										<span
-											key={`group:${keyFor(line, first.token, first.wordIndex)}`}
-											className={classNames(
-												styles.wordGroup,
-												group.hasTrailingSpace && styles.wordBoundary,
-											)}
-										>
-											{group.items.map(({ token, wordIndex }) =>
-												renderToken(line, token, wordIndex, false),
-											)}
+				<div className={styles.virtualContent} style={{ height: totalSize }}>
+					{rows.map(({ index, start }) => {
+						const line = lines[index];
+						if (!line) return null;
+						return (
+							<div
+								key={line.id}
+								ref={measureRow}
+								data-index={index}
+								className={styles.row}
+								style={{
+									transform: `translateY(${start}px)`,
+									paddingBottom: `${rowGap(lines, index)}cqw`,
+								}}
+							>
+								<div
+									ref={(node) => {
+										if (node) lineNodes.current.set(line.id, node);
+										else lineNodes.current.delete(line.id);
+									}}
+									className={classNames(
+										styles.line,
+										line.isDotLine && styles.dotLine,
+										line.isLineSynced && styles.lineSynced,
+										line.isRtl && styles.rtl,
+										line.isBackground && styles.backgroundLine,
+										line.isDuet && styles.duet,
+										line.isUntimed && styles.lineUnsynced,
+									)}
+									dir={line.isRtl ? "rtl" : undefined}
+									onClick={() => {
+										if (line.isUntimed) return;
+										seek(line.startTime);
+									}}
+								>
+									{line.isDotLine ? (
+										<div className={styles.dotGroup}>
+											{line.words.map((word, wi) => {
+												const key = keyFor(line, word, wi);
+												return (
+													<span
+														key={key}
+														ref={(node) => {
+															if (node) wordNodes.current.set(key, node);
+															else wordNodes.current.delete(key);
+														}}
+														className={styles.dot}
+													>
+														{word.text}
+													</span>
+												);
+											})}
+										</div>
+									) : line.isLineSynced ? (
+										line.text
+									) : (
+										groupSpicyTokens(line.words).map((group) => {
+											const first = group.items[0];
+											if (group.items.length === 1)
+												return renderToken(
+													line,
+													first.token,
+													first.wordIndex,
+													group.hasTrailingSpace,
+												);
+											return (
+												<span
+													key={`group:${keyFor(line, first.token, first.wordIndex)}`}
+													className={classNames(
+														styles.wordGroup,
+														group.hasTrailingSpace && styles.wordBoundary,
+													)}
+												>
+													{group.items.map(({ token, wordIndex }) =>
+														renderToken(line, token, wordIndex, false),
+													)}
+												</span>
+											);
+										})
+									)}
+									{showTranslation && !line.isDotLine && line.translation ? (
+										<span className={styles.translation}>
+											{line.translation}
 										</span>
-									);
-								})
-							)}
-							{showTranslation && !line.isDotLine && line.translation ? (
-								<span className={styles.translation}>{line.translation}</span>
-							) : null}
-						</div>
-					);
-				})}
+									) : null}
+								</div>
+							</div>
+						);
+					})}
+				</div>
 				{songCredits && (
 					<div className={styles.songCredits}>
 						{songCredits.writers && (
@@ -1373,6 +1357,7 @@ export const SpicyLyrics = memo(
 				)}
 			</div>
 		);
+
 
 		return (
 			<div

@@ -1,17 +1,18 @@
 import { Dialog } from "@radix-ui/themes";
-import JSZip from "jszip";
 import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai";
+import JSZip from "jszip";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { confirmDialogAtom, settingsDialogAtom, settingsTabAtom } from "$/states/dialogs";
-import { lyricLinesAtom } from "$/states/main";
 import { pluginManager } from "$/modules/plugins/plugin-manager";
-import {
-	getAllPlugins,
-	togglePlugin,
-} from "$/modules/plugins/plugin-store";
+import { getAllPlugins, togglePlugin } from "$/modules/plugins/plugin-store";
 import type { PluginPermission, WASMPlugin } from "$/modules/plugins/types";
 import { pluginStudioOpenAtom } from "$/modules/studio/state";
+import {
+	confirmDialogAtom,
+	settingsDialogAtom,
+	settingsTabAtom,
+} from "$/states/dialogs";
+import { lyricLinesAtom } from "$/states/main";
 import { saveFile } from "$/utils/fileSystem";
 import styles from "./studio.module.css";
 
@@ -26,11 +27,22 @@ const PERMISSION_LABELS: Record<PluginPermission, string> = {
 	"ui:panel": "Panel slot",
 };
 
+const RESERVED_PERMISSIONS = new Set<PluginPermission>([
+	"network",
+	"settings:read",
+	"ui:panel",
+]);
+
+const permissionLabel = (permission: PluginPermission) =>
+	`${PERMISSION_LABELS[permission] ?? permission}${
+		RESERVED_PERMISSIONS.has(permission) ? " (reserved)" : ""
+	}`;
+
 function DevKit() {
 	const zip = new JSZip();
 	zip.file(
 		"README.md",
-		`# TTML Tool Plugin API 2.0\n\nA plugin is a WebAssembly module plus a metadata manifest. It never runs JavaScript in the app.\n\n## Manifest\n\n\`\`\`json\n{\n  "id": "com.example.pretty-printer",\n  "name": "Pretty Printer",\n  "description": "Formats lyric lines",\n  "author": "Your name",\n  "version": "1.0.0",\n  "type": "tool",\n  "apiVersion": 2,\n  "permissions": ["lyrics:read", "lyrics:write", "ui:toolbar"],\n  "slots": ["toolbar"]\n}\n\`\`\`\n\n## Exports\n\n- \`allocate(size: i32) -> i32\`\n- \`deallocate(ptr: i32, size: i32)\` (optional)\n- \`run_importer(ptr: i32, len: i32) -> i32\` (NUL-terminated UTF-8 result)\n- \`run_exporter(ptr: i32, len: i32) -> i32\`\n- \`run_tool(ptr: i32, len: i32) -> i32\` where input and output are JSON arrays of lyric lines.\n\nText is UTF-8. Return a pointer to a NUL-terminated string in the module's linear memory.\n\n## Permissions\n\nAPI 2.0 plugins must declare every permission they use. The host enforces \`lyrics:read\` and \`lyrics:write\` for tools, and only shows toolbar slots when \`ui:toolbar\` is declared.\n\n## Slots\n\n\`toolbar\`, \`panel\`, \`import-dialog\`, \`export-dialog\`. Toolbar plugins appear beside the workspace tabs and run on the current project after confirmation.\n\n## Build\n\n\`\`\`sh\nclang --target=wasm32 -nostdlib -Wl,--no-entry -Wl,--export-all -O3 example.c -o plugin.wasm\n\`\`\`\n\nThen install the \`.wasm\` file from Plugins → Plugin Management.\n`,
+		`# TTML Tool Plugin API 2.0\n\nA plugin is a WebAssembly module plus a metadata manifest. It never runs JavaScript in the app.\n\n## Manifest\n\n\`\`\`json\n{\n  "id": "com.example.pretty-printer",\n  "name": "Pretty Printer",\n  "description": "Formats lyric lines",\n  "author": "Your name",\n  "version": "1.0.0",\n  "type": "tool",\n  "apiVersion": 2,\n  "permissions": ["lyrics:read", "lyrics:write", "ui:toolbar"],\n  "slots": ["toolbar"]\n}\n\`\`\`\n\n## Exports\n\n- \`allocate(size: i32) -> i32\`\n- \`deallocate(ptr: i32, size: i32)\` (optional)\n- \`run_importer(ptr: i32, len: i32) -> i32\` (NUL-terminated UTF-8 result)\n- \`run_exporter(ptr: i32, len: i32) -> i32\`\n- \`run_tool(ptr: i32, len: i32) -> i32\` where input and output are JSON arrays of lyric lines.\n\nText is UTF-8. Return a pointer to a NUL-terminated string in the module's linear memory.\n\n## Permissions\n\nAPI 2.0 tool plugins may edit lyric text only. The host rejects results that change line or word IDs, timing, or structure. Network access, reading settings, and side panels are reserved for a later API and are not active in 2.1. API 2.0 plugins must declare every permission they use. The host enforces \`lyrics:read\` and \`lyrics:write\` for tools, and only shows toolbar slots when \`ui:toolbar\` is declared.\n\n## Slots\n\n\`toolbar\`, \`panel\`, \`import-dialog\`, \`export-dialog\`. Toolbar plugins appear beside the workspace tabs and run on the current project after confirmation.\n\n## Build\n\n\`\`\`sh\nclang --target=wasm32 -nostdlib -Wl,--no-entry -Wl,--export-all -O3 example.c -o plugin.wasm\n\`\`\`\n\nThen install the \`.wasm\` file from Plugins → Plugin Management.\n`,
 	);
 	zip.file(
 		"plugin.json",
@@ -102,7 +114,9 @@ export function PluginStudioDialog() {
 	};
 
 	const runTool = (plugin: WASMPlugin) => {
-		if (!pluginManager.getTools().some((tool) => tool.metadata.id === plugin.id)) {
+		if (
+			!pluginManager.getTools().some((tool) => tool.metadata.id === plugin.id)
+		) {
 			toast.info("Enable the plugin first, then run it.");
 			return;
 		}
@@ -198,21 +212,28 @@ export function PluginStudioDialog() {
 							and <code>lyrics:write</code>; toolbar slots require{" "}
 							<code>ui:toolbar</code>.
 						</div>
+						<div className={styles.studioMuted}>
+							Tool results may edit text only. The host rejects any result that
+							changes timing, line order, or word order, so a plugin cannot
+							retime a project.
+						</div>
 						<div className={styles.studioRow}>
 							<span className={styles.studioBadge}>ABI 2</span>
 							<span className={styles.studioBadge}>WASM only</span>
 							<span className={styles.studioBadge}>No remote code</span>
 							<span className={styles.studioBadge}>
 								{pluginManager.getPluginsBySlot("toolbar").length} toolbar slot
-								{pluginManager.getPluginsBySlot("toolbar").length === 1 ? "" : "s"}
+								{pluginManager.getPluginsBySlot("toolbar").length === 1
+									? ""
+									: "s"}
 							</span>
 						</div>
 					</div>
 
 					{plugins.length === 0 ? (
 						<div className={styles.reviewEmpty}>
-															No plugins installed. Open Settings → Developer to install a{" "}
-								<code>.wasm</code> plugin.
+							No plugins installed. Open Settings → Developer to install a{" "}
+							<code>.wasm</code> plugin.
 						</div>
 					) : (
 						<div className={styles.studioGrid}>
@@ -237,7 +258,7 @@ export function PluginStudioDialog() {
 										{plugin.permissions?.length ? (
 											plugin.permissions.map((permission) => (
 												<span key={permission} className={styles.studioBadge}>
-													{PERMISSION_LABELS[permission] ?? permission}
+													{permissionLabel(permission)}
 												</span>
 											))
 										) : (
@@ -294,16 +315,14 @@ export function PluginToolbarSlots() {
 			getAllPlugins()
 				.then((list) => {
 					if (!cancelled) {
-						setPlugins(
-							list.filter(
-								(plugin) =>
-									plugin.isEnabled &&
-									(plugin.apiVersion ?? 1) >= 2 &&
-									plugin.slots?.includes("toolbar") &&
-									plugin.permissions?.includes("ui:toolbar") &&
-									(plugin.type === "tool" || plugin.type === "both"),
-							),
+						// The slot list comes from initialized instances, so a plugin
+						// that claims "tool" but does not export run_tool is not shown.
+						const capable = new Set(
+							pluginManager
+								.getPluginsBySlot("toolbar")
+								.map((instance) => instance.metadata.id),
 						);
+						setPlugins(list.filter((plugin) => capable.has(plugin.id)));
 					}
 				})
 				.catch(() => setPlugins([]));

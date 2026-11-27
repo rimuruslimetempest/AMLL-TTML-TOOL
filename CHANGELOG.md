@@ -3,6 +3,59 @@
 All notable changes to TTML Tool are listed here, newest first. The in-app
 What's New window reads this file.
 
+## [2.1.1] - 2026-11-27
+
+### Improved
+
+- The Preview lyric list now mounts only the rows around the viewport and
+  measures each row once, following the measured-virtual-row model from Spicy
+  Lyrics. Scroll-follow, blur, and word gradients read the same measured
+  offsets instead of walking the whole document. On a 120-line word-synced
+  test file the median frame rate rose from about 34 FPS to 65–79 FPS and the
+  rendered DOM fell from about 1,330 to under 800 nodes.
+- Seeking, paused seeks, manual scrolling, and background-vocal groups re-aim
+  the follow at the correct measured row, and a row keeps its place while the
+  rows above it finish measuring.
+- The Preview scroll helper now has a single measured placement path instead of
+  a mounted-node fallback.
+
+### Fixed
+
+- Lyric animation state no longer outlives its row: springs and Simple Lyrics
+  Mode gradients are discarded when a row unmounts, so scrolling back starts
+  from the correct pose.
+
+## [2.1.0] - 2026-11-26
+
+### New
+
+- Added two reviewed official plugins to the Plugin Store: Whitespace Cleaner
+  and HTML Entity Decoder. Both edit lyric text only and are bundled with the
+  app, so the store works even when the public marketplace is stale or offline.
+- Added a host-side timing guard for plugin tools. A result must keep every
+  line and word ID, the line and word order, and every start/end time; the host
+  rejects a retimed or structurally changed document.
+- Added an undo-history reset when a document loads or a workspace tab is
+  activated, so Undo cannot restore another project's lyrics.
+
+### Improved
+
+- The Plugin Store now resolves marketplace-relative download paths, merges the
+  bundled official catalog, and keeps the official entry when a remote catalog
+  is stale.
+- Plugin importers, exporters, and tools are listed from the actual WebAssembly
+  exports; a tool-only plugin no longer appears as an importer or exporter.
+- Reserved permissions (`network`, `settings:read`, `ui:panel`) are labelled as
+  reserved in the install and Studio views.
+- Plugin tool failures now show a toast in addition to the console error.
+
+### Fixed
+
+- Fixed plugin installs from the documented relative registry paths.
+- Fixed the empty official store and the missing first updater manifest; 2.1.0
+  publishes signed artifacts and `latest.json`. Existing 1.0.4/2.0.0 installs
+  need one manual update before automatic updates work.
+
 ## [2.0.0] - 2026-11-26
 
 ### New

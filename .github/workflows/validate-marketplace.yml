@@ -5,8 +5,13 @@ on:
     paths:
       - "docs/registry/**"
       - "docs/assets/previews/**"
+      - "public/plugins/**"
+      - "src/modules/plugins/official-plugins.json"
       - "scripts/validate-theme-registry.mjs"
       - "scripts/validate-plugin-registry.mjs"
+      - "scripts/validate-marketplace.mjs"
+      - "scripts/build-official-plugins.mjs"
+      - "scripts/test-official-plugins.mjs"
       - ".github/workflows/validate-marketplace.yml"
   workflow_dispatch:
 
@@ -25,3 +30,5 @@ jobs:
         run: |
           node scripts/validate-theme-registry.mjs
           node scripts/validate-plugin-registry.mjs
+      - name: Smoke-test the bundled official plugins
+        run: node scripts/test-official-plugins.mjs

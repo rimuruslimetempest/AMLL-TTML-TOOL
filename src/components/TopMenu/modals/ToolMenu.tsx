@@ -1,4 +1,3 @@
-import { Button, DropdownMenu, Flex } from "@radix-ui/themes";
 import {
 	ArrowAutofitWidth20Regular,
 	ArrowDownload20Regular,
@@ -15,21 +14,23 @@ import {
 	Timer20Regular,
 	Wrench20Regular,
 } from "@fluentui/react-icons";
+import { Button, DropdownMenu, Flex } from "@radix-ui/themes";
 import { isTauri } from "@tauri-apps/api/core";
 import { useAtom, useSetAtom } from "jotai";
 import { Toolbar } from "radix-ui";
 import type { CSSProperties } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 import {
 	downloaderInitialQueryAtom,
 	downloaderOpenAtom,
 } from "$/modules/downloader/states";
 import { pluginManager } from "$/modules/plugins/plugin-manager";
+import { songInfoDialogAtom } from "$/modules/song-info/states";
 import {
 	applySavedSplitsDialogAtom,
 	splitLibraryDialogAtom,
 } from "$/modules/split-library/states";
-import { songInfoDialogAtom } from "$/modules/song-info/states";
 import { handoffSummaryDialogAtom } from "$/states/dialogs";
 import { lyricLinesAtom } from "$/states/main";
 import { formatKeyBindings } from "$/utils/keybindings";
@@ -70,6 +71,7 @@ const ToolMenuItems = () => {
 			}));
 		} catch (e) {
 			console.error(`Failed to run tool ${pluginId}:`, e);
+			toast.error(e instanceof Error ? e.message : String(e));
 		}
 	};
 
@@ -112,10 +114,7 @@ const ToolMenuItems = () => {
 				<NewMenuIcon>
 					<TextAdd20Regular />
 				</NewMenuIcon>
-				{t(
-					"topBar.menu.applySavedSplits",
-					"Apply Saved Splits to Song...",
-				)}
+				{t("topBar.menu.applySavedSplits", "Apply Saved Splits to Song...")}
 			</DropdownMenu.Item>
 			<DropdownMenu.Sub>
 				<DropdownMenu.SubTrigger>
@@ -202,16 +201,11 @@ const ToolMenuItems = () => {
 				<NewMenuIcon>
 					<History20Regular />
 				</NewMenuIcon>
-				{t(
-					"topBar.menu.refreshGeniusLyrics",
-					"Refresh Lyrics from Genius...",
-				)}
+				{t("topBar.menu.refreshGeniusLyrics", "Refresh Lyrics from Genius...")}
 			</DropdownMenu.Item>
 			<DropdownMenu.Item onSelect={menu.onOpenCensorWords}>
 				<Flex align="center" gap="2">
-					<Broom20Regular
-						style={{ width: 15, height: 15, flexShrink: 0 }}
-					/>
+					<Broom20Regular style={{ width: 15, height: 15, flexShrink: 0 }} />
 					{t("topBar.menu.censorWords", "Search Bad Words & Clean Version…")}
 				</Flex>
 			</DropdownMenu.Item>

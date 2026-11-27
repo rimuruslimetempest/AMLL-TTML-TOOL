@@ -1,4 +1,5 @@
 import { PLUGIN_REGISTRY_URL } from "$/config/links";
+import officialPluginData from "./official-plugins.json";
 import type {
 	PluginPermission,
 	PluginRegistryEntry,
@@ -37,12 +38,6 @@ const ALLOWED_TYPES = new Set<PluginType>([
 	"both",
 ]);
 
-/**
- * Built-in listings shipped with the app. The reviewed catalog lives in
- * docs/registry/plugins.json; this list only keeps the store usable offline.
- */
-export const OFFICIAL_PLUGIN_REGISTRY: PluginRegistryEntry[] = [];
-
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -60,6 +55,26 @@ function readList<T extends string>(
 		(item): item is T => typeof item === "string" && allowed.has(item as T),
 	);
 	return [...new Set(items)];
+}
+
+/**
+ * Registry downloads come in three shapes:
+ * - `https://…` for a remote catalog hosted somewhere else,
+ * - `registry/plugins/…` for a path relative to the marketplace root,
+ * - `/plugins/…` for a file bundled with the app (the official plugins).
+ */
+export function resolvePluginRegistryUrl(path: string): string {
+	if (/^https?:/i.test(path)) {
+		const url = new URL(path);
+		if (url.protocol !== "https:") {
+			throw new Error("The plugin registry returned a non-HTTPS address.");
+		}
+		return url.href;
+	}
+	if (path.startsWith("/")) return path;
+	const base = new URL(pluginRegistryUrl());
+	base.pathname = base.pathname.replace(/registry\/[^/]*$/, "");
+	return new URL(path, base).href;
 }
 
 function readEntry(value: unknown): PluginRegistryEntry | null {
@@ -98,7 +113,7 @@ function readEntry(value: unknown): PluginRegistryEntry | null {
 		permissions: readList(value.permissions, ALLOWED_PERMISSIONS),
 		slots: readList(value.slots, ALLOWED_SLOTS),
 		homepage: readString(value.homepage) ?? undefined,
-		downloadUrl: download,
+		downloadUrl: resolvePluginRegistryUrl(download),
 		sha256,
 		size: typeof value.size === "number" ? value.size : undefined,
 		tags: Array.isArray(value.tags)
@@ -112,6 +127,21 @@ function readEntry(value: unknown): PluginRegistryEntry | null {
 	};
 }
 
+/**
+ * Built-in listings shipped with the app. These use `/plugins/...` paths that
+ * are bundled under `public/`, so the official store works without GitHub
+ * Pages or any network request to the marketplace.
+ */
+const rawOfficial = (officialPluginData as { plugins?: unknown }).plugins;
+export const OFFICIAL_PLUGIN_REGISTRY: PluginRegistryEntry[] = Array.isArray(
+	rawOfficial,
+)
+	? rawOfficial
+			.map(readEntry)
+			.filter((entry): entry is PluginRegistryEntry => entry !== null)
+			.sort((a, b) => a.name.localeCompare(b.name))
+	: [];
+
 /** Optional override for local testing; the production default is the Pages registry. */
 export function pluginRegistryUrl(): string {
 	const override = (
@@ -120,28 +150,18 @@ export function pluginRegistryUrl(): string {
 	return override?.trim() || PLUGIN_REGISTRY_URL;
 }
 
-/** Registry entries are relative to the marketplace root, not registry/. */
-export function resolvePluginRegistryUrl(path: string): string {
-	if (/^https?:/i.test(path)) {
-		const url = new URL(path);
-		if (url.protocol !== "https:") {
-			throw new Error("The plugin registry returned a non-HTTPS address.");
-		}
-		return url.href;
-	}
-	const base = new URL(pluginRegistryUrl());
-	base.pathname = base.pathname.replace(/registry\/[^/]*$/, "");
-	return new URL(path, base).href;
-}
-
 export async function fetchRemoteRegistry(): Promise<PluginRegistryEntry[]> {
+	const official = new Map(
+		OFFICIAL_PLUGIN_REGISTRY.map((entry) => [entry.id, entry]),
+	);
 	try {
 		const res = await fetch(pluginRegistryUrl(), {
 			headers: { accept: "application/json" },
 			cache: "no-store",
 			signal: AbortSignal.timeout(15_000),
 		});
-		if (!res.ok) throw new Error(`The marketplace returned HTTP ${res.status}.`);
+		if (!res.ok)
+			throw new Error(`The marketplace returned HTTP ${res.status}.`);
 		const text = await res.text();
 		if (text.length > MAX_REGISTRY_BYTES) {
 			throw new Error("The plugin registry is larger than expected.");
@@ -154,13 +174,18 @@ export async function fetchRemoteRegistry(): Promise<PluginRegistryEntry[]> {
 		) {
 			throw new Error("The plugin registry has an unknown format.");
 		}
-		return parsed.plugins
+		const remote = parsed.plugins
 			.map(readEntry)
-			.filter((entry): entry is PluginRegistryEntry => entry !== null)
-			.sort((a, b) => a.name.localeCompare(b.name));
+			.filter((entry): entry is PluginRegistryEntry => entry !== null);
+		for (const entry of remote) {
+			// The bundled copy is authoritative for official plugins, so a stale
+			// Pages deploy cannot point users at an older module.
+			if (!official.has(entry.id)) official.set(entry.id, entry);
+		}
+		return [...official.values()].sort((a, b) => a.name.localeCompare(b.name));
 	} catch (error) {
 		console.error("Plugin registry fetch failed:", error);
-		return OFFICIAL_PLUGIN_REGISTRY;
+		return [...OFFICIAL_PLUGIN_REGISTRY];
 	}
 }
 

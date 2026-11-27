@@ -1,7 +1,7 @@
 {
 	"name": "ttml-tool",
 	"private": true,
-	"version": "2.0.0",
+	"version": "2.1.1",
 	"description": "A word-synced TTML lyric editor for Apple Music-style lyrics, built with React, TypeScript, and Tauri.",
 	"author": {
 		"name": "Rimurulover",
@@ -28,6 +28,8 @@
 		"themes:build": "node scripts/build-example-themes.mjs",
 		"themes:validate": "node scripts/validate-theme-registry.mjs",
 		"plugins:validate": "node scripts/validate-plugin-registry.mjs",
+		"plugins:build": "node scripts/build-official-plugins.mjs",
+		"plugins:test": "node scripts/test-official-plugins.mjs",
 		"validate:marketplace": "node scripts/validate-marketplace.mjs",
 		"tauri:build:release": "node scripts/prepare-downloader.mjs && tauri build",
 		"version:bump": "node scripts/bump-version.mjs",
@@ -61,6 +63,7 @@
 		"@radix-ui/react-dialog": "^1.1.15",
 		"@radix-ui/themes": "^3.2.1",
 		"@sentry/react": "^10.32.1",
+		"@tanstack/virtual-core": "^3.19.13",
 		"@tauri-apps/api": "^2.9.1",
 		"@tauri-apps/plugin-dialog": "^2.6.0",
 		"@tauri-apps/plugin-fs": "^2.4.5",

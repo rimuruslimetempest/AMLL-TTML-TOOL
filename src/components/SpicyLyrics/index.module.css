@@ -342,6 +342,23 @@
 	padding: 25cqh clamp(20px, 4cqw, 48px) 12cqh clamp(24px, 5cqw, 60px);
 }
 
+/* Only rows near the viewport are mounted. Each sits at its measured offset,
+   with the gap to the next row as its bottom padding. */
+.virtualContent {
+	position: relative;
+	width: 100%;
+}
+.row {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	box-sizing: border-box;
+}
+.row .line {
+	margin: 0;
+}
+
 /* ── Lyric Lines ─────────────────────────────────────────────── */
 .line {
 	--blur: 0px;
@@ -362,14 +379,6 @@
 		scale 0.2s cubic-bezier(0.37, 0, 0.63, 1);
 	text-shadow: 0 0 var(--blur) rgba(255, 255, 255, 0.5);
 	cursor: pointer;
-}
-
-/* Off-screen lines are kept in the DOM, but the browser can skip their
-   layout/paint work until they approach the viewport. Visible lines, including
-   every word and letter of the active line, are unchanged. */
-.line:not(.dotLine):not([data-state="active"]) {
-	content-visibility: auto;
-	contain-intrinsic-size: auto 1.18em;
 }
 
 .line[data-state="not-sung"] {

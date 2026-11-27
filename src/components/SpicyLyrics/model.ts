@@ -39,6 +39,8 @@ export interface SpicyLine {
 	isDuet: boolean;
 	agent?: string;
 	isDotLine?: boolean;
+	/** Not synced yet: shown in place, never animated or sought. */
+	isUntimed?: boolean;
 	translation?: string;
 	words: SpicyToken[];
 }
@@ -276,6 +278,8 @@ export function buildSpicyLines(
 					(effectiveStart > 0 ? effectiveStart + 1000 : 0));
 		const lineSyncedExplicit = forceLineSynced || isLineSynced(line);
 		const isWordSynced = !lineSyncedExplicit && timedWords.length > 0;
+		const isUntimed =
+			!(effectiveEnd > effectiveStart || timedWords.length > 0);
 		return {
 			id: line.id,
 			startTime: effectiveStart,
@@ -287,6 +291,7 @@ export function buildSpicyLines(
 			isBackground: !!line.isBG,
 			isDuet: isVoiceRightAligned(line),
 			agent: getLineVoice(line),
+			isUntimed,
 			translation: line.translatedLyric || undefined,
 			words: makeTokens(line.words, simple, romanized, !!line.isBG),
 		};

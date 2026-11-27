@@ -8,6 +8,7 @@
 			"!**/build",
 			"!**/target",
 			"!**/vendor",
+			"!src/modules/plugins/official-plugins.json",
 			"!!**/decode-audio.js"
 		]
 	},

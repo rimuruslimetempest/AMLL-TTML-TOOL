@@ -1,114 +1,90 @@
-# TTML Tool 2.0.0
+# TTML Tool 2.1.1
 
-TTML Tool 2.0 is the Studio release. It adds a workspace layer for larger
-editing sessions, a rebuilt New UI shell, a WebAssembly plugin platform, Theme
-Studio, right-to-left interface support, and the high-refresh performance work
-from the 1.0.4 line. All lyric timing stays manual.
+2.1 makes the 2.0 workspace dependable, and 2.1.1 rebuilds the Preview lyric
+list around measured virtual rows. The Plugin Store now opens with two reviewed
+first-party plugins, tool plugins can change text but never timing, undo is
+scoped to the open document, and this is the first release with signed updater
+artifacts and `latest.json`. All lyric timing stays manual.
 
 ## New
 
-### Studio workspace
+### A Plugin Store with real plugins
 
-- **Command palette** (`Ctrl/Cmd+Shift+P`) searches the app's commands and
-  opens the matching workspace action without leaving the keyboard.
-- **Workspace home** (`Ctrl/Cmd+Shift+H`) lists open workspace tabs and recent
-  sessions, and can restore the last session after an interruption.
-- **Review cockpit** (`Ctrl/Cmd+Shift+Q`) keeps the editor, preview, and review
-  checks together for a focused pass over a song.
-- **Focus mode** (`Ctrl/Cmd+Shift+F`) hides the surrounding chrome so the
-  editor and preview get the whole window.
-- **Workspace tabs, layout presets, and a diff view** make it practical to move
-  between projects and compare a working copy with the saved version.
-- **Crash recovery and rolling session backups** keep a dirty snapshot while
-  you work, write a clean marker on a normal close, and offer to restore the
-  last session after a crash.
+- **Whitespace Cleaner** collapses repeated whitespace and removes zero-width
+  characters without joining separate words.
+- **HTML Entity Decoder** turns `&amp;`, `&#39;`, and numeric entities back into
+  the characters they represent.
+- Both plugins are bundled with the app, so they appear in the store even when
+  the public marketplace is offline or stale. They are text-only tools and also
+  appear in the plugin toolbar.
+- Every store entry shows its permissions and SHA-256 before install. Plugins
+  stay ordinary WebAssembly modules; they cannot inject JavaScript or read the
+  page.
 
-### New shell
+### Timing stays yours
 
-- The New UI now uses a real flex shell: a top bar, tab rail, command bar, and
-  status bar around one growing workspace. Menus, popovers, and panels no
-  longer sit on top of each other because of fixed positioning.
-- The shell measures its own chrome and handles overflow, so it stays usable at
-  narrow window sizes and at high display scaling.
-- The Classic UI switch, keyboard shortcuts, themes, and the existing editor
-  remain available.
+- Tool results must keep the same line and word IDs, the same line and word
+  order, and every start/end time. The host rejects a retimed or structurally
+  changed document with a clear error instead of applying it.
+- Importers and exporters keep their existing behavior. The guard applies where
+  a plugin tool claims to edit the current lyrics.
+- All timing remains manual. No plugin can create, move, or retime a word.
 
-### Plugin platform
+### Safer workspace tabs
 
-- Plugins are sandboxed WebAssembly modules that can import a lyric format,
-  export one, or transform lyric lines. They cannot inject JavaScript, read the
-  page, or reach the network unless the host grants a declared permission.
-- **Plugin Store** lists reviewed plugins from the public catalog and shows
-  every requested permission before install. Installed plugins live in
-  IndexedDB, not in the install folder.
-- **Plugin Studio** builds and tests a manifest and module, with API version 2,
-  a 2 MB module cap, and explicit `lyrics:read`, `lyrics:write`, `files:read`,
-  `files:write`, `network`, `settings:read`, `ui:toolbar`, and `ui:panel`
-  permissions.
-- The repository now includes the plugin registry, JSON schema, submission
-  template, marketplace validator, and a validation workflow.
-
-### Themes and settings
-
-- **Theme Studio** edits theme tokens, previews the result, and packages a
-  theme without writing JavaScript.
-- Settings has a searchable index, consistent page headers, and dedicated
-  Themes and Performance pages. The existing theme storage keys and user theme
-  folder are unchanged.
-
-### Accessibility
-
-- Right-to-left interface support follows the selected language automatically,
-  with a manual LTR/RTL override, and sets the document language for screen
-  readers.
-- A polite live-announcement region reports workspace and command changes
-  without moving focus.
-
-### Formats
-
-- Added ASS and VTT export, including the existing export-loss report so it is
-  clear when per-word timing, roles, or TTML metadata cannot be stored.
+- Loading a project or activating another workspace tab now resets the lyric
+  undo/redo history. Undo in project B can no longer restore project A's lyrics.
+- The existing dirty-tab close confirmation and multi-tab workflow are
+  unchanged.
 
 ## Improved
 
-- Preview, its progress bar, the bottom waveform, and the spectrogram share one
-  animation scheduler and a smoothed audio clock. Paused playback does no
-  per-frame lyric work, unchanged style values are skipped, and scroll
-  correction no longer forces layout every frame.
-- Settings → Performance adds adaptive visual quality, a frame-time diagnostics
-  overlay with Copy frame report, and the opt-in, restart-gated Windows
-  Unlimited frame-rate mode. Auto quality only removes decoration and never
-  delays audio, input, or timing.
-- Spectrogram zoom and pan easing is time-based, so it feels consistent at 60,
-  165, and 240 Hz.
-- More workspace actions are available from the native menu and the keyboard
-  command list, including the new palette, focus, home, and cockpit shortcuts.
+### A faster Preview for long songs
 
-## Fixed
-
-- Retained the 1.0.4 fix for the waveform startup crash, so the app opens
-  normally on 1.0.3 projects.
+- The Preview lyric list now mounts only the rows around the viewport and
+  measures each row once, following the measured-virtual-row model from Spicy
+  Lyrics. Scroll-follow, blur, and word gradients read the same measured
+  offsets instead of walking the whole document.
+- On a 120-line word-synced test file the median frame rate rose from about
+  34 FPS to 65–79 FPS, and the rendered DOM fell from about 1,330 to under 800
+  nodes. Short songs get the same treatment with less to mount.
+- Seeking, paused seeks, manual scrolling, and background-vocal groups re-aim
+  the follow at the correct measured row, and word highlighting resumes from
+  the right gradient after a seek.
+- Store downloads resolve the documented marketplace-relative paths correctly,
+  including the public Pages catalog and the app-local official catalog.
+- The store merges bundled official plugins with the fetched catalog, so a
+  stale public registry cannot hide them.
+- Importers, exporters, and tools are listed from the actual WebAssembly
+  exports, so a tool-only plugin no longer appears as an importer or exporter.
+- `network`, `settings:read`, and `ui:panel` are labelled reserved until a
+  later plugin API implements them.
+- Plugin tool failures now show a toast as well as a console error.
 
 ## Downloads
 
 | Platform | File |
 | --- | --- |
-| Windows x64 | `TTML-Tool_2.0.0_x64-setup.exe` or `TTML-Tool_2.0.0_x64.msi` |
-| macOS Apple Silicon | `TTML-Tool_2.0.0_aarch64.dmg` |
-| macOS Intel | `TTML-Tool_2.0.0_x64.dmg` |
-| Linux x64 | `TTML-Tool_2.0.0_amd64.AppImage`, `.deb`, or `.rpm` |
+| Windows x64 | `TTML-Tool_2.1.1_x64-setup.exe` or `TTML-Tool_2.1.1_x64.msi` |
+| macOS Apple Silicon | `TTML-Tool_2.1.1_aarch64.dmg` |
+| macOS Intel | `TTML-Tool_2.1.1_x64.dmg` |
+| Linux x64 | `TTML-Tool_2.1.1_amd64.AppImage`, `.deb`, or `.rpm` |
 
 The Windows, macOS Apple Silicon, macOS Intel, and Linux x64 builds are checked
 before publication. On Linux, the AppImage updates itself; use your package
 manager for `.deb` and `.rpm`.
 
-## Upgrade notes
+## Updating from 1.0.4 or 2.0.0
 
-- Projects, themes, and settings keep their existing formats and storage keys.
-- Installing 2.0.0 over 1.0.x keeps local projects, saved splits, user themes,
-  and the recycle bin in place.
-- All timing remains manual. The editor, importers, text tools, and plugins
-  never create, move, or retime a timestamp on their own.
+This is the first release with a working updater manifest. Releases 1.0.4 and
+2.0.0 never published `latest.json`, so an installed copy cannot discover 2.1.1
+on its own. Install 2.1.1 once from the release page; after that, the built-in
+updater can find later releases automatically. Copies installed from the local
+2.1.0 test build can update the same way.
+
+Projects, saved splits, user themes, installed plugins, settings, and the
+recycle bin keep their existing formats and storage keys. The plugin manifest
+and WebAssembly ABI are unchanged from 2.0.0.
 
 ## Credits
 

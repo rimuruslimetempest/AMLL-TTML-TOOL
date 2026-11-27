@@ -93,7 +93,7 @@ body:
     id: min_version
     attributes:
       label: Minimum TTML Tool version
-      placeholder: "1.0.4"
+      placeholder: "2.1.0"
     validations:
       required: true
 

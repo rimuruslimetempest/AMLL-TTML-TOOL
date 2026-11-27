@@ -137,7 +137,8 @@
 					<p class="sub" style="margin-bottom: 18px">
 						Plugins run as sandboxed WebAssembly. A plugin can add an import
 						format, an export format, or a lyric tool; it cannot inject
-						JavaScript into the editor.
+						JavaScript into the editor. Tool results may edit text only: the host
+						rejects any change to timing, line order, or word order.
 					</p>
 					<ol class="steps">
 						<li>
@@ -202,7 +203,7 @@
   "download": "registry/plugins/lyric-normalizer/plugin.wasm",
   "sha256": "&lt;64 lowercase hex characters&gt;",
   "size": 24576,
-  "minAppVersion": "1.0.4",
+  "minAppVersion": "2.1.0",
   "addedAt": "2026-11-24",
   "verified": false
 }</code></pre>

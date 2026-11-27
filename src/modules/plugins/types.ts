@@ -16,7 +16,11 @@ export type PluginPermission =
 	| "ui:toolbar"
 	| "ui:panel";
 
-export type PluginSlot = "toolbar" | "panel" | "import-dialog" | "export-dialog";
+export type PluginSlot =
+	| "toolbar"
+	| "panel"
+	| "import-dialog"
+	| "export-dialog";
 
 export interface PluginMetadata {
 	id: string;

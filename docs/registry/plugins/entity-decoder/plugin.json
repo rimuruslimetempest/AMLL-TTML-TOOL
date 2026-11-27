@@ -1,0 +1,23 @@
+{
+  "id": "entity-decoder",
+  "name": "HTML Entity Decoder",
+  "description": "Decodes HTML entities such as &amp; and &#39; in imported lyric text. Timing and word order stay untouched.",
+  "author": "Rimurulover",
+  "version": "1.0.0",
+  "type": "tool",
+  "apiVersion": 2,
+  "permissions": [
+    "lyrics:read",
+    "lyrics:write",
+    "ui:toolbar"
+  ],
+  "slots": [
+    "toolbar"
+  ],
+  "homepage": "https://github.com/rimuruslimetempest/AMLL-TTML-TOOL",
+  "techniques": [
+    "Decode named entities",
+    "Decode numeric entities"
+  ],
+  "usage": "Run from Tools or the plugin toolbar after importing lyrics."
+}

@@ -5,9 +5,12 @@ on:
     branches: [main]
     paths:
       - "docs/**"
+      - "public/plugins/**"
+      - "src/modules/plugins/official-plugins.json"
       - "scripts/validate-theme-registry.mjs"
       - "scripts/validate-plugin-registry.mjs"
       - "scripts/validate-marketplace.mjs"
+      - "scripts/test-official-plugins.mjs"
       - ".github/workflows/themes-pages.yml"
   workflow_dispatch:
 
@@ -29,7 +32,9 @@ jobs:
         with:
           node-version: 20
       - name: Validate the marketplace catalogs
-        run: node scripts/validate-marketplace.mjs
+        run: |
+          node scripts/validate-marketplace.mjs
+          node scripts/test-official-plugins.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

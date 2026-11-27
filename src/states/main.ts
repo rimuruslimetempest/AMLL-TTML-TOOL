@@ -11,7 +11,7 @@
 
 import { atom, type Atom } from "jotai";
 import { atomWithStorage, selectAtom } from "jotai/utils";
-import { REDO, UNDO, withHistory } from "jotai-history";
+import { REDO, RESET, UNDO, withHistory } from "jotai-history";
 import { uid } from "uid";
 import { identifyProject } from "$/modules/project/logic/project-info";
 import {
@@ -201,6 +201,7 @@ export const newLyricLinesAtom = atom(
 		migrateLegacySections(newState);
 		repairSectionIntegrity(newState);
 		set(lyricLinesAtom, newState);
+		set(undoableLyricLinesAtom, RESET);
 		set(lastSavedContentAtom, serializeLyricState(newState));
 		set(selectedLinesAtom, new Set());
 		set(selectedWordsAtom, new Set());
